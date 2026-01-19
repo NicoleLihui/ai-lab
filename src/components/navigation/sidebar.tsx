@@ -110,8 +110,8 @@ function CategorySection({
         className={cn(
           "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors",
           isActive
-            ? "bg-primary-50 text-primary-700"
-            : "text-slate-700 hover:bg-slate-100"
+            ? "bg-blue-50 text-blue-700"
+            : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"
         )}
       >
         <div className="flex items-center gap-2">
@@ -175,8 +175,8 @@ function ModuleSection({
           className={cn(
             "w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-colors",
             isActive
-              ? "bg-primary-50 text-primary-700 font-medium"
-              : "text-slate-600 hover:bg-slate-50"
+              ? " text-blue-700 font-medium"
+              : "text-slate-600 hover:bg-blue-50 hover:text-blue-600"
           )}
         >
           <span>{module.name}</span>
@@ -202,8 +202,8 @@ function ModuleSection({
                 className={cn(
                   "block px-3 py-1.5 rounded-md text-xs transition-colors",
                   isActive
-                    ? "bg-primary-100 text-primary-700 font-medium"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? " text-blue-700 font-medium"
+                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-600"
                 )}
               >
                 {page.name}

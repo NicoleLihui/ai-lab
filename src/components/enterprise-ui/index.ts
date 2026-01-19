@@ -24,3 +24,7 @@ export type { MdCardProps } from "./md-card"
 
 export { MdAlert } from "./md-alert"
 export type { MdAlertProps } from "./md-alert"
+
+export { AdvancedSearch, type AdvancedSearchProps, type FormItem } from "./advanced-search"
+
+export { CardInfo, type CardInfoProps } from "./card-info"

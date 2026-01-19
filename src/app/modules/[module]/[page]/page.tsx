@@ -69,7 +69,7 @@ export default function ModulePage(props: PageProps) {
 
       {/* 可滚动内容区 */}
       <div className="flex-1 overflow-y-auto bg-slate-50/50 outline-none border-none shadow-none">
-        <div className="max-w-full space-y-6">
+        <div className="max-w-full space-y-6 p-6">
           <MdCard className="p-5 space-y-3 bg-white">
             <h2 className="text-base font-semibold text-slate-800">页面概览</h2>
             <ul className="space-y-2 text-sm text-slate-700">
@@ -113,7 +113,7 @@ export default function ModulePage(props: PageProps) {
           </MdCard>
 
           {SystemPageComponent && (
-            <div className="bg-white overflow-hidden">
+            <div className="bg-slate-50/50">
               <SystemPageComponent />
             </div>
           )}

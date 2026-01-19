@@ -1,134 +1,133 @@
-import Link from "next/link";
-import { categories, totalCategories, totalModules, totalPages, getKeyModules } from "@/config/modules";
-import { MdCard, MdBadge } from "@/components/enterprise-ui";
-import { Brain, BarChart3, Zap, Settings, Eye, Database, ArrowRight } from "lucide-react";
+'use client';
 
-const getKeyModuleIcon = (name: string) => {
-  if (name.includes("模型训练")) return <BarChart3 className="w-6 h-6" />;
-  if (name.includes("智能体")) return <Zap className="w-6 h-6" />;
-  if (name.includes("规则引擎")) return <Settings className="w-6 h-6" />;
-  if (name.includes("监控")) return <Eye className="w-6 h-6" />;
-  if (name.includes("数据资源目录")) return <Database className="w-6 h-6" />;
-  return <Brain className="w-6 h-6" />;
-};
+import { Card, Row, Col, Space, Typography, Divider } from 'antd';
+import Link from 'next/link';
+import { BarChartOutlined, CloudSyncOutlined, DatabaseOutlined, TeamOutlined, ApiOutlined, ControlOutlined, SettingOutlined, DashboardOutlined } from '@ant-design/icons';
 
-const getKeyModuleColor = (name: string) => {
-  if (name.includes("模型训练")) return "from-blue-500 to-blue-600";
-  if (name.includes("智能体")) return "from-yellow-500 to-yellow-600";
-  if (name.includes("规则引擎")) return "from-red-500 to-red-600";
-  if (name.includes("监控")) return "from-pink-500 to-pink-600";
-  if (name.includes("数据资源目录")) return "from-rose-500 to-rose-600";
-  return "from-primary to-primary-light";
-};
+const { Title, Text } = Typography;
 
-export default function HomePage() {
-  const keyModules = getKeyModules();
+const HomePage = () => {
+  const categories = [
+    {
+      key: 'model-lab',
+      title: '模型实验室',
+      description: '实验环境 - 提供模型训练、评估、部署等功能',
+      icon: <BarChartOutlined style={{ fontSize: '24px' }} />,
+      color: '#1890ff',
+      modules: [
+        { name: '模型训练', path: '/categories/model-lab/training/training-tasks', desc: '训练任务创建、执行和监控' },
+        { name: '模型评估', path: '/categories/model-lab/benefit-evaluation/benefit-evaluation', desc: '离线评估 / 模型回测' },
+        { name: '模型广场', path: '/categories/model-lab/model-plaza/model-plaza', desc: '预训练模型浏览与在线试用' },
+        { name: '模型开发', path: '/categories/model-lab/model-development/machine-learning-models', desc: '机器学习模型、智能体模型、数据规则模型' },
+      ]
+    },
+    {
+      key: 'model-center',
+      title: '模型中心',
+      description: '生产环境 - 提供模型库、上线、调度和监控功能',
+      icon: <DashboardOutlined style={{ fontSize: '24px' }} />,
+      color: '#52c41a',
+      modules: [
+        { name: '模型库', path: '/categories/model-center/model-registry/registry', desc: '模型库注册与签名' },
+        { name: '模型上线', path: '/categories/model-center/release-governance/model-release-review', desc: '发布审批流与准入检测' },
+        { name: '模型调度', path: '/categories/model-center/scheduling/cron-schedule', desc: '定时 / 触发 / API 调度' },
+        { name: '模型监控', path: '/categories/model-center/monitoring/usage-stats', desc: '性能、漂移、用量与告警' },
+      ]
+    },
+    {
+      key: 'data-platform',
+      title: '数据中台',
+      description: '数据管理与治理平台',
+      icon: <DatabaseOutlined style={{ fontSize: '24px' }} />,
+      color: '#722ed1',
+      modules: [
+        { name: '元数据管理', path: '/categories/data-platform/metadata/metadata-list', desc: '元数据、血缘、字典' },
+        { name: '标签管理', path: '/categories/data-platform/tag-management/tag-types', desc: '标签类型管理、标签设置' },
+        { name: '数据资源目录', path: '/categories/data-platform/data-catalog/business-entity', desc: '实体、逻辑模型、目录搭建' },
+        { name: '质量管理', path: '/categories/data-platform/data-quality/sensitive-data', desc: '规则定义与门禁阻断' },
+      ]
+    },
+    {
+      key: 'system',
+      title: '系统管理',
+      description: '组织、用户、权限与日志管理',
+      icon: <SettingOutlined style={{ fontSize: '24px' }} />,
+      color: '#fa8c16',
+      modules: [
+        { name: '组织管理', path: '/categories/system/org-management/org-management', desc: '组织架构与部门管理' },
+        { name: '用户管理', path: '/categories/system/user-management/user-management', desc: '用户信息与状态管理' },
+        { name: '角色管理', path: '/categories/system/role-management/role-management', desc: '角色权限模型管理' },
+        { name: '日志管理', path: '/categories/system/log-management/login-log', desc: '登录与操作日志' },
+      ]
+    }
+  ];
 
   return (
-    <div className="space-y-8">
-      {/* 头部 */}
-      <div className="rounded-2xl bg-white p-8 shadow-lg">
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-gradient-to-r from-primary to-primary-light p-3 text-white">
-              <Brain className="h-10 w-10" />
+    <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
+      <div style={{ background: '#fff', padding: '24px', borderRadius: '8px', marginBottom: '24px' }}>
+        <Title level={2} style={{ marginBottom: '16px' }}>企业模型实验室系统</Title>
+        <Text type="secondary">一站式模型开发、训练、评估、部署和管理平台</Text>
+      </div>
+
+      {categories.map((category) => (
+        <div key={category.key} style={{ marginBottom: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ 
+              width: '48px', 
+              height: '48px', 
+              borderRadius: '50%', 
+              backgroundColor: `${category.color}20`, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              marginRight: '16px'
+            }}>
+              {category.icon}
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">模型实验室</h1>
-              <p className="mt-2 text-base text-slate-600">
-                数据中台与模型搭建平台
-              </p>
+              <Title level={3} style={{ margin: 0 }}>{category.title}</Title>
+              <Text type="secondary">{category.description}</Text>
             </div>
           </div>
-          <div className="flex items-center gap-4 rounded-xl bg-gradient-to-r from-slate-100 to-slate-200 p-4">
-            <MdBadge variant="success" className="rounded-lg px-4 py-2 text-base">
-              {totalCategories} 个一级模块
-            </MdBadge>
-            <MdBadge variant="warning" className="rounded-lg px-4 py-2 text-base">
-              {totalModules} 个二级模块
-            </MdBadge>
-            <MdBadge variant="info" className="rounded-lg px-4 py-2 text-base">
-              {totalPages} 个页面
-            </MdBadge>
-          </div>
-        </div>
-      </div>
 
-      {/* 关键模块快速入口 */}
-      <div className="mb-12">
-        <h2 className="mb-6 text-2xl font-bold text-slate-900">快速入口</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {keyModules.map(({ category, module, name }) => {
-            if (!module || !module.pages.length) return null;
-            const firstPage = module.pages[0];
-            const href = `/categories/${category}/${module.key}/${firstPage.key}`;
-            
-            return (
-              <Link key={`${category}-${module.key}`} href={href}>
-                <MdCard className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                  <div className={`absolute right-4 top-4 rounded-lg bg-gradient-to-r ${getKeyModuleColor(name)} p-3 text-white opacity-20 transition-opacity group-hover:opacity-100`}>
-                    {getKeyModuleIcon(name)}
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                        {name}
-                      </h3>
-                      <p className="text-sm text-slate-600 mb-3">
-                        {module.description}
-                      </p>
-                      <div className="flex items-center text-sm text-primary-600 font-medium">
-                        进入模块
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </div>
+          <Row gutter={[16, 16]}>
+            {category.modules.map((module, index) => (
+              <Col xs={24} sm={12} md={8} lg={6} key={index}>
+                <Link href={module.path as any} style={{ textDecoration: 'none' }}>
+                  <Card 
+                    hoverable
+                    style={{ 
+                      height: '100%',
+                      borderLeft: `4px solid ${category.color}`,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <div>
+                      <Title level={4} style={{ margin: 0, fontSize: '16px', color: category.color }}>{module.name}</Title>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}>
+                        {module.desc}
+                      </Text>
                     </div>
-                  </div>
-                </MdCard>
-              </Link>
-            );
-          })}
+                  </Card>
+                </Link>
+              </Col>
+            ))}
+          </Row>
         </div>
-      </div>
+      ))}
 
-      {/* 所有一级模块 */}
-      <div>
-        <h2 className="mb-6 text-2xl font-bold text-slate-900">所有模块</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => {
-            const firstModule = category.modules[0];
-            const firstPage = firstModule?.pages[0];
-            const href = firstPage
-              ? `/categories/${category.key}/${firstModule.key}/${firstPage.key}`
-              : "#";
+      <Divider style={{ margin: '32px 0' }} />
 
-            return (
-              <Link key={category.key} href={href}>
-                <MdCard className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="w-full flex items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          {category.name}
-                        </h3>
-                        <p className="text-sm text-slate-600">{category.description}</p>
-                      </div>
-                      <div className="rounded-lg bg-slate-100 p-2 text-2xl">
-                        {category.icon}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm text-slate-500">
-                      {category.modules.length} 个二级模块
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-primary-600 transition-colors" />
-                  </div>
-                </MdCard>
-              </Link>
-            );
-          })}
-        </div>
+      <div style={{ textAlign: 'center', padding: '24px' }}>
+        <Title level={4}>快速开始</Title>
+        <Space direction="vertical" size="middle">
+          <Text>1. 从上方分类中选择适合的功能模块</Text>
+          <Text>2. 进入相应页面开始模型开发工作</Text>
+          <Text>3. 利用平台提供的完整工具链提升效率</Text>
+        </Space>
       </div>
     </div>
   );
-}
+};
+
+export default HomePage;

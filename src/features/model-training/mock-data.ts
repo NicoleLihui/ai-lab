@@ -1,5 +1,5 @@
 // 污水处理行业模型训练任务Mock数据
-export interface TrainingTask {
+export interface TrainingTask extends Record<string, unknown> {
   id: string;
   taskName: string;
   modelName: string;
@@ -15,6 +15,19 @@ export interface TrainingTask {
   modelId: string;
   runId: string;
   modelKey: string;
+}
+
+export interface TrainingResult {
+  runId: string;
+  inputJson: string;
+  runDataVO: {
+    picList: string[];
+    csvReturnVO: {
+      titleMap: Record<string, string>;
+      dataList: Record<string, string | number>[];
+    };
+    evaIndexList: Array<{ name: string; desc: string; value: string }>;
+  };
 }
 
 // Mock评估指标数据
@@ -36,6 +49,116 @@ const mockEvaluateIndices = [
     value: "0.942"
   }
 ];
+
+const createPlaceholderImage = (label: string) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="560" height="320">
+      <rect width="100%" height="100%" fill="#f3f4f6"/>
+      <text x="50%" y="50%" font-size="18" font-family="Arial" fill="#6b7280" dominant-baseline="middle" text-anchor="middle">${label}</text>
+    </svg>`,
+  )}`;
+
+const mockTrainingResults: Record<string, TrainingResult> = {
+  run_001: {
+    runId: "run_001",
+    inputJson: JSON.stringify(
+      {
+        windowSize: 12,
+        learningRate: 0.001,
+        batchSize: 64,
+        epochs: 80,
+        optimizer: "Adam",
+      },
+      null,
+      2,
+    ),
+    runDataVO: {
+      picList: [createPlaceholderImage("训练结果图 1"), createPlaceholderImage("训练结果图 2")],
+      csvReturnVO: {
+        titleMap: {
+          column1: "样本编号",
+          column2: "预测值",
+          column3: "真实值",
+          column4: "误差",
+        },
+        dataList: [
+          { column1: "A001", column2: 12.3, column3: 11.8, column4: 0.5 },
+          { column1: "A002", column2: 10.9, column3: 11.2, column4: -0.3 },
+          { column1: "A003", column2: 13.1, column3: 12.9, column4: 0.2 },
+        ],
+      },
+      evaIndexList: [
+        { name: "RMSE", desc: "均方根误差", value: "0.15" },
+        { name: "MAE", desc: "平均绝对误差", value: "0.08" },
+        { name: "R²", desc: "拟合优度", value: "0.87" },
+      ],
+    },
+  },
+  run_004: {
+    runId: "run_004",
+    inputJson: JSON.stringify(
+      {
+        forecastHorizon: 24,
+        seasonal: true,
+        trend: "additive",
+        confidence: 0.9,
+      },
+      null,
+      2,
+    ),
+    runDataVO: {
+      picList: [createPlaceholderImage("预测曲线图")],
+      csvReturnVO: {
+        titleMap: {
+          column1: "时间点",
+          column2: "预测DO",
+          column3: "实际DO",
+        },
+        dataList: [
+          { column1: "2026-01-08 12:00", column2: 2.6, column3: 2.4 },
+          { column1: "2026-01-08 13:00", column2: 2.8, column3: 2.7 },
+          { column1: "2026-01-08 14:00", column2: 2.5, column3: 2.6 },
+        ],
+      },
+      evaIndexList: [
+        { name: "MAPE", desc: "平均绝对百分比误差", value: "8.3%" },
+        { name: "RMSE", desc: "均方根误差", value: "0.22" },
+      ],
+    },
+  },
+  run_006: {
+    runId: "run_006",
+    inputJson: JSON.stringify(
+      {
+        anomalyThreshold: 0.92,
+        featureCount: 18,
+        batchSize: 32,
+        epochs: 60,
+      },
+      null,
+      2,
+    ),
+    runDataVO: {
+      picList: [],
+      csvReturnVO: {
+        titleMap: {
+          column1: "样本编号",
+          column2: "预测结果",
+          column3: "真实标记",
+        },
+        dataList: [
+          { column1: "B1001", column2: "正常", column3: "正常" },
+          { column1: "B1002", column2: "异常", column3: "异常" },
+          { column1: "B1003", column2: "正常", column3: "正常" },
+        ],
+      },
+      evaIndexList: [
+        { name: "准确率", desc: "预测准确率", value: "96.7%" },
+        { name: "误报率", desc: "误报占比", value: "2.1%" },
+      ],
+    },
+  },
+};
 
 // 污水处理行业相关的模型任务数据
 export const mockTrainingTasks: TrainingTask[] = [
@@ -261,5 +384,14 @@ export const mockDeployTest = (params: {
       deploymentId: `deploy_${Date.now()}`,
       status: "deploying"
     }
+  };
+};
+
+export const getMockTrainingResult = (params: { runId: string }) => {
+  const data = mockTrainingResults[params.runId] ?? mockTrainingResults.run_001;
+  return {
+    success: true,
+    data,
+    message: "获取成功",
   };
 };

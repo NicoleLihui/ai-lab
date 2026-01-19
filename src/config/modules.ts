@@ -37,22 +37,38 @@ export const categories: PrimaryCategory[] = [
         description: "Notebook / 环境隔离 / 资源挂载",
         pages: [
           {
-            key: "notebook-env",
-            name: "Notebook 开发环境",
-            description: "Python / R 开发镜像与依赖预置",
+            key: "environment-config",
+            name: "环境配置",
+            description: "Notebook 开发环境、环境隔离管理、资源动态挂载",
             status: "待开发"
+          }
+        ]
+      },
+      {
+        key: "model-development",
+        name: "模型开发",
+        description: "机器学习模型、智能体模型、数据规则模型",
+        pages: [
+          {
+            key: "machine-learning-models",
+            name: "机器学习模型",
+            description: "新建、编辑、发布、试用、版本管理和删除模型的列表",
+            status: "已具备",
+            existingPath: "model-evaluation/model-train/index.vue"
           },
           {
-            key: "env-isolation",
-            name: "环境隔离管理",
-            description: "Conda / Docker 隔离与模板化",
-            status: "待开发"
+            key: "agent-models",
+            name: "智能体模型",
+            description: "Agent 开发列表，支持新增、编辑、删除、版本管理、发布",
+            status: "待优化",
+            existingPath: "model-develop/agent/agent/index.vue"
           },
           {
-            key: "resource-mount",
-            name: "资源动态挂载",
-            description: "GPU、分布式存储动态挂载",
-            status: "待开发"
+            key: "data-rule-models",
+            name: "数据规则模型",
+            description: "支持根据不同的时间维度、水厂维度等，配置数据计算规则",
+            status: "待优化",
+            existingPath: "model-management/data-rule-models/index.vue"
           }
         ]
       },
@@ -62,81 +78,60 @@ export const categories: PrimaryCategory[] = [
         description: "训练任务创建、执行和监控",
         pages: [
           {
+            key: "model-training",
+            name: "模型训练",
+            description: "模型训练",
+            status: "已具备",
+            existingPath: "model-evaluation/model-train/index.vue"
+          },
+          {
             key: "training-tasks",
             name: "训练任务管理",
-            description: "任务创建、执行与监控",
+            description: "对数据规则模型和机器学习模型的训练任务列表，支持对训练的模型进行部署测试、支持训练结果查看",
             status: "已具备",
             existingPath: "model-evaluation/model-train/index.vue"
           }
         ]
       },
       {
-        key: "evaluation",
-        name: "模型评估",
-        description: "离线评估 / 模型回测",
+        key: "benefit-evaluation",
+        name: "效益评估",
+        description: "效益评估、效益评估管理",
         pages: [
-          {
-            key: "offline-evaluation",
-            name: "离线评估",
-            description: "模型回测与指标评估",
-            status: "已具备",
-            existingPath: "model-management/model-backtesting/benefitEvaluation/index.vue"
-          },
           {
             key: "benefit-evaluation",
             name: "效益评估",
-            description: "业务收益视角回测",
+            description: "效益评估",
             status: "已具备",
             existingPath: "model-management/model-backtesting/benefitEvaluation/index.vue"
           },
           {
-            key: "ml-evaluation",
-            name: "机器学习模型评估",
-            description: "ML 模型评估与对比",
+            key: "benefit-evaluation-mgmt",
+            name: "效益评估管理",
+            description: "效益评估管理",
             status: "已具备",
             existingPath: "model-management/model-backtesting/machineLearningEvaluation/index.vue"
-          }
+          },
         ]
       },
       {
-        key: "backtesting-mgmt",
-        name: "回测管理",
-        description: "效益 / 机器学习评估管理",
+        key: "ml-evaluation",
+        name: "模型评估",
+        description: "模型评估、模型评估管理",
         pages: [
           {
-            key: "benefit-management",
-            name: "效益评估管理",
-            description: "评估任务生命周期管理",
+            key: "ml-evaluation",
+            name: "模型评估",
+            description: "模型评估",
             status: "已具备",
             existingPath: "system-management/system-backtesting/systemBenefitEvaluation/index.vue"
           },
           {
-            key: "ml-management",
-            name: "机器学习评估管理",
-            description: "ML 评估任务统一管理",
+            key: "evaluation-mgmt",
+            name: "评估管理",
+            description: "评估管理",
             status: "已具备",
             existingPath: "system-management/system-backtesting/systemMachineEvaluation/index.vue"
-          }
-        ]
-      },
-      {
-        key: "beidou-award",
-        name: "北斗奖评估",
-        description: "北斗奖评估与对标",
-        pages: [
-          {
-            key: "beidou-benefit",
-            name: "北斗奖效益评估",
-            description: "行业效益评估",
-            status: "已具备",
-            existingPath: "model-management/beidou-award/beidouEvaluation/index.vue"
-          },
-          {
-            key: "beidou-ml",
-            name: "北斗奖机器学习评估",
-            description: "ML 模型评审",
-            status: "已具备",
-            existingPath: "model-management/beidou-award/machineLearningBeidou/index.vue"
           }
         ]
       },
@@ -148,65 +143,9 @@ export const categories: PrimaryCategory[] = [
           {
             key: "model-plaza",
             name: "模型广场",
-            description: "预训练模型浏览与筛选",
+            description: "预训练模型浏览、模型在线试用、模型详情页",
             status: "已具备",
             existingPath: "model-management/model-plaza/index.vue"
-          },
-          {
-            key: "model-trial",
-            name: "模型在线试用",
-            description: "快速体验模型能力",
-            status: "已具备",
-            existingPath: "model-evaluation/model-ontrial/index.vue"
-          },
-          {
-            key: "model-detail",
-            name: "模型详情",
-            description: "模型档案、版本、评估结果",
-            status: "已具备",
-            existingPath: "model-management/model-plaza/detail.vue"
-          }
-        ]
-      },
-      {
-        key: "agent-dev",
-        name: "智能体开发",
-        description: "Agent 列表与配置",
-        pages: [
-          {
-            key: "agent-list",
-            name: "Agent 开发列表",
-            description: "Agent 项目管理",
-            status: "待优化",
-            existingPath: "model-develop/agent/agent/index.vue"
-          },
-          {
-            key: "agent-detail",
-            name: "Agent 详情配置",
-            description: "Agent 配置与版本",
-            status: "待优化",
-            existingPath: "model-management/model-plaza/detail.vue"
-          }
-        ]
-      },
-      {
-        key: "data-rule-engine",
-        name: "数据规则引擎",
-        description: "规则模型列表与详情",
-        pages: [
-          {
-            key: "rule-model-list",
-            name: "规则模型列表",
-            description: "规则模型注册与检索",
-            status: "待优化",
-            existingPath: "model-management/data-rule-models/index.vue"
-          },
-          {
-            key: "rule-model-detail",
-            name: "规则模型详情",
-            description: "规则配置与依赖",
-            status: "待优化",
-            existingPath: "model-management/model-plaza/detail.vue"
           }
         ]
       }
@@ -246,39 +185,32 @@ export const categories: PrimaryCategory[] = [
       {
         key: "release-governance",
         name: "模型上线",
-        description: "发布审批流与准入检测",
+        description: "准入检测、发布审核、部署审核、部署管理",
         pages: [
-          {
-            key: "release-approval",
-            name: "发布审批流",
-            description: "工作流集成的发布审批",
-            status: "已具备",
-            existingPath: "backend-management/review-model-release/index.vue"
-          },
           {
             key: "admission-check",
             name: "准入检测",
-            description: "冒烟测试 / 基准测试准入",
+            description: "冒烟测试 / 基准测试",
             status: "待开发"
           },
           {
             key: "model-release-review",
             name: "模型发布审核",
-            description: "模型发布审核流程",
+            description: "模型发布审核",
             status: "已具备",
             existingPath: "backend-management/review-model-release/index.vue"
           },
           {
             key: "model-deploy-review",
             name: "模型部署审核",
-            description: "部署变更审核流程",
+            description: "模型部署审核",
             status: "已具备",
             existingPath: "backend-management/review-model-deploy/index.vue"
           },
           {
             key: "deploy-ops",
             name: "模型部署管理",
-            description: "部署实例运维管理",
+            description: "模型部署管理",
             status: "已具备",
             existingPath: "model-evaluation/model-deploy/index.vue"
           }
@@ -311,25 +243,25 @@ export const categories: PrimaryCategory[] = [
       },
       {
         key: "monitoring",
-        name: "监控与告警",
-        description: "性能、漂移、用量与告警",
+        name: "模型监控",
+        description: "性能监控、数据漂移监控、模型用量统计、告警通知",
         pages: [
           {
             key: "performance-monitor",
-            name: "服务性能监控",
-            description: "QPS / 延迟 / 错误率",
+            name: "性能监控",
+            description: "服务性能监控（QPS / 延迟 / 错误率）",
             status: "待开发"
           },
           {
             key: "data-drift",
             name: "数据漂移监控",
-            description: "PSI 检测与阈值告警",
+            description: "PSI 检测",
             status: "待开发"
           },
           {
             key: "usage-stats",
-            name: "调用用量统计",
-            description: "调用次数、费用与趋势",
+            name: "模型用量统计",
+            description: "模型调用用量统计",
             status: "已具备",
             existingPath: "backend-management/usage-statistics/index.vue"
           },
@@ -352,68 +284,39 @@ export const categories: PrimaryCategory[] = [
       {
         key: "metadata",
         name: "元数据管理",
-        description: "元数据、血缘、字典",
+        description: "数据列表、数据字典",
         pages: [
           {
-            key: "metadata-sync",
-            name: "元数据自动采集",
-            description: "表结构同步与采集",
-            status: "待优化",
-            existingPath: "backend-management/data-catalog/metadata-management/index.vue"
-          },
-          {
-            key: "lineage",
-            name: "血缘解析",
-            description: "字段级 lineage 路径",
+            key: "metadata-list",
+            name: "数据列表",
+            description: "自动采集（表结构同步）、血缘解析（数据追踪）",
             status: "待优化",
             existingPath: "backend-management/data-catalog/metadata-management/index.vue"
           },
           {
             key: "data-dictionary",
             name: "数据字典",
-            description: "业务含义映射与搜索",
-            status: "待优化",
-            existingPath: "backend-management/data-catalog/metadata-management/index.vue"
+            description: "数据字典（业务含义映射）",
+            status: "待优化"
           }
         ]
       },
       {
-        key: "taxonomy",
-        name: "数据分类与标签",
-        description: "分类体系与标签治理",
+        key: "tag-management",
+        name: "标签管理",
+        description: "标签类型管理、标签设置",
         pages: [
-          {
-            key: "classification",
-            name: "数据分类管理",
-            description: "数据资产分类编目",
-            status: "已具备",
-            existingPath: "backend-management/data-catalog/data-classification/index.vue"
-          },
-          {
-            key: "classification-detail",
-            name: "数据分类详情",
-            description: "分类下数据详情",
-            status: "已具备",
-            existingPath: "data-sandbox/data-catalog/detail.vue"
-          },
-          {
-            key: "business-topic",
-            name: "业务分析主题",
-            description: "主题域与指标体系",
-            status: "已具备",
-            existingPath: "backend-management/data-catalog/business-analysis-topic/index.vue"
-          },
           {
             key: "tag-types",
             name: "标签类型管理",
-            description: "标签类型建模与分层",
+            description: "标签类型管理",
             status: "已具备",
             existingPath: "tag-management/tag-type.vue"
           },
           {
             key: "tag-settings",
             name: "标签设置",
-            description: "标签定义与绑定",
+            description: "标签设置",
             status: "已具备",
             existingPath: "tag-management/tag-set.vue"
           }
@@ -422,33 +325,54 @@ export const categories: PrimaryCategory[] = [
       {
         key: "data-catalog",
         name: "数据资源目录",
-        description: "实体、逻辑模型、目录搭建",
+        description: "业务实体、逻辑模型、数据目录、数据分类、业务分析主题、报表",
         pages: [
           {
             key: "business-entity",
             name: "业务实体管理",
-            description: "实体注册与版本管理",
+            description: "业务实体管理",
             status: "已具备",
             existingPath: "backend-management/data-catalog/business-entity/index.vue"
           },
           {
             key: "logical-model",
-            name: "逻辑数据模型",
-            description: "逻辑/物理模型管理",
+            name: "逻辑数据模型管理",
+            description: "逻辑数据模型管理",
             status: "已具备",
             existingPath: "backend-management/data-catalog/logical-data-model/index.vue"
           },
           {
             key: "data-directory-build",
             name: "数据目录搭建",
-            description: "数据目录创建与发布",
+            description: "数据目录搭建",
             status: "已具备",
             existingPath: "data-sandbox/data-catalog/detail.vue"
           },
           {
+            key: "classification",
+            name: "数据分类管理",
+            description: "数据分类管理",
+            status: "已具备",
+            existingPath: "backend-management/data-catalog/data-classification/index.vue"
+          },
+          {
+            key: "classification-detail",
+            name: "数据分类详情",
+            description: "数据分类详情",
+            status: "已具备",
+            existingPath: "data-sandbox/data-catalog/detail.vue"
+          },
+          {
+            key: "business-topic",
+            name: "业务分析主题管理",
+            description: "业务分析主题管理",
+            status: "已具备",
+            existingPath: "backend-management/data-catalog/business-analysis-topic/index.vue"
+          },
+          {
             key: "report-management",
             name: "报表管理",
-            description: "报表资产管理与共享",
+            description: "报表管理",
             status: "已具备",
             existingPath: "backend-management/data-catalog/reportManagement/index.vue"
           }
@@ -476,25 +400,19 @@ export const categories: PrimaryCategory[] = [
       {
         key: "data-quality",
         name: "质量管理",
-        description: "规则定义与门禁阻断",
+        description: "敏感数据管理、数据规则",
         pages: [
           {
             key: "sensitive-data",
             name: "敏感数据管理",
-            description: "敏感字段识别与审批",
+            description: "敏感数据管理",
             status: "已具备",
             existingPath: "backend-management/sensitive-data/index.vue"
           },
           {
-            key: "quality-rule-definition",
-            name: "规则定义",
-            description: "空值/唯一性等质量规则",
-            status: "待开发"
-          },
-          {
-            key: "gatekeeping",
-            name: "门禁阻断",
-            description: "脏数据拦截与例外管理",
+            key: "data-rules",
+            name: "数据规则",
+            description: "规则定义（空值 / 唯一性检查）、门禁阻断（脏数据拦截）",
             status: "待开发"
           }
         ]
@@ -508,68 +426,88 @@ export const categories: PrimaryCategory[] = [
     icon: "🔬",
     modules: [
       {
-        key: "sandbox",
+        key: "dataset-management",
         name: "数据集管理",
-        description: "数据集申请与审核",
+        description: "数据集列表、数据集详情、数据集审核、数据集上传审核、数据公开审核",
         pages: [
           {
-            key: "dataset-apply",
-            name: "数据集自助申请",
-            description: "资源申请与审批流程",
+            key: "dataset-list",
+            name: "数据集列表",
+            description: "调用工作流申请数据集、数据集的审核、数据集查看详情、数据集状态（审批中、已通过、被驳回）",
             status: "已具备",
             existingPath: "data-sandbox/resource-application/index.vue"
           },
           {
-            key: "dataset-apply-review",
-            name: "数据集申请审核",
-            description: "审核列表与批复",
+            key: "dataset-detail",
+            name: "数据集详情",
+            description: "支持数据探查，数据集详情查看",
             status: "已具备",
             existingPath: "backend-management/review-dataset-apply/index.vue"
           },
           {
-            key: "review-detail",
-            name: "审核详情",
-            description: "审核记录与批注",
+            key: "dataset-review",
+            name: "数据集审核",
+            description: "审核详情页，审核、工作流详情查看",
             status: "待优化",
             existingPath: "backend-management/review-management/detail.vue"
+          },
+          {
+            key: "upload-review",
+            name: "数据集上传审核",
+            description: "数据集上传审核",
+            status: "已具备",
+            existingPath: "backend-management/review-dataset-upload/index.vue"
+          },
+          {
+            key: "data-open-review",
+            name: "数据公开审核",
+            description: "数据公开审核",
+            status: "已具备",
+            existingPath: "backend-management/review-data-open/index.vue"
           }
         ]
       },
       {
-        key: "data-prep",
-        name: "数据准备",
-        description: "语义加工与我的数据集",
+        key: "semantic-processing",
+        name: "语义加工",
+        description: "语义加工（拖拽式处理）",
         pages: [
           {
             key: "semantic-processing",
             name: "语义加工",
-            description: "拖拽式语义加工",
+            description: "语义加工（拖拽式处理）",
             status: "待开发"
-          },
+          }
+        ]
+      },
+      {
+        key: "my-datasets",
+        name: "我的数据集",
+        description: "我的数据集，支持未申请的数据集的增删改查",
+        pages: [
           {
             key: "my-datasets",
             name: "我的数据集",
-            description: "个人持有数据集列表",
-            status: "待优化",
-            existingPath: "data-sandbox/resource-application/"
+            description: "我的数据集，支持未申请的数据集的增删改查",
+            status: "待开发"
           }
         ]
       },
       {
         key: "data-explore",
         name: "数据探查",
-        description: "查询、数据集、开放、权限与审计",
+        description: "即席查询、SQL 历史记录",
         pages: [
           {
             key: "adhoc-query",
             name: "即席查询",
-            description: "秒级 SQL 查询",
+            description: "即席查询（秒级查询）",
             status: "待开发"
           },
           {
             key: "sql-history",
             name: "SQL 历史记录",
-            description: "查询历史与复用",
+            description: "SQL 历史记录",
             status: "待开发"
           }
         ]
@@ -577,62 +515,47 @@ export const categories: PrimaryCategory[] = [
       {
         key: "dataset-plaza",
         name: "数据集广场",
-        description: "数据集浏览与开放",
+        description: "数据集浏览、数据集详情、权限申请、数据公开、Top N 数据采样预览",
         pages: [
           {
             key: "dataset-plaza",
-            name: "数据集广场",
-            description: "数据集浏览与筛选",
+            name: "数据集",
+            description: "数据集浏览",
             status: "已具备",
             existingPath: "data-sandbox/dataset-management/index.vue"
           },
           {
-            key: "dataset-detail",
+            key: "dataset-detail-plaza",
             name: "数据集详情",
-            description: "样本预览、字段信息",
+            description: "数据集详情",
             status: "已具备",
             existingPath: "data-sandbox/dataset-management/detail.vue"
           },
           {
+            key: "permission-apply",
+            name: "权限申请",
+            description: "权限申请",
+            status: "待开发"
+          },
+          {
             key: "data-open-management",
             name: "数据上架管理",
-            description: "上架数据集管理",
+            description: "数据上架管理",
             status: "已具备",
             existingPath: "data-sandbox/data-open/index.vue"
           },
           {
             key: "data-open-detail",
             name: "数据上架详情",
-            description: "上架详情与审核记录",
+            description: "数据上架详情",
             status: "已具备",
             existingPath: "data-sandbox/data-open/detail"
           },
           {
-            key: "upload-review",
-            name: "数据集上传审核",
-            description: "上传提交流程审核",
-            status: "已具备",
-            existingPath: "backend-management/review-dataset-upload/index.vue"
-          },
-          {
-            key: "data-open-review",
-            name: "数据公开审核",
-            description: "开放审核与批复",
-            status: "已具备",
-            existingPath: "backend-management/review-data-open/index.vue"
-          },
-          {
             key: "topn-preview",
-            name: "Top N 采样预览",
-            description: "快速采样预览数据",
+            name: "Top N 数据采样预览",
+            description: "Top N 数据采样预览",
             status: "待开发"
-          },
-          {
-            key: "permission-apply",
-            name: "权限申请",
-            description: "权限自助申请与审批",
-            status: "已具备",
-            existingPath: "data-sandbox/resource-application/"
           }
         ]
       }
@@ -776,16 +699,14 @@ export const findPage = (
 // 获取关键模块（用于首页快速入口）
 export const getKeyModules = () => {
   const trainingModule = findModule("model-lab", "training");
-  const agentModule = findModule("model-lab", "agent-dev");
-  const ruleEngineModule = findModule("model-lab", "data-rule-engine");
+  const modelDevelopmentModule = findModule("model-lab", "model-development");
   const monitoringModule = findModule("model-center", "monitoring");
   const dataCatalogModule = findModule("data-platform", "data-catalog");
 
   return [
     { category: "model-lab", module: trainingModule, name: "模型训练" },
-    { category: "model-lab", module: agentModule, name: "智能体开发" },
-    { category: "model-lab", module: ruleEngineModule, name: "数据规则引擎" },
-    { category: "model-center", module: monitoringModule, name: "监控与告警" },
+    { category: "model-lab", module: modelDevelopmentModule, name: "模型开发" },
+    { category: "model-center", module: monitoringModule, name: "模型监控" },
     { category: "data-platform", module: dataCatalogModule, name: "数据资源目录" }
   ].filter((item) => item.module);
 };

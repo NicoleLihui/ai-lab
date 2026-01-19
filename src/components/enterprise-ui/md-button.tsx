@@ -70,7 +70,7 @@ const MdButton = React.forwardRef<HTMLButtonElement, MdButtonProps>(
 
     return (
       <Comp
-        className={cn(mdButtonVariants({ variant, size, fullWidth, className }), "ripple")}
+        className={cn(mdButtonVariants({ variant, size, fullWidth, className }))}
         ref={ref}
         disabled={disabled || loading}
         {...props}

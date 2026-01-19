@@ -1,5 +1,13 @@
 import React from "react";
 import { TrainingTasksPage } from "../model-training/training-tasks-page";
+import { ModelTrainingPage } from "../model-training/model-training-page";
+import { MachineLearningModelsPage } from "../model-training/machine-learning-models-page";
+import { OrganizationManagementPage as OrgPage } from "./organization-page";
+import { EnvironmentConfigPage } from "../environment-config/environment-config-page";
+import { AgentModelsPage } from "../model-development/agent-models/agent-models-page";
+import { DataRuleModelsPage } from "../model-development/data-rule-models/data-rule-models-page";
+import { BenefitEvaluationPage } from "../model-lab/benefit-evaluation/benefit-evaluation-page";
+import { BenefitEvaluationMgmtPage } from "../model-lab/benefit-evaluation/benefit-evaluation-mgmt-page";
 
 export function OrganizationManagementPage() {
   return (
@@ -324,12 +332,26 @@ export function OperationLogPage() {
 }
 
 export const systemPageComponentMap: Record<string, React.ComponentType> = {
-  "data-explore:org-management": OrganizationManagementPage,
-  "data-explore:user-management": UserManagementPage,
-  "data-explore:role-management": RoleManagementPage,
-  "data-explore:user-authorization": UserAuthorizationPage,
-  "data-explore:login-log": LoginLogPage,
-  "data-explore:operation-log": OperationLogPage,
+  // 系统管理
+  "system-org-management:org-management": OrgPage,
+  "system-user-management:user-management": UserManagementPage,
+  "system-role-management:role-management": RoleManagementPage,
+  "system-role-management:user-authorization": UserAuthorizationPage,
+  "system-dict-management:dict-management": () => <div>字典管理 - 待转换</div>,
+  "system-log-management:login-log": LoginLogPage,
+  "system-log-management:operation-log": OperationLogPage,
+  // 模型训练
+  "model-lab-training:model-training": ModelTrainingPage,
   "model-lab-training:training-tasks": TrainingTasksPage,
+  "model-lab-model-development:machine-learning-models": MachineLearningModelsPage,
+  // 模型开发 - 智能体模型
+  "model-lab-model-development:agent-models": AgentModelsPage,
+  // 模型开发 - 数据规则模型
+  "model-lab-model-development:data-rule-models": DataRuleModelsPage,
+  // 环境配置
+  "model-lab-environment:environment-config": EnvironmentConfigPage,
+  // 效益评估
+  "model-lab-benefit-evaluation:benefit-evaluation": BenefitEvaluationPage,
+  "model-lab-benefit-evaluation:benefit-evaluation-mgmt": BenefitEvaluationMgmtPage,
 };
 

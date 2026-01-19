@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./navigation/sidebar";
+import { Brain } from "lucide-react";
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,8 +22,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
           <div className={`flex items-center justify-between transition-all duration-300 ${headerContainerClass}`}>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary-600 text-white grid place-items-center font-semibold">
-                模
+              <div className="h-10 w-10 rounded-lg bg-primary-600 text-white grid place-items-center bg-gradient-to-r from-primary to-primary-light p-0 text-white">
+                <Brain className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-lg font-semibold text-slate-900">
@@ -51,8 +52,8 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
       <header className="flex-none z-20 bg-white border-b border-slate-200 shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded bg-primary-600 text-white grid place-items-center font-semibold text-sm">
-              模
+            <div className="h-8 w-8 rounded bg-primary-600 text-white grid place-items-center text-sm">
+              <Brain className="h-4 w-4" />
             </div>
             <div>
               <div className="text-base font-semibold text-slate-900 leading-tight">

@@ -8,13 +8,13 @@ import type { Column } from "@/components/enterprise-ui"
 import { getMockTrainingPage, getMockTrainingResult, mockDeployTest, TrainingResult, TrainingTask } from "./mock-data"
 import { toast } from "sonner"
 
-export function TrainingTasksPage() {
+export function ModelTrainingPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
   const [tableData, setTableData] = useState<TrainingTask[]>([])
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 20,
     total: 0,
   })
   const [resultOpen, setResultOpen] = useState(false)
@@ -36,9 +36,26 @@ export function TrainingTasksPage() {
         pageSize: size,
         searchWord: query,
         sort: 1,
+        pageType: 1,
       })
       if (res.success) {
-        setTableData(res.data.body as TrainingTask[])
+        // 处理评估指标数据
+        const processedData = (res.data.body as TrainingTask[]).map((item) => {
+          if (item.evaluateIndex) {
+            try {
+              const jsonEvaluateIndex = JSON.parse(item.evaluateIndex)
+              const resultMap = jsonEvaluateIndex.reduce((acc: Record<string, string>, item: { name: string; value: string }) => {
+                acc[item.name] = item.value
+                return acc
+              }, {})
+              item.evaluateIndexData = resultMap
+            } catch (e) {
+              console.error("解析评估指标失败:", e)
+            }
+          }
+          return item
+        })
+        setTableData(processedData)
         setPagination(prev => ({
           ...prev,
           current: page,
@@ -56,13 +73,18 @@ export function TrainingTasksPage() {
 
   useEffect(() => {
     loadData(1)
-  }, [loadData])
+  }, [])
 
   const handleSearch = () => {
-    loadData(1)
+    loadData(1, pagination.pageSize, searchQuery)
   }
 
   const handleReset = () => {
+    setSearchQuery("")
+    loadData(1, pagination.pageSize, "")
+  }
+
+  const handleSearchClear = () => {
     setSearchQuery("")
     loadData(1, pagination.pageSize, "")
   }
@@ -289,18 +311,16 @@ export function TrainingTasksPage() {
 
   return (
     <div className="flex flex-col h-full border-0 outline-0 shadow-none m-0 p-0 gap-3">
-      <div className="flex items-center justify-end gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div className="flex items-center gap-2 w-80">
+      {/* 操作栏 */}
+      <div className="operation-bar flex items-center justify-end gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div className="search-area flex items-center gap-2 w-80">
           <MdInput
             placeholder="搜索任务名称、模型名称"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             clearable
-            onClear={() => {
-              setSearchQuery("")
-              loadData(1, pagination.pageSize, "")
-            }}
+            onClear={handleSearchClear}
             leftIcon={<Search className="h-4 w-4" />}
             className="h-9"
           />
@@ -322,7 +342,8 @@ export function TrainingTasksPage() {
         </MdButton>
       </div>
 
-      <div className="flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      {/* 表格 */}
+      <div className="content-main flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <MdTable
           columns={columns}
           data={tableData as any}
@@ -337,6 +358,7 @@ export function TrainingTasksPage() {
         />
       </div>
 
+      {/* 训练结果弹窗 */}
       {resultOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/30" onClick={closeResultDrawer} />
@@ -443,9 +465,9 @@ export function TrainingTasksPage() {
                           )}
                           {!imageLoading && resultData?.runDataVO.picList.length ? (
                             <div className="grid grid-cols-2 gap-3">
-                              {resultData.runDataVO.picList.map((item) => (
+                              {resultData.runDataVO.picList.map((item, index) => (
                                 <Image
-                                  key={item}
+                                  key={index}
                                   src={item}
                                   alt="训练结果图片"
                                   width={560}

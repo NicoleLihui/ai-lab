@@ -4,10 +4,10 @@
 
 :root {
   /* Primary Blue (#409eff) */
-  --primary: oklch(0.663 0.164 250.84);
-  --primary-foreground: oklch(1 0 0);
-  --primary-hover: oklch(0.58 0.16 250.84);
-  --primary-light: oklch(0.92 0.04 250.84);
+  --primary: oklch(66.3% 0.157 254.59);
+  --primary-foreground: oklch(100% 0 0);
+  --primary-hover: oklch(58% 0.14 254.59);
+  --primary-light: oklch(92% 0.044 254.59);
 
   /* Success Green */
   --success: oklch(0.72 0.17 145);
@@ -68,10 +68,10 @@
 }
 
 .dark {
-  --primary: oklch(0.663 0.164 250.84);
+  --primary: oklch(66.3% 0.157 254.59);
   --primary-foreground: oklch(1 0 0);
-  --primary-hover: oklch(0.75 0.16 250.84);
-  --primary-light: oklch(0.3 0.06 250.84);
+  --primary-hover: oklch(75% 0.14 254.59);
+  --primary-light: oklch(30% 0.044 254.59);
 
   --success: oklch(0.72 0.17 145);
   --success-foreground: oklch(1 0 0);
