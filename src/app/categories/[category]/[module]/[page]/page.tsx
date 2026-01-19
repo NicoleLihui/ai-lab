@@ -39,14 +39,22 @@ export default function CategoryModulePage(props: PageProps) {
   const moduleData = findModule(categoryKey, moduleKey);
   const page = findPage(categoryKey, moduleKey, pageKey);
 
-  if (!categoryData || !moduleData || !page) {
-    return notFound();
-  }
-
   // 构建用于查找组件的 key（扁平化格式：category-module:page）
   const flatModuleKey = `${categoryKey}-${moduleKey}`;
   const pageKeyWithModule = `${flatModuleKey}:${pageKey}`;
   const SystemPageComponent = systemPageComponentMap[pageKeyWithModule];
+
+  // 详情页不需要显示头部和面包屑，即使不在配置中也可以访问
+  const isDetailPage = pageKey === "model-detail";
+
+  if (isDetailPage && SystemPageComponent) {
+    return <SystemPageComponent />;
+  }
+
+  // 对于其他页面，需要检查配置是否存在
+  if (!categoryData || !moduleData || !page) {
+    return notFound();
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

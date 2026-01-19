@@ -8,6 +8,10 @@ import { AgentModelsPage } from "../model-development/agent-models/agent-models-
 import { DataRuleModelsPage } from "../model-development/data-rule-models/data-rule-models-page";
 import { BenefitEvaluationPage } from "../model-lab/benefit-evaluation/benefit-evaluation-page";
 import { BenefitEvaluationMgmtPage } from "../model-lab/benefit-evaluation/benefit-evaluation-mgmt-page";
+import { MLEvaluationPage } from "../model-lab/ml-evaluation/ml-evaluation-page";
+import { EvaluationMgmtPage } from "../model-lab/ml-evaluation/evaluation-mgmt-page";
+import { ModelPlazaPage } from "../model-lab/model-plaza/page";
+import { ModelDetailPage } from "../model-lab/model-plaza/model-detail-page";
 
 export function OrganizationManagementPage() {
   return (
@@ -353,5 +357,11 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   // 效益评估
   "model-lab-benefit-evaluation:benefit-evaluation": BenefitEvaluationPage,
   "model-lab-benefit-evaluation:benefit-evaluation-mgmt": BenefitEvaluationMgmtPage,
+  // 模型评估
+  "model-lab-ml-evaluation:ml-evaluation": MLEvaluationPage,
+  "model-lab-ml-evaluation:evaluation-mgmt": EvaluationMgmtPage,
+  // 模型广场
+  "model-lab-model-plaza:model-plaza": ModelPlazaPage,
+  "model-lab-model-plaza:model-detail": ModelDetailPage,
 };
 
