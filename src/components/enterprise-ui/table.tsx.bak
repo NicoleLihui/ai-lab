@@ -1,6 +1,5 @@
 import React from 'react';
 import { Table as AntTable, TableProps } from 'antd';
-import { MdButton } from './md-button';
 
 export interface BeTableProps extends Omit<TableProps<any>, 'columns'> {
   isLock?: boolean;
@@ -40,34 +39,18 @@ const BeTable: React.FC<BeTableProps> = ({
         render: (_: any, record: any) => {
           const buttons = col.buttons ? col.buttons(record) : [];
           return (
-            <div className="flex items-center justify-center gap-2 flex-wrap">
-              {buttons.map((btn: any, idx: number) => {
-                // 映射按钮类型到MdButton的variant
-                const variantMap: Record<string, 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'outline' | 'ghost'> = {
-                  'primary': 'primary',
-                  'secondary': 'secondary',
-                  'success': 'success',
-                  'danger': 'danger',
-                  'warning': 'warning',
-                  'info': 'info',
-                  'outline': 'outline',
-                  'ghost': 'ghost',
-                  'default': 'outline'
-                };
-                const variant = variantMap[btn.type || 'default'] || 'outline';
-                
-                return (
-                  <MdButton
-                    key={idx}
-                    variant={variant}
-                    size="sm"
-                    onClick={() => onCommand?.(btn.command, record)}
-                    disabled={btn.disabled}
-                  >
-                    {btn.name}
-                  </MdButton>
-                );
-              })}
+            <div>
+              {buttons.map((btn: any, idx: number) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className={`btn ${btn.type === 'primary' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => onCommand?.(btn.command, record)}
+                  disabled={btn.disabled}
+                >
+                  {btn.name}
+                </button>
+              ))}
             </div>
           );
         },
@@ -89,7 +72,6 @@ const BeTable: React.FC<BeTableProps> = ({
         dataIndex: col.prop,
         key: col.prop,
         align: col.align,
-        render: col.render ? (value: any, record: any) => col.render?.(record) : undefined,
       };
     }
   });

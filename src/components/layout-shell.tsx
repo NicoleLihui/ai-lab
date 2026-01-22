@@ -18,11 +18,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     
   if (isHome) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
-        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
+      <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-50">
+        <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
           <div className={`flex items-center justify-between transition-all duration-300 ${headerContainerClass}`}>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary-600 text-white grid place-items-center bg-gradient-to-r from-primary to-primary-light p-0 text-white">
+              <div className="h-10 w-10 rounded-lg bg-linear-to-br from-blue-600 to-blue-500 text-white grid place-items-center shadow-lg shadow-blue-500/20">
                 <Brain className="h-5 w-5" />
               </div>
               <div>
@@ -39,7 +39,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-0 py-16 md:px-0 md:py-12 lg:py-16 transition-all duration-300">
+        <main className="mx-auto max-w-6xl px-6 py-16 md:px-8 md:py-20 lg:py-24 transition-all duration-300">
           {children}
         </main>
       </div>

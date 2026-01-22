@@ -6,6 +6,7 @@ export type ModulePage = {
   description: string;
   status: PageStatus;
   existingPath?: string;
+  show?: boolean;
 };
 
 export type SecondaryModule = {
@@ -40,7 +41,7 @@ export const categories: PrimaryCategory[] = [
             key: "environment-config",
             name: "环境配置",
             description: "Notebook 开发环境、环境隔离管理、资源动态挂载",
-            status: "待开发"
+            status: "已具备"
           }
         ]
       },
@@ -163,22 +164,24 @@ export const categories: PrimaryCategory[] = [
         description: "模型库注册与签名",
         pages: [
           {
-            key: "registry",
-            name: "模型库注册",
-            description: "版本化注册，支持 Staging/Prod",
-            status: "待开发"
+            key: "model-registry",
+            name: "模型库管理",
+            description: "版本化注册，支持 Staging/Prod、输入输出 Schema 及兼容性检查、环境自动打包与依赖版本固定",
+            status: "已具备"
           },
           {
-            key: "model-signature",
-            name: "模型签名",
-            description: "输入输出 Schema 及兼容性检查",
-            status: "待开发"
+            key: "model-detail",
+            name: "模型详情",
+            description: "模型详细信息",
+            status: "已具备",
+            show: false
           },
           {
-            key: "dependency-pack",
-            name: "依赖包管理",
-            description: "环境自动打包与依赖版本固定",
-            status: "待开发"
+            key: "model-edit",
+            name: "模型编辑",
+            description: "模型编辑功能",
+            status: "已具备",
+            show: false
           }
         ]
       },
@@ -191,7 +194,7 @@ export const categories: PrimaryCategory[] = [
             key: "admission-check",
             name: "准入检测",
             description: "冒烟测试 / 基准测试",
-            status: "待开发"
+            status: "已具备"
           },
           {
             key: "model-release-review",
@@ -206,38 +209,40 @@ export const categories: PrimaryCategory[] = [
             description: "模型部署审核",
             status: "已具备",
             existingPath: "backend-management/review-model-deploy/index.vue"
-          },
-          {
-            key: "deploy-ops",
-            name: "模型部署管理",
-            description: "模型部署管理",
-            status: "已具备",
-            existingPath: "model-evaluation/model-deploy/index.vue"
           }
         ]
       },
       {
         key: "scheduling",
         name: "模型调度",
-        description: "定时 / 触发 / API 调度",
+        description: "支持按时间、按任务、或API方式调度模型",
         pages: [
           {
             key: "cron-schedule",
-            name: "定时调度",
-            description: "CRON 周期调度",
-            status: "待开发"
+            name: "调度管理",
+            description: "支持按时间、按任务、或API方式调度模型",
+            status: "已具备"
           },
           {
-            key: "event-trigger",
-            name: "任务触发调度",
-            description: "事件触发的流水线调度",
-            status: "待开发"
+            key: "schedule-detail",
+            name: "调度详情",
+            description: "调度任务详情信息",
+            status: "已具备",
+            show: false
           },
           {
-            key: "api-trigger",
-            name: "API 调度",
-            description: "API 触发与编排",
-            status: "待开发"
+            key: "schedule-edit",
+            name: "调度编辑",
+            description: "调度任务编辑功能",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "schedule-create",
+            name: "调度创建",
+            description: "调度任务创建功能",
+            status: "已具备",
+            show: false
           }
         ]
       },
@@ -248,28 +253,15 @@ export const categories: PrimaryCategory[] = [
         pages: [
           {
             key: "performance-monitor",
-            name: "性能监控",
-            description: "服务性能监控（QPS / 延迟 / 错误率）",
-            status: "待开发"
-          },
-          {
-            key: "data-drift",
-            name: "数据漂移监控",
-            description: "PSI 检测",
-            status: "待开发"
-          },
-          {
-            key: "usage-stats",
-            name: "模型用量统计",
-            description: "模型调用用量统计",
-            status: "已具备",
-            existingPath: "backend-management/usage-statistics/index.vue"
+            name: "模型监控管理",
+            description: "1. 服务性能监控：QPS, Latency, Error Rate。2. 数据漂移监控：特征分布 PSI 检测。",
+            status: "已具备"
           },
           {
             key: "alerting",
             name: "告警通知",
             description: "邮件 / 即时通讯告警",
-            status: "待开发"
+            status: "已具备"
           }
         ]
       }
@@ -298,6 +290,13 @@ export const categories: PrimaryCategory[] = [
             name: "数据字典",
             description: "数据字典（业务含义映射）",
             status: "待优化"
+          },
+          {
+            key: "metadata-detail",
+            name: "详情页",
+            description: "元数据详情信息",
+            status: "已具备",
+            show: false
           }
         ]
       },
@@ -330,7 +329,7 @@ export const categories: PrimaryCategory[] = [
           {
             key: "business-entity",
             name: "业务实体管理",
-            description: "业务实体管理",
+            description: "业务分类：按业务线组织数据目录；标准指标：统一管理业务分析指标口径",
             status: "已具备",
             existingPath: "backend-management/data-catalog/business-entity/index.vue"
           },
@@ -344,9 +343,9 @@ export const categories: PrimaryCategory[] = [
           {
             key: "data-directory-build",
             name: "数据目录搭建",
-            description: "数据目录搭建",
+            description: "构建业务系统的数据目录树形结构，以污水处理厂为例进行业务梳理",
             status: "已具备",
-            existingPath: "data-sandbox/data-catalog/detail.vue"
+            existingPath: "data-platform/data-catalog/data-directory-build-page.tsx"
           },
           {
             key: "classification",
@@ -362,20 +361,20 @@ export const categories: PrimaryCategory[] = [
             status: "已具备",
             existingPath: "data-sandbox/data-catalog/detail.vue"
           },
-          {
-            key: "business-topic",
-            name: "业务分析主题管理",
-            description: "业务分析主题管理",
-            status: "已具备",
-            existingPath: "backend-management/data-catalog/business-analysis-topic/index.vue"
-          },
-          {
-            key: "report-management",
-            name: "报表管理",
-            description: "报表管理",
-            status: "已具备",
-            existingPath: "backend-management/data-catalog/reportManagement/index.vue"
-          }
+          // {
+          //   key: "business-topic",
+          //   name: "业务分析主题管理",
+          //   description: "业务分析主题管理",
+          //   status: "已具备",
+          //   existingPath: "backend-management/data-catalog/business-analysis-topic/index.vue"
+          // },
+          // {
+          //   key: "report-management",
+          //   name: "报表管理",
+          //   description: "报表管理",
+          //   status: "已具备",
+          //   existingPath: "backend-management/data-catalog/reportManagement/index.vue"
+          // }
         ]
       },
       {
@@ -385,16 +384,10 @@ export const categories: PrimaryCategory[] = [
         pages: [
           {
             key: "feature-registry",
-            name: "特征注册",
-            description: "特征入库与版本管理",
-            status: "待开发"
+            name: "特征库管理",
+            description: "1. 特征注册：统一管理特征计算逻辑。2. 复用分析：识别高频使用的特征。",
+            status: "已具备"
           },
-          {
-            key: "feature-reuse",
-            name: "特征复用分析",
-            description: "跨项目特征复用洞察",
-            status: "待开发"
-          }
         ]
       },
       {
@@ -413,7 +406,7 @@ export const categories: PrimaryCategory[] = [
             key: "data-rules",
             name: "数据规则",
             description: "规则定义（空值 / 唯一性检查）、门禁阻断（脏数据拦截）",
-            status: "待开发"
+            status: "已具备"
           }
         ]
       }
@@ -476,7 +469,7 @@ export const categories: PrimaryCategory[] = [
             key: "semantic-processing",
             name: "语义加工",
             description: "语义加工（拖拽式处理）",
-            status: "待开发"
+            status: "已具备"
           }
         ]
       },
@@ -489,7 +482,7 @@ export const categories: PrimaryCategory[] = [
             key: "my-datasets",
             name: "我的数据集",
             description: "我的数据集，支持未申请的数据集的增删改查",
-            status: "待开发"
+            status: "已具备"
           }
         ]
       },
@@ -502,13 +495,13 @@ export const categories: PrimaryCategory[] = [
             key: "adhoc-query",
             name: "即席查询",
             description: "即席查询（秒级查询）",
-            status: "待开发"
+            status: "已具备"
           },
           {
             key: "sql-history",
             name: "SQL 历史记录",
             description: "SQL 历史记录",
-            status: "待开发"
+            status: "已具备"
           }
         ]
       },
@@ -535,7 +528,7 @@ export const categories: PrimaryCategory[] = [
             key: "permission-apply",
             name: "权限申请",
             description: "权限申请",
-            status: "待开发"
+            status: "已具备"
           },
           {
             key: "data-open-management",
@@ -555,7 +548,7 @@ export const categories: PrimaryCategory[] = [
             key: "topn-preview",
             name: "Top N 数据采样预览",
             description: "Top N 数据采样预览",
-            status: "待开发"
+            status: "已具备"
           }
         ]
       }

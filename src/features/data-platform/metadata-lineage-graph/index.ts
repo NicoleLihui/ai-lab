@@ -1,0 +1,1 @@
+export { LineageGraphComponent } from './lineage-graph-component';

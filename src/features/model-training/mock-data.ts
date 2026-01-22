@@ -1,3 +1,31 @@
+// 可训练模型数据接口
+export interface TrainableModel {
+  id: string;
+  modelId: string;
+  modelName: string;
+  version: string;
+  modelType: string;
+  developLanguage: string;
+  status: string; // 模型状态（如：已发布、草稿、已下线）
+  description: string;
+  applicableScenario: string; // 适用场景
+  createTime: string;
+  updateTime: string;
+  tags?: string[];
+  parameters?: ModelParameter[]; // 模型可配置参数
+}
+
+// 模型参数接口
+export interface ModelParameter {
+  name: string;
+  displayName: string;
+  type: 'string' | 'number' | 'boolean' | 'select';
+  defaultValue: any;
+  description: string;
+  required: boolean;
+  options?: string[]; // 仅当type为select时使用
+}
+
 // 污水处理行业模型训练任务Mock数据
 export interface TrainingTask extends Record<string, unknown> {
   id: string;
@@ -28,7 +56,211 @@ export interface TrainingResult {
     };
     evaIndexList: Array<{ name: string; desc: string; value: string }>;
   };
-}
+};
+
+// 可训练模型的模拟数据
+export const mockTrainableModels: TrainableModel[] = [
+  {
+    id: "1",
+    modelId: "model_001",
+    modelName: "水质预测模型",
+    version: "v1.2.0",
+    modelType: "回归模型",
+    developLanguage: "Python",
+    status: "已发布",
+    description: "基于历史水质数据预测未来水质指标变化趋势",
+    applicableScenario: "污水处理厂水质预测",
+    createTime: "2025-12-10 09:30:00",
+    updateTime: "2026-01-10 14:20:00",
+    tags: ["水质预测", "回归分析", "时间序列"],
+    parameters: [
+      {
+        name: "window_size",
+        displayName: "时间窗口大小",
+        type: "number",
+        defaultValue: 24,
+        description: "用于预测的时间窗口大小（小时）",
+        required: true
+      },
+      {
+        name: "learning_rate",
+        displayName: "学习率",
+        type: "number",
+        defaultValue: 0.001,
+        description: "模型训练的学习率",
+        required: true
+      },
+      {
+        name: "epochs",
+        displayName: "训练轮数",
+        type: "number",
+        defaultValue: 100,
+        description: "模型训练的轮数",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "2",
+    modelId: "model_002",
+    modelName: "污泥浓度识别模型",
+    version: "v2.1.3",
+    modelType: "分类模型",
+    developLanguage: "Python",
+    status: "已发布",
+    description: "识别和分类污泥浓度水平，辅助工艺调控",
+    applicableScenario: "污泥处理工艺",
+    createTime: "2025-11-15 10:45:00",
+    updateTime: "2026-01-08 11:15:00",
+    tags: ["分类", "污泥处理", "工艺优化"],
+    parameters: [
+      {
+        name: "threshold",
+        displayName: "识别阈值",
+        type: "number",
+        defaultValue: 0.7,
+        description: "分类的置信度阈值",
+        required: true
+      },
+      {
+        name: "batch_size",
+        displayName: "批次大小",
+        type: "number",
+        defaultValue: 32,
+        description: "训练时的批次大小",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "3",
+    modelId: "model_003",
+    modelName: "COD去除率优化模型",
+    version: "v1.1.0",
+    modelType: "强化学习",
+    developLanguage: "Python",
+    status: "已发布",
+    description: "优化COD去除率的强化学习模型",
+    applicableScenario: "COD去除工艺优化",
+    createTime: "2025-10-20 14:30:00",
+    updateTime: "2026-01-05 16:40:00",
+    tags: ["强化学习", "工艺优化", "COD去除"],
+    parameters: [
+      {
+        name: "gamma",
+        displayName: "折扣因子",
+        type: "number",
+        defaultValue: 0.99,
+        description: "强化学习折扣因子",
+        required: true
+      },
+      {
+        name: "epsilon",
+        displayName: "探索率",
+        type: "number",
+        defaultValue: 0.1,
+        description: "探索策略的随机性",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "4",
+    modelId: "model_004",
+    modelName: "曝气池溶解氧预测",
+    version: "v3.0.1",
+    modelType: "时间序列",
+    developLanguage: "Python",
+    status: "已发布",
+    description: "预测曝气池中溶解氧浓度的变化",
+    applicableScenario: "曝气池溶解氧控制",
+    createTime: "2025-09-12 08:20:00",
+    updateTime: "2025-12-28 10:30:00",
+    tags: ["时间序列", "溶解氧", "曝气控制"],
+    parameters: [
+      {
+        name: "forecast_horizon",
+        displayName: "预测范围",
+        type: "number",
+        defaultValue: 24,
+        description: "预测未来多少小时的数据",
+        required: true
+      },
+      {
+        name: "seasonal_periods",
+        displayName: "季节周期",
+        type: "number",
+        defaultValue: 24,
+        description: "季节性周期长度",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "5",
+    modelId: "model_005",
+    modelName: "能耗预测模型",
+    version: "v1.3.2",
+    modelType: "深度学习",
+    developLanguage: "Python",
+    status: "已发布",
+    description: "预测污水处理厂整体能耗",
+    applicableScenario: "能耗管理",
+    createTime: "2025-08-05 13:15:00",
+    updateTime: "2025-12-20 15:20:00",
+    tags: ["深度学习", "能耗预测", "节能优化"],
+    parameters: [
+      {
+        name: "hidden_units",
+        displayName: "隐藏单元数",
+        type: "number",
+        defaultValue: 128,
+        description: "神经网络隐藏层单元数量",
+        required: true
+      },
+      {
+        name: "dropout_rate",
+        displayName: "丢弃率",
+        type: "number",
+        defaultValue: 0.2,
+        description: "防止过拟合的丢弃率",
+        required: true
+      }
+    ]
+  },
+  {
+    id: "6",
+    modelId: "model_006",
+    modelName: "出水氨氮浓度监测",
+    version: "v2.0.0",
+    modelType: "异常检测",
+    developLanguage: "Python",
+    status: "已发布",
+    description: "监测出水氨氮浓度异常",
+    applicableScenario: "水质异常检测",
+    createTime: "2025-07-18 11:40:00",
+    updateTime: "2025-12-15 09:10:00",
+    tags: ["异常检测", "氨氮监测", "水质安全"],
+    parameters: [
+      {
+        name: "anomaly_threshold",
+        displayName: "异常阈值",
+        type: "number",
+        defaultValue: 0.95,
+        description: "异常检测的置信阈值",
+        required: true
+      },
+      {
+        name: "window_size",
+        displayName: "检测窗口",
+        type: "number",
+        defaultValue: 12,
+        description: "异常检测的时间窗口",
+        required: true
+      }
+    ]
+  }
+];
 
 // Mock评估指标数据
 const mockEvaluateIndices = [
@@ -393,5 +625,75 @@ export const getMockTrainingResult = (params: { runId: string }) => {
     success: true,
     data,
     message: "获取成功",
+  };
+};
+
+// 获取可训练模型列表
+export const getMockTrainableModels = (params: {
+  currentPage: number;
+  pageSize: number;
+  searchWord?: string;
+  modelType?: string;
+  status?: string;
+}) => {
+  let filteredData = [...mockTrainableModels];
+  
+  // 搜索过滤
+  if (params.searchWord) {
+    const searchLower = params.searchWord.toLowerCase();
+    filteredData = filteredData.filter(model => 
+      model.modelName.toLowerCase().includes(searchLower) ||
+      model.description.toLowerCase().includes(searchLower) ||
+      model.applicableScenario.toLowerCase().includes(searchLower)
+    );
+  }
+  
+  // 按模型类型过滤
+  if (params.modelType) {
+    filteredData = filteredData.filter(model => 
+      model.modelType.includes(params.modelType!)
+    );
+  }
+  
+  // 按状态过滤
+  if (params.status) {
+    filteredData = filteredData.filter(model => 
+      model.status.includes(params.status!)
+    );
+  }
+  
+  // 分页
+  const total = filteredData.length;
+  const startIndex = (params.currentPage - 1) * params.pageSize;
+  const endIndex = startIndex + params.pageSize;
+  const body = filteredData.slice(startIndex, endIndex);
+  
+  return {
+    success: true,
+    data: {
+      body,
+      total
+    },
+    message: "获取成功"
+  };
+};
+
+// 启动模型训练模拟函数
+export const mockStartTraining = (params: {
+  modelId: string;
+  modelName: string;
+  version: string;
+  taskName: string;
+  trainingParams: Record<string, any>;
+}) => {
+  return {
+    success: true,
+    message: `模型 ${params.modelName} 的训练任务已启动`,
+    data: {
+      taskId: `task_${Date.now()}`,
+      taskName: params.taskName,
+      status: "pending",
+      startTime: new Date().toISOString()
+    }
   };
 };

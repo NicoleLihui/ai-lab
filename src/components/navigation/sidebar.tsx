@@ -192,8 +192,8 @@ function ModuleSection({
 
       {isExpanded && hasPages && (
         <div className="ml-2 space-y-0.5">
-          {module.pages.map((page) => {
-            const href = `/categories/${category.key}/${module.key}/${page.key}`;
+          {module.pages.filter(page => page.show !== false).map((page) => {
+            const href = `/categories/${category.key}/${module.key}/${page.key}` as const;
             const isActive = isPageActive(category.key, module.key, page.key);
             return (
               <Link

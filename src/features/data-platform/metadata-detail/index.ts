@@ -1,0 +1,1 @@
+export { MetadataDetailPage } from './metadata-detail-page';

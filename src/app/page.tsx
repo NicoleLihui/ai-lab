@@ -1,10 +1,16 @@
 'use client';
 
-import { Card, Row, Col, Space, Typography, Divider } from 'antd';
 import Link from 'next/link';
-import { BarChartOutlined, CloudSyncOutlined, DatabaseOutlined, TeamOutlined, ApiOutlined, ControlOutlined, SettingOutlined, DashboardOutlined } from '@ant-design/icons';
-
-const { Title, Text } = Typography;
+import { 
+  BarChartOutlined, 
+  CloudSyncOutlined, 
+  DatabaseOutlined, 
+  TeamOutlined, 
+  ApiOutlined, 
+  ControlOutlined, 
+  SettingOutlined, 
+  DashboardOutlined 
+} from '@ant-design/icons';
 
 const HomePage = () => {
   const categories = [
@@ -12,8 +18,7 @@ const HomePage = () => {
       key: 'model-lab',
       title: '模型实验室',
       description: '实验环境 - 提供模型训练、评估、部署等功能',
-      icon: <BarChartOutlined style={{ fontSize: '24px' }} />,
-      color: '#1890ff',
+      icon: BarChartOutlined,
       modules: [
         { name: '模型训练', path: '/categories/model-lab/training/training-tasks', desc: '训练任务创建、执行和监控' },
         { name: '模型评估', path: '/categories/model-lab/benefit-evaluation/benefit-evaluation', desc: '离线评估 / 模型回测' },
@@ -25,8 +30,7 @@ const HomePage = () => {
       key: 'model-center',
       title: '模型中心',
       description: '生产环境 - 提供模型库、上线、调度和监控功能',
-      icon: <DashboardOutlined style={{ fontSize: '24px' }} />,
-      color: '#52c41a',
+      icon: DashboardOutlined,
       modules: [
         { name: '模型库', path: '/categories/model-center/model-registry/registry', desc: '模型库注册与签名' },
         { name: '模型上线', path: '/categories/model-center/release-governance/model-release-review', desc: '发布审批流与准入检测' },
@@ -38,8 +42,7 @@ const HomePage = () => {
       key: 'data-platform',
       title: '数据中台',
       description: '数据管理与治理平台',
-      icon: <DatabaseOutlined style={{ fontSize: '24px' }} />,
-      color: '#722ed1',
+      icon: DatabaseOutlined,
       modules: [
         { name: '元数据管理', path: '/categories/data-platform/metadata/metadata-list', desc: '元数据、血缘、字典' },
         { name: '标签管理', path: '/categories/data-platform/tag-management/tag-types', desc: '标签类型管理、标签设置' },
@@ -51,8 +54,7 @@ const HomePage = () => {
       key: 'system',
       title: '系统管理',
       description: '组织、用户、权限与日志管理',
-      icon: <SettingOutlined style={{ fontSize: '24px' }} />,
-      color: '#fa8c16',
+      icon: SettingOutlined,
       modules: [
         { name: '组织管理', path: '/categories/system/org-management/org-management', desc: '组织架构与部门管理' },
         { name: '用户管理', path: '/categories/system/user-management/user-management', desc: '用户信息与状态管理' },
@@ -63,68 +65,81 @@ const HomePage = () => {
   ];
 
   return (
-    <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
-      <div style={{ background: '#fff', padding: '24px', borderRadius: '8px', marginBottom: '24px' }}>
-        <Title level={2} style={{ marginBottom: '16px' }}>企业模型实验室系统</Title>
-        <Text type="secondary">一站式模型开发、训练、评估、部署和管理平台</Text>
+    <div className="w-full">
+      {/* Hero Section */}
+      <div className="text-center mb-20 px-4">
+        <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 tracking-tight">
+          模型实验室
+        </h1>
+        <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          一站式模型开发、训练、评估、部署和管理平台
+        </p>
+        <div className="mt-8 flex items-center justify-center gap-2 text-sm text-slate-500">
+          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+          <span>企业级 AI 实验舱</span>
+        </div>
       </div>
 
-      {categories.map((category) => (
-        <div key={category.key} style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ 
-              width: '48px', 
-              height: '48px', 
-              borderRadius: '50%', 
-              backgroundColor: `${category.color}20`, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              marginRight: '16px'
-            }}>
-              {category.icon}
-            </div>
-            <div>
-              <Title level={3} style={{ margin: 0 }}>{category.title}</Title>
-              <Text type="secondary">{category.description}</Text>
-            </div>
-          </div>
+      {/* Categories Grid */}
+      <div className="space-y-16 mb-20">
+        {categories.map((category) => {
+          const IconComponent = category.icon;
+          return (
+            <div key={category.key} className="space-y-6">
+              {/* Category Header */}
+              <div className="flex items-start gap-4 pb-2">
+                <div className="shrink-0 w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25">
+                  <IconComponent className="text-2xl" />
+                </div>
+                <div className="flex-1 pt-1">
+                  <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+                    {category.title}
+                  </h2>
+                  <p className="text-slate-600 leading-relaxed">
+                    {category.description}
+                  </p>
+                </div>
+              </div>
 
-          <Row gutter={[16, 16]}>
-            {category.modules.map((module, index) => (
-              <Col xs={24} sm={12} md={8} lg={6} key={index}>
-                <Link href={module.path as any} style={{ textDecoration: 'none' }}>
-                  <Card 
-                    hoverable
-                    style={{ 
-                      height: '100%',
-                      borderLeft: `4px solid ${category.color}`,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}
+              {/* Modules Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {category.modules.map((module, index) => (
+                  <Link
+                    key={index}
+                    href={module.path as any}
+                    className="group relative block"
                   >
-                    <div>
-                      <Title level={4} style={{ margin: 0, fontSize: '16px', color: category.color }}>{module.name}</Title>
-                      <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}>
-                        {module.desc}
-                      </Text>
+                    <div className="h-full p-6 bg-white rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 hover:-translate-y-1.5">
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900 group-hover:text-blue-600 transition-colors duration-200">
+                          {module.name}
+                        </h3>
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          {module.desc}
+                        </p>
+                      </div>
+                      <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">
+                        <svg
+                          className="w-5 h-5 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
                     </div>
-                  </Card>
-                </Link>
-              </Col>
-            ))}
-          </Row>
-        </div>
-      ))}
-
-      <Divider style={{ margin: '32px 0' }} />
-
-      <div style={{ textAlign: 'center', padding: '24px' }}>
-        <Title level={4}>快速开始</Title>
-        <Space direction="vertical" size="middle">
-          <Text>1. 从上方分类中选择适合的功能模块</Text>
-          <Text>2. 进入相应页面开始模型开发工作</Text>
-          <Text>3. 利用平台提供的完整工具链提升效率</Text>
-        </Space>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -12,6 +12,23 @@ type PageProps = {
     module: string;
     page: string;
   };
+  searchParams: {
+    [key: string]: string | string[] | undefined;
+  };
+};
+
+// 从 URLSearchParams 转换为简单对象
+const convertSearchParamsToObject = (searchParams: {
+  [key: string]: string | string[] | undefined;
+}) => {
+  const result: { [key: string]: string } = {};
+  Object.keys(searchParams).forEach(key => {
+    const value = searchParams[key];
+    if (typeof value === 'string') {
+      result[key] = value;
+    }
+  });
+  return result;
 };
 
 const statusClassMap: Record<string, string> = {
@@ -34,6 +51,7 @@ export async function generateStaticParams() {
 
 export default function CategoryModulePage(props: PageProps) {
   const { category: categoryKey, module: moduleKey, page: pageKey } = props.params;
+  const { searchParams } = props;
 
   const categoryData = findCategory(categoryKey);
   const moduleData = findModule(categoryKey, moduleKey);
@@ -44,11 +62,21 @@ export default function CategoryModulePage(props: PageProps) {
   const pageKeyWithModule = `${flatModuleKey}:${pageKey}`;
   const SystemPageComponent = systemPageComponentMap[pageKeyWithModule];
 
-  // 详情页不需要显示头部和面包屑，即使不在配置中也可以访问
-  const isDetailPage = pageKey === "model-detail";
-
-  if (isDetailPage && SystemPageComponent) {
-    return <SystemPageComponent />;
+  // 检查当前页面是否为特殊页面（show为false的页面）
+  const isSpecialPage = page && page.show === false;
+  
+  // 如果组件存在且当前页面是特殊页面，则直接渲染，不显示面包屑和标题
+  if (SystemPageComponent && isSpecialPage) {
+    // 为详情页和编辑页提供滚动容器
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-y-auto bg-slate-50/50 outline-none border-none shadow-none">
+          <div className="max-w-full space-y-6 p-6">
+            <SystemPageComponent />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // 对于其他页面，需要检查配置是否存在

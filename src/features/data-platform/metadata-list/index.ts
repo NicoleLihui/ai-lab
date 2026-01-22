@@ -1,0 +1,1 @@
+export { MetadataListPage } from './metadata-list-page';

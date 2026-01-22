@@ -1,0 +1,1 @@
+export { DataDictionaryPage } from './data-dictionary-page';

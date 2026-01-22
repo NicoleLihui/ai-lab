@@ -12,6 +12,25 @@ import { MLEvaluationPage } from "../model-lab/ml-evaluation/ml-evaluation-page"
 import { EvaluationMgmtPage } from "../model-lab/ml-evaluation/evaluation-mgmt-page";
 import { ModelPlazaPage } from "../model-lab/model-plaza/page";
 import { ModelDetailPage } from "../model-lab/model-plaza/model-detail-page";
+import { ModelRegistryPage } from "../model-lab/model-registry/model-registry-page";
+import { ModelDetailPage as RegistryModelDetailPage } from "../model-lab/model-registry/model-detail-page";
+import { ModelEditPage as ModelEditPageType } from "../model-lab/model-registry/model-edit-page";
+import { AdmissionCheckPage } from "../model-center/release-governance/admission-check-page";
+import { AdmissionCheckCreatePage } from "../model-center/release-governance/admission-check-create-page";
+import { AdmissionCheckDetailPage } from "../model-center/release-governance/admission-check-detail-page";
+import { AdmissionCheckEditPage } from "../model-center/release-governance/admission-check-edit-page";
+import { PerformanceMonitorPage } from "../model-center/monitoring/performance-monitor-page";
+import { AlertingPage } from "../model-center/monitoring/alerting-page";
+import { CronSchedulePage, ScheduleDetailPage, ScheduleCreatePage, ScheduleEditPage } from "../model-center/scheduling";
+import { ReviewModelReleasePage } from "../model-center/release-governance/review-model-release-page";
+import { ReviewModelDeployPage } from "../model-center/release-governance/review-model-deploy-page";
+import { MetadataManagementPage } from "../data-platform/metadata-management";
+import { MetadataListPage } from "../data-platform/metadata-list";
+import { DataDictionaryPage } from "../data-platform/data-dictionary";
+import { MetadataDetailPage } from "../data-platform/metadata-detail";
+import { TagTypesPage, TagSettingsPage } from "../data-platform/tag-management";
+import { BusinessEntityPage } from "../data-platform/business-entity";
+import { DataDirectoryBuildPage } from "../data-platform/data-catalog";
 
 export function OrganizationManagementPage() {
   return (
@@ -335,6 +354,16 @@ export function OperationLogPage() {
   );
 }
 
+
+// 创建包装组件来处理查询参数
+const ModelDetailPageWrapper: React.FC = () => {
+  return <RegistryModelDetailPage />;
+};
+
+const ModelEditPageWrapper: React.FC = () => {
+  return <ModelEditPageType />;
+};
+
 export const systemPageComponentMap: Record<string, React.ComponentType> = {
   // 系统管理
   "system-org-management:org-management": OrgPage,
@@ -363,5 +392,36 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   // 模型广场
   "model-lab-model-plaza:model-plaza": ModelPlazaPage,
   "model-lab-model-plaza:model-detail": ModelDetailPage,
+  // 模型库
+  "model-center-model-registry:model-registry": ModelRegistryPage,
+  "model-center-model-registry:model-detail": ModelDetailPageWrapper,
+  "model-center-model-registry:model-edit": ModelEditPageWrapper,
+  // 准入检测
+  "model-center-release-governance:admission-check": AdmissionCheckPage,
+  "model-center-release-governance:admission-check-create": AdmissionCheckCreatePage,
+  "model-center-release-governance:admission-check-detail": AdmissionCheckDetailPage,
+  "model-center-release-governance:admission-check-edit": AdmissionCheckEditPage,
+  // 模型调度
+  "model-center-scheduling:cron-schedule": CronSchedulePage,
+  "model-center-scheduling:schedule-detail": ScheduleDetailPage,
+  "model-center-scheduling:schedule-create": ScheduleCreatePage,
+  "model-center-scheduling:schedule-edit": ScheduleEditPage,
+  // 模型上线
+  "model-center-release-governance:model-release-review": ReviewModelReleasePage,
+  "model-center-release-governance:model-deploy-review": ReviewModelDeployPage,
+  // 模型监控
+  "model-center-monitoring:performance-monitor": PerformanceMonitorPage,
+  "model-center-monitoring:alerting": AlertingPage,
+  // 数据平台 - 元数据管理
+  "data-platform-metadata:metadata-management": MetadataManagementPage,
+  "data-platform-metadata:metadata-list": MetadataListPage,
+  "data-platform-metadata:data-dictionary": DataDictionaryPage,
+  "data-platform-metadata:metadata-detail": MetadataDetailPage,
+  // 数据平台 - 标签管理
+  "data-platform-tag-management:tag-types": TagTypesPage,
+  "data-platform-tag-management:tag-settings": TagSettingsPage,
+  // 数据平台 - 数据资源目录
+  "data-platform-data-catalog:business-entity": BusinessEntityPage,
+  "data-platform-data-catalog:data-directory-build": DataDirectoryBuildPage,
 };
 

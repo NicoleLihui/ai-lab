@@ -1,0 +1,1 @@
+export { MetadataManagementPage } from './metadata-management-page';
