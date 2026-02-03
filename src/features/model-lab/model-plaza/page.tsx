@@ -281,7 +281,7 @@ export function ModelPlazaPage() {
           <h3 className="text-lg font-semibold text-foreground">全部模型</h3>
           <div className="flex items-center gap-1">
             <MdButton
-              variant={classification === 'organization' ? 'default' : 'ghost'}
+              variant={classification === 'organization' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => handleClass('organization')}
               className="h-7 px-2 text-xs"
@@ -290,7 +290,7 @@ export function ModelPlazaPage() {
             </MdButton>
             <span className="text-muted-foreground">|</span>
             <MdButton
-              variant={classification === 'business' ? 'default' : 'ghost'}
+              variant={classification === 'business' ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => handleClass('business')}
               className="h-7 px-2 text-xs"
@@ -330,7 +330,7 @@ export function ModelPlazaPage() {
           <h3 className="text-lg font-semibold text-foreground mb-4">模型列表</h3>
           
           {/* 搜索区域 */}
-          <div className="bg-card rounded-xl border border-border shadow-sm mb-4">
+          <div className="bg-white rounded-xl border border-border shadow-sm mb-4">
             <AdvancedSearch
               formItemList={formItemList}
               onSearch={handleFilterSearch}

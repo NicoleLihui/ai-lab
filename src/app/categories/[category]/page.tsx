@@ -61,7 +61,7 @@ export default function CategoryPage(props: CategoryPageProps) {
               : "#";
 
             return (
-              <Link key={module.key} href={href}>
+              <Link key={module.key} href={href as Parameters<typeof Link>[0]["href"]}>
                 <MdCard className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-6 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">

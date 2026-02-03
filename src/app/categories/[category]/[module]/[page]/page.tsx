@@ -70,7 +70,7 @@ export default function CategoryModulePage(props: PageProps) {
     // 为详情页和编辑页提供滚动容器
     return (
       <div className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 outline-none border-none shadow-none">
+        <div className="flex-1 overflow-y-auto bg-white outline-none border-none shadow-none">
           <div className="max-w-full space-y-6 p-6">
             <SystemPageComponent />
           </div>
@@ -120,7 +120,7 @@ export default function CategoryModulePage(props: PageProps) {
       </div>
 
       {/* 可滚动内容区 */}
-      <div className="flex-1 overflow-y-auto bg-slate-50/50 outline-none border-none shadow-none">
+      <div className="flex-1 overflow-y-auto bg-white outline-none border-none shadow-none">
         <div className="max-w-full space-y-6 p-6">
           {!SystemPageComponent && (
             <div>
@@ -180,7 +180,7 @@ export default function CategoryModulePage(props: PageProps) {
           )}
 
           {SystemPageComponent && (
-            <div className="bg-slate-50/50">
+            <div key={pageKeyWithModule} className="bg-white">
               <SystemPageComponent />
             </div>
           )}

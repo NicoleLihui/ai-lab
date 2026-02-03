@@ -482,7 +482,7 @@ export function BusinessEntityPage() {
   };
 
   // 业务分类表格列
-  const categoryColumns: Column<BusinessCategory>[] = [
+  const categoryColumns: Array<Column<BusinessCategory>> = [
     {
       key: "index",
       title: "序号",
@@ -592,7 +592,7 @@ export function BusinessEntityPage() {
   ];
 
   // 标准指标表格列
-  const indicatorColumns: Column<StandardIndicator>[] = [
+  const indicatorColumns: Array<Column<StandardIndicator>> = [
     {
       key: "index",
       title: "序号",
@@ -660,9 +660,9 @@ export function BusinessEntityPage() {
       title: "版本",
       align: "center",
       width: 80,
-      render: (value: unknown) => (
-        <MdBadge variant="info">{String(value || "")}</MdBadge>
-      ),
+      render: (value) => {
+        return <MdBadge variant="info">{String(value || "")}</MdBadge>;
+      },
     },
     {
       key: "status",
@@ -694,12 +694,12 @@ export function BusinessEntityPage() {
       title: "操作",
       width: 150,
       align: "center",
-      render: (_: unknown, row: StandardIndicator) => (
+      render: (_, row) => (
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <MdButton
             variant="ghost"
             size="sm"
-            onClick={() => handleIndicatorEdit(row)}
+            onClick={() => handleIndicatorEdit(row as StandardIndicator)}
             leftIcon={<Edit className="h-3 w-3" />}
           >
             编辑
@@ -707,7 +707,7 @@ export function BusinessEntityPage() {
           <MdButton
             variant="ghost"
             size="sm"
-            onClick={() => handleIndicatorDelete(row)}
+            onClick={() => handleIndicatorDelete(row as StandardIndicator)}
             leftIcon={<Trash2 className="h-3 w-3" />}
           >
             删除
@@ -725,9 +725,9 @@ export function BusinessEntityPage() {
   return (
     <div className="flex flex-col h-full border-0 outline-0 shadow-none m-0 p-0 gap-3">
       {/* Tab 切换 */}
-      <div className="flex items-center gap-2 bg-card p-4 rounded-xl border border-border shadow-sm">
+      <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-border shadow-sm">
         <MdButton
-          variant={activeTab === 'category' ? 'default' : 'outline'}
+          variant={activeTab === 'category' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('category')}
           leftIcon={<FolderTree className="h-4 w-4" />}
           className="h-9 px-4"
@@ -735,7 +735,7 @@ export function BusinessEntityPage() {
           业务分类
         </MdButton>
         <MdButton
-          variant={activeTab === 'indicator' ? 'default' : 'outline'}
+          variant={activeTab === 'indicator' ? 'primary' : 'outline'}
           onClick={() => setActiveTab('indicator')}
           leftIcon={<BarChart3 className="h-4 w-4" />}
           className="h-9 px-4"
@@ -747,54 +747,9 @@ export function BusinessEntityPage() {
       {/* 业务分类管理 */}
       {activeTab === 'category' && (
         <>
-          {/* 搜索区域 */}
-          <div className="flex items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
-            <div className="flex items-center gap-2">
-              <MdButton 
-                onClick={handleCategoryCreate} 
-                leftIcon={<Plus className="h-4 w-4" />} 
-                className="h-9 px-3"
-              >
-                新建业务分类
-              </MdButton>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-80">
-                <MdInput
-                  placeholder="搜索分类编码、名称、业务线或描述"
-                  value={categorySearchQuery}
-                  onChange={(e) => setCategorySearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCategorySearch()}
-                  clearable
-                  onClear={() => {
-                    setCategorySearchQuery("");
-                    loadCategoryData(1, categoryPagination.pageSize, "");
-                  }}
-                  leftIcon={<Search className="h-4 w-4" />}
-                  className="h-9"
-                />
-              </div>
-              <MdButton
-                onClick={handleCategorySearch}
-                leftIcon={<Search className="h-4 w-4" />}
-                className="h-9 px-3"
-              >
-                查询
-              </MdButton>
-              <MdButton
-                variant="outline"
-                onClick={handleCategoryReset}
-                leftIcon={<RotateCcw className="h-4 w-4" />}
-                className="h-9 px-3"
-              >
-                重置
-              </MdButton>
-            </div>
-          </div>
-
-          {/* 统计卡片 */}
+          {/* 统计信息：页面最上方 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-100">
                   <FolderTree className="h-5 w-5 text-blue-600" />
@@ -805,7 +760,7 @@ export function BusinessEntityPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-green-100">
                   <Building2 className="h-5 w-5 text-green-600" />
@@ -818,7 +773,7 @@ export function BusinessEntityPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-purple-100">
                   <FolderTree className="h-5 w-5 text-purple-600" />
@@ -831,7 +786,7 @@ export function BusinessEntityPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-orange-100">
                   <Building2 className="h-5 w-5 text-orange-600" />
@@ -846,8 +801,53 @@ export function BusinessEntityPage() {
             </div>
           </div>
 
+          {/* 查询区域 */}
+          <div className="flex items-center justify-end gap-3 bg-white p-4 rounded-xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 w-80">
+              <MdInput
+                placeholder="搜索分类编码、名称、业务线或描述"
+                value={categorySearchQuery}
+                onChange={(e) => setCategorySearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCategorySearch()}
+                clearable
+                onClear={() => {
+                  setCategorySearchQuery("");
+                  loadCategoryData(1, categoryPagination.pageSize, "");
+                }}
+                leftIcon={<Search className="h-4 w-4" />}
+                className="h-9"
+              />
+            </div>
+            <MdButton
+              onClick={handleCategorySearch}
+              leftIcon={<Search className="h-4 w-4" />}
+              className="h-9 px-3"
+            >
+              查询
+            </MdButton>
+            <MdButton
+              variant="outline"
+              onClick={handleCategoryReset}
+              leftIcon={<RotateCcw className="h-4 w-4" />}
+              className="h-9 px-3"
+            >
+              重置
+            </MdButton>
+          </div>
+
+          {/* 批量操作 */}
+          <div className="flex items-center gap-2">
+            <MdButton 
+              onClick={handleCategoryCreate} 
+              leftIcon={<Plus className="h-4 w-4" />} 
+              className="h-9 px-3"
+            >
+              新建业务分类
+            </MdButton>
+          </div>
+
           {/* 数据表格 */}
-          <div className="flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden">
             <MdTable<BusinessCategory>
               columns={categoryColumns}
               data={categoryTableData}
@@ -974,54 +974,9 @@ export function BusinessEntityPage() {
       {/* 标准指标管理 */}
       {activeTab === 'indicator' && (
         <>
-          {/* 搜索区域 */}
-          <div className="flex items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
-            <div className="flex items-center gap-2">
-              <MdButton 
-                onClick={handleIndicatorCreate} 
-                leftIcon={<Plus className="h-4 w-4" />} 
-                className="h-9 px-3"
-              >
-                新建标准指标
-              </MdButton>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-80">
-                <MdInput
-                  placeholder="搜索指标编码、名称、业务线或分类"
-                  value={indicatorSearchQuery}
-                  onChange={(e) => setIndicatorSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleIndicatorSearch()}
-                  clearable
-                  onClear={() => {
-                    setIndicatorSearchQuery("");
-                    loadIndicatorData(1, indicatorPagination.pageSize, "");
-                  }}
-                  leftIcon={<Search className="h-4 w-4" />}
-                  className="h-9"
-                />
-              </div>
-              <MdButton
-                onClick={handleIndicatorSearch}
-                leftIcon={<Search className="h-4 w-4" />}
-                className="h-9 px-3"
-              >
-                查询
-              </MdButton>
-              <MdButton
-                variant="outline"
-                onClick={handleIndicatorReset}
-                leftIcon={<RotateCcw className="h-4 w-4" />}
-                className="h-9 px-3"
-              >
-                重置
-              </MdButton>
-            </div>
-          </div>
-
-          {/* 统计卡片 */}
+          {/* 统计信息：页面最上方 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-100">
                   <BarChart3 className="h-5 w-5 text-blue-600" />
@@ -1032,7 +987,7 @@ export function BusinessEntityPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-green-100">
                   <TrendingUp className="h-5 w-5 text-green-600" />
@@ -1045,7 +1000,7 @@ export function BusinessEntityPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-purple-100">
                   <Building2 className="h-5 w-5 text-purple-600" />
@@ -1058,7 +1013,7 @@ export function BusinessEntityPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-card rounded-lg p-4 border border-border shadow-sm">
+            <div className="bg-white rounded-lg p-4 border border-border shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-orange-100">
                   <BarChart3 className="h-5 w-5 text-orange-600" />
@@ -1073,8 +1028,53 @@ export function BusinessEntityPage() {
             </div>
           </div>
 
+          {/* 查询区域 */}
+          <div className="flex items-center justify-end gap-3 bg-white p-4 rounded-xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 w-80">
+              <MdInput
+                placeholder="搜索指标编码、名称、业务线或分类"
+                value={indicatorSearchQuery}
+                onChange={(e) => setIndicatorSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleIndicatorSearch()}
+                clearable
+                onClear={() => {
+                  setIndicatorSearchQuery("");
+                  loadIndicatorData(1, indicatorPagination.pageSize, "");
+                }}
+                leftIcon={<Search className="h-4 w-4" />}
+                className="h-9"
+              />
+            </div>
+            <MdButton
+              onClick={handleIndicatorSearch}
+              leftIcon={<Search className="h-4 w-4" />}
+              className="h-9 px-3"
+            >
+              查询
+            </MdButton>
+            <MdButton
+              variant="outline"
+              onClick={handleIndicatorReset}
+              leftIcon={<RotateCcw className="h-4 w-4" />}
+              className="h-9 px-3"
+            >
+              重置
+            </MdButton>
+          </div>
+
+          {/* 批量操作 */}
+          <div className="flex items-center gap-2">
+            <MdButton 
+              onClick={handleIndicatorCreate} 
+              leftIcon={<Plus className="h-4 w-4" />} 
+              className="h-9 px-3"
+            >
+              新建标准指标
+            </MdButton>
+          </div>
+
           {/* 数据表格 */}
-          <div className="flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden">
             <MdTable<StandardIndicator>
               columns={indicatorColumns}
               data={indicatorTableData}

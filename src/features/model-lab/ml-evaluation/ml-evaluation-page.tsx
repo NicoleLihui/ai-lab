@@ -262,7 +262,7 @@ export function MLEvaluationPage() {
   return (
     <div className="flex flex-col h-full border-0 outline-0 shadow-none m-0 p-0 gap-3">
       {/* 搜索区域 */}
-      <div className="bg-card rounded-xl border border-border shadow-sm">
+      <div className="bg-white rounded-xl border border-border shadow-sm">
         <AdvancedSearch
           formItemList={formItemList}
           onSearch={handleSearch}
@@ -272,7 +272,7 @@ export function MLEvaluationPage() {
       </div>
 
       {/* 表格区域 */}
-      <div className="flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="p-4 flex items-center justify-start">
           <MdButton onClick={handleAdd} leftIcon={<Plus className="h-3 w-3" />}>
             新增分析项目

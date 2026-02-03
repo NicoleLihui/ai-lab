@@ -77,21 +77,42 @@ const ModelRegistryPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">模型库</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            管理和注册机器学习模型，支持版本化发布和环境依赖配置
-          </p>
-        </div>
-        <MdButton>
-          <Plus className="mr-2 h-4 w-4" />
-          注册新模型
-        </MdButton>
-      </div>
-
       <MdCard>
-        <MdCardHeader className="border-b">
+        <MdCardHeader>
+          <MdCardTitle>模型库概览</MdCardTitle>
+          <MdCardDescription>
+            展示模型库的整体情况和关键指标
+          </MdCardDescription>
+        </MdCardHeader>
+        <MdCardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">{models.length}</div>
+              <div className="text-xs text-muted-foreground">模型总数</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">
+                {models.filter(m => m.status === 'production').length}
+              </div>
+              <div className="text-xs text-muted-foreground">生产环境</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">
+                {models.filter(m => m.status === 'staging').length}
+              </div>
+              <div className="text-xs text-muted-foreground">预发布环境</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">
+                {models.reduce((acc, model) => acc + model.dependencies.length, 0)}
+              </div>
+              <div className="text-xs text-muted-foreground">依赖包总数</div>
+            </div>
+          </div>
+        </MdCardContent>
+      </MdCard>
+      <MdCard>
+        <MdCardHeader>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -116,6 +137,12 @@ const ModelRegistryPage: React.FC = () => {
           </div>
         </MdCardHeader>
         <MdCardContent className="p-0">
+          <div className="flex justify-start p-2">
+            <MdButton>
+              <Plus className="mr-2 h-4 w-4" />
+              注册新模型
+            </MdButton>
+          </div>
           <MdTable<ModelInfo>
             data={filteredModels}
             columns={[{
@@ -185,41 +212,6 @@ const ModelRegistryPage: React.FC = () => {
               )
             }]}
           />
-        </MdCardContent>
-      </MdCard>
-
-      <MdCard>
-        <MdCardHeader>
-          <MdCardTitle>模型库概览</MdCardTitle>
-          <MdCardDescription>
-            展示模型库的整体情况和关键指标
-          </MdCardDescription>
-        </MdCardHeader>
-        <MdCardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-lg border bg-card p-4">
-              <div className="text-2xl font-bold">{models.length}</div>
-              <div className="text-xs text-muted-foreground">模型总数</div>
-            </div>
-            <div className="rounded-lg border bg-card p-4">
-              <div className="text-2xl font-bold">
-                {models.filter(m => m.status === 'production').length}
-              </div>
-              <div className="text-xs text-muted-foreground">生产环境</div>
-            </div>
-            <div className="rounded-lg border bg-card p-4">
-              <div className="text-2xl font-bold">
-                {models.filter(m => m.status === 'staging').length}
-              </div>
-              <div className="text-xs text-muted-foreground">预发布环境</div>
-            </div>
-            <div className="rounded-lg border bg-card p-4">
-              <div className="text-2xl font-bold">
-                {models.reduce((acc, model) => acc + model.dependencies.length, 0)}
-              </div>
-              <div className="text-xs text-muted-foreground">依赖包总数</div>
-            </div>
-          </div>
         </MdCardContent>
       </MdCard>
     </div>

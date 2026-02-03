@@ -6,10 +6,14 @@ import { ChevronDown, ChevronUp, ChevronsUpDown, ChevronLeft, ChevronRight } fro
 
 export interface Column<T> {
   key: keyof T | string
-  title: string
+  title: React.ReactNode
   width?: number | string
   align?: "left" | "center" | "right"
   sortable?: boolean
+  /** @deprecated use key for data field; kept for backward compatibility */
+  dataIndex?: keyof T | string
+  ellipsis?: boolean
+  fixed?: "left" | "right"
   render?: (value: unknown, record: T, index: number) => React.ReactNode
 }
 
@@ -33,7 +37,7 @@ export interface MdTableProps<T> {
   className?: string
 }
 
-export function MdTable<T extends Record<string, unknown>>({
+export function MdTable<T extends object>({
   columns,
   data,
   rowKey = "id" as keyof T,

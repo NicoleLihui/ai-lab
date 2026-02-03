@@ -339,7 +339,7 @@ export function DataDictionaryDetailPage() {
   return (
     <div className="flex flex-col h-full border-0 outline-0 shadow-none m-0 p-0 gap-4">
       {/* 顶部工具栏 */}
-      <div className="flex items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
+      <div className="flex items-center justify-between gap-3 bg-white p-4 rounded-xl border border-border shadow-sm">
         <div className="flex items-center gap-3">
           <MdButton 
             variant="outline" 
@@ -472,7 +472,7 @@ export function DataDictionaryDetailPage() {
 
         {/* 字典值标签页 */}
         <TabsContent value="values" className="mt-4">
-          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
             <div className="flex items-center justify-between p-4 bg-muted/30">
               <h2 className="text-lg font-semibold">字典值列表</h2>
               <MdButton 

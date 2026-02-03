@@ -30,7 +30,12 @@ import { DataDictionaryPage } from "../data-platform/data-dictionary";
 import { MetadataDetailPage } from "../data-platform/metadata-detail";
 import { TagTypesPage, TagSettingsPage } from "../data-platform/tag-management";
 import { BusinessEntityPage } from "../data-platform/business-entity";
-import { DataDirectoryBuildPage } from "../data-platform/data-catalog";
+import { DataDirectoryBuildPage, BusinessAnalysisTopicPage } from "../data-platform/data-catalog";
+import { DataClassificationPage, DataClassificationDetailPage } from "../data-platform/data-catalog/data-classification";
+import { LogicalDataModelPage, LogicalDataModelDetailPage } from "../data-platform/logical-data-model";
+import { FeatureRegistryPage, FeatureRegistryDetailPage, FeatureRegistryEditPage } from "../data-platform/feature-registry";
+import { SensitiveDataPage } from "../data-platform/sensitive-data";
+import { DataRulesPage, DataRulesDetailPage, DataRulesEditPage } from "../data-platform/data-rules";
 
 export function OrganizationManagementPage() {
   return (
@@ -422,6 +427,21 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   "data-platform-tag-management:tag-settings": TagSettingsPage,
   // 数据平台 - 数据资源目录
   "data-platform-data-catalog:business-entity": BusinessEntityPage,
+  "data-platform-data-catalog:logical-model": LogicalDataModelPage,
+  "data-platform-data-catalog:logical-model-detail": LogicalDataModelDetailPage,
   "data-platform-data-catalog:data-directory-build": DataDirectoryBuildPage,
+  "data-platform-data-catalog:business-analysis-topic": BusinessAnalysisTopicPage,
+  "data-platform-data-catalog:classification": DataClassificationPage,
+  "data-platform-data-catalog:classification-detail": DataClassificationDetailPage,
+  // 数据平台 - 特征库
+  "data-platform-feature-quality:feature-registry": FeatureRegistryPage,
+  "data-platform-feature-quality:feature-registry-detail": FeatureRegistryDetailPage,
+  "data-platform-feature-quality:feature-registry-edit": FeatureRegistryEditPage,
+  // 数据平台 - 质量管理 - 敏感数据管理
+  "data-platform-data-quality:sensitive-data": SensitiveDataPage,
+  // 数据平台 - 质量管理 - 数据规则
+  "data-platform-data-quality:data-rules": DataRulesPage,
+  "data-platform-data-quality:data-rules-detail": DataRulesDetailPage,
+  "data-platform-data-quality:data-rules-edit": DataRulesEditPage,
 };
 

@@ -251,7 +251,7 @@ export function EvaluationMgmtPage() {
   return (
     <div className="flex flex-col h-full border-0 outline-0 shadow-none m-0 p-0 gap-3">
       {/* 搜索区域 */}
-      <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+      <div className="bg-white rounded-xl border border-border shadow-sm p-4">
         <div className="flex items-center justify-end gap-3">
           <div className="flex items-center gap-2 w-80">
             <MdInput
@@ -284,7 +284,7 @@ export function EvaluationMgmtPage() {
       </div>
 
       {/* 表格区域 */}
-      <div className="flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden p-4">
+      <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden p-4">
         <MdTable
           columns={columns}
           data={tableData}

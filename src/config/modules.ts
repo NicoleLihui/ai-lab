@@ -341,11 +341,25 @@ export const categories: PrimaryCategory[] = [
             existingPath: "backend-management/data-catalog/logical-data-model/index.vue"
           },
           {
+            key: "logical-model-detail",
+            name: "逻辑数据模型详情",
+            description: "逻辑数据模型详情",
+            status: "已具备",
+            show: false
+          },
+          {
             key: "data-directory-build",
             name: "数据目录搭建",
             description: "构建业务系统的数据目录树形结构，以污水处理厂为例进行业务梳理",
             status: "已具备",
             existingPath: "data-platform/data-catalog/data-directory-build-page.tsx"
+          },
+          {
+            key: "business-analysis-topic",
+            name: "业务分析主题管理",
+            description: "按照业务主题对公式、模型进行分类管理，支持分析主题-子主题两层结构",
+            status: "已具备",
+            existingPath: "data-platform/data-catalog/business-analysis-topic-page.tsx"
           },
           {
             key: "classification",
@@ -359,7 +373,7 @@ export const categories: PrimaryCategory[] = [
             name: "数据分类详情",
             description: "数据分类详情",
             status: "已具备",
-            existingPath: "data-sandbox/data-catalog/detail.vue"
+            show: false
           },
           // {
           //   key: "business-topic",
@@ -388,6 +402,20 @@ export const categories: PrimaryCategory[] = [
             description: "1. 特征注册：统一管理特征计算逻辑。2. 复用分析：识别高频使用的特征。",
             status: "已具备"
           },
+          {
+            key: "feature-registry-detail",
+            name: "特征详情",
+            description: "特征详情、复用分析与质量指标",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "feature-registry-edit",
+            name: "特征编辑",
+            description: "特征基础信息与计算逻辑编辑",
+            status: "已具备",
+            show: false
+          },
         ]
       },
       {
@@ -407,6 +435,20 @@ export const categories: PrimaryCategory[] = [
             name: "数据规则",
             description: "规则定义（空值 / 唯一性检查）、门禁阻断（脏数据拦截）",
             status: "已具备"
+          },
+          {
+            key: "data-rules-detail",
+            name: "数据规则详情",
+            description: "数据规则详情、执行记录、启用停用",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "data-rules-edit",
+            name: "数据规则编辑",
+            description: "编辑规则配置与门禁动作",
+            status: "已具备",
+            show: false
           }
         ]
       }
@@ -435,7 +477,8 @@ export const categories: PrimaryCategory[] = [
             name: "数据集详情",
             description: "支持数据探查，数据集详情查看",
             status: "已具备",
-            existingPath: "backend-management/review-dataset-apply/index.vue"
+            existingPath: "backend-management/review-dataset-apply/index.vue",
+            show: false
           },
           {
             key: "dataset-review",
@@ -522,7 +565,8 @@ export const categories: PrimaryCategory[] = [
             name: "数据集详情",
             description: "数据集详情",
             status: "已具备",
-            existingPath: "data-sandbox/dataset-management/detail.vue"
+            existingPath: "data-sandbox/dataset-management/detail.vue",
+            show: false
           },
           {
             key: "permission-apply",
@@ -542,7 +586,8 @@ export const categories: PrimaryCategory[] = [
             name: "数据上架详情",
             description: "数据上架详情",
             status: "已具备",
-            existingPath: "data-sandbox/data-open/detail"
+            existingPath: "data-sandbox/data-open/detail",
+            show: false
           },
           {
             key: "topn-preview",

@@ -48,11 +48,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   // 非首页：固定头部，侧边栏和内容区独立滚动
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-900">
+    <div className="h-screen flex flex-col overflow-hidden bg-white text-slate-900">
       <header className="flex-none z-20 bg-white border-b border-slate-200 shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded bg-primary-600 text-white grid place-items-center text-sm">
+            <div className="h-8 w-8 rounded  bg-linear-to-br from-blue-600 to-blue-500 text-white grid place-items-center text-sm">
               <Brain className="h-4 w-4" />
             </div>
             <div>

@@ -323,7 +323,7 @@ export function AgentModelsPage() {
   return (
     <div className="flex flex-col h-full border-0 outline-0 shadow-none m-0 p-0 gap-3">
       {/* 搜索区域 */}
-      <div className="flex items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
+      <div className="flex items-center justify-between gap-3 bg-white p-4 rounded-xl border border-border shadow-sm">
         <MdButton onClick={handleAdd} leftIcon={<Plus className="h-4 w-4" />} className="h-9 px-3">
           新建模型
         </MdButton>
@@ -362,7 +362,7 @@ export function AgentModelsPage() {
       </div>
 
       {/* 数据表格 */}
-      <div className="flex-1 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden">
         <MdTable
           columns={columns}
           data={tableData as any}

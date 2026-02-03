@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 import { ChevronDown, Check, X } from "lucide-react"
 
@@ -43,7 +44,10 @@ export function MdSelect({
 }: MdSelectProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const [isFocused, setIsFocused] = React.useState(false)
+  const [dropdownStyle, setDropdownStyle] = React.useState<{ top: number; left: number; minWidth: number } | null>(null)
   const selectRef = React.useRef<HTMLDivElement>(null)
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+  const dropdownRef = React.useRef<HTMLDivElement>(null)
 
   const selectedOption = options.find((opt) => opt.value === value)
 
@@ -59,16 +63,75 @@ export function MdSelect({
     standard: "border-0 border-b-2 border-input bg-transparent rounded-none",
   }
 
+  React.useLayoutEffect(() => {
+    if (isOpen && triggerRef.current && typeof document !== "undefined") {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setDropdownStyle({
+        top: rect.bottom + 4,
+        left: rect.left,
+        minWidth: rect.width,
+      })
+    } else {
+      setDropdownStyle(null)
+    }
+  }, [isOpen])
+
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-        setIsFocused(false)
+      const target = event.target as Node
+      if (
+        selectRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target)
+      ) {
+        return
       }
+      setIsOpen(false)
+      setIsFocused(false)
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  const dropdownContent =
+    isOpen &&
+    dropdownStyle &&
+    typeof document !== "undefined" &&
+    createPortal(
+      <div
+        ref={dropdownRef}
+        className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95"
+        style={{
+          top: dropdownStyle.top,
+          left: dropdownStyle.left,
+          minWidth: dropdownStyle.minWidth,
+          maxHeight: 240,
+        }}
+      >
+        <div className="max-h-60 overflow-auto py-1">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              disabled={option.disabled}
+              onClick={() => {
+                onChange?.(option.value)
+                setIsOpen(false)
+              }}
+              className={cn(
+                "flex w-full items-center justify-between px-4 py-2 text-sm transition-colors",
+                "hover:bg-primary-light",
+                option.value === value && "bg-primary-light text-primary",
+                option.disabled && "cursor-not-allowed opacity-50",
+              )}
+            >
+              {option.label}
+              {option.value === value && <Check className="h-4 w-4 text-primary" />}
+            </button>
+          ))}
+        </div>
+      </div>,
+      document.body
+    )
 
   return (
     <div className={cn("w-full space-y-1.5", className)} ref={selectRef}>
@@ -85,6 +148,7 @@ export function MdSelect({
       )}
       <div className="relative">
         <button
+          ref={triggerRef}
           type="button"
           disabled={disabled}
           onClick={() => {
@@ -114,33 +178,7 @@ export function MdSelect({
             <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")} />
           </div>
         </button>
-
-        {isOpen && (
-          <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95">
-            <div className="max-h-60 overflow-auto py-1">
-              {options.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  disabled={option.disabled}
-                  onClick={() => {
-                    onChange?.(option.value)
-                    setIsOpen(false)
-                  }}
-                  className={cn(
-                    "flex w-full items-center justify-between px-4 py-2 text-sm transition-colors",
-                    "hover:bg-primary-light",
-                    option.value === value && "bg-primary-light text-primary",
-                    option.disabled && "cursor-not-allowed opacity-50",
-                  )}
-                >
-                  {option.label}
-                  {option.value === value && <Check className="h-4 w-4 text-primary" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {dropdownContent}
       </div>
       {(helperText || errorMessage) && (
         <p className={cn("text-xs", error ? "text-destructive" : "text-muted-foreground")}>
