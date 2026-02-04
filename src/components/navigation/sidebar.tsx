@@ -164,9 +164,31 @@ function ModuleSection({
   isPageActive,
   pathname
 }: ModuleSectionProps) {
-  const hasPages = module.pages.length > 0;
-  const firstPage = hasPages ? module.pages[0] : null;
+  const visiblePages = module.pages.filter(page => page.show !== false);
+  const hasPages = visiblePages.length > 0;
+  const hasSinglePage = visiblePages.length === 1;
+  const firstPage = hasSinglePage ? visiblePages[0] : null;
 
+  // 如果只有一个可见页面，直接渲染为链接
+  if (hasSinglePage && firstPage) {
+    const href = `/categories/${category.key}/${module.key}/${firstPage.key}` as const;
+    const pageIsActive = isPageActive(category.key, module.key, firstPage.key);
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "w-full flex items-center px-3 py-1.5 rounded-md text-sm transition-colors",
+          pageIsActive || isActive
+            ? "text-blue-700 font-medium bg-blue-50"
+            : "text-slate-600 hover:bg-blue-50 hover:text-blue-600"
+        )}
+      >
+        <span>{module.name}</span>
+      </Link>
+    );
+  }
+
+  // 如果有多个页面，保持原有的展开/收起逻辑
   return (
     <div className="space-y-1">
       {hasPages ? (
@@ -192,16 +214,16 @@ function ModuleSection({
 
       {isExpanded && hasPages && (
         <div className="ml-2 space-y-0.5">
-          {module.pages.filter(page => page.show !== false).map((page) => {
+          {visiblePages.map((page) => {
             const href = `/categories/${category.key}/${module.key}/${page.key}` as const;
-            const isActive = isPageActive(category.key, module.key, page.key);
+            const pageIsActive = isPageActive(category.key, module.key, page.key);
             return (
               <Link
                 key={page.key}
                 href={href}
                 className={cn(
                   "block px-3 py-1.5 rounded-md text-xs transition-colors",
-                  isActive
+                  pageIsActive
                     ? " text-blue-700 font-medium"
                     : "text-slate-600 hover:bg-blue-50 hover:text-blue-600"
                 )}

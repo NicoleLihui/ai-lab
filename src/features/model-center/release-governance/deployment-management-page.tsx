@@ -7,7 +7,7 @@ import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
-import { Search, Plus, Eye, Edit, RotateCcw, Power, Activity, History, GitBranch, Settings } from 'lucide-react';
+import { Search, Plus, Power, Activity, Settings } from 'lucide-react';
 
 interface Deployment {
   id: string;
@@ -31,17 +31,6 @@ interface Deployment {
   creator: string;
 }
 
-interface DeploymentHistory {
-  id: string;
-  deploymentId: string;
-  action: 'deploy' | 'update' | 'rollback' | 'stop' | 'start';
-  fromVersion?: string;
-  toVersion?: string;
-  operator: string;
-  operateTime: string;
-  status: 'success' | 'failed';
-  reason?: string;
-}
 
 const DeploymentManagementPage: React.FC = () => {
   const router = useRouter();
@@ -251,29 +240,6 @@ const DeploymentManagementPage: React.FC = () => {
     alert('部署任务创建成功！');
   };
 
-  const handleUpdateVersion = (deployment: Deployment) => {
-    setSelectedDeployment(deployment);
-    setVersionSwitchDrawerOpen(true);
-  };
-
-  const handleRollback = (deployment: Deployment) => {
-    if (confirm(`确定回滚部署 ${deployment.modelName} 到上一个版本？`)) {
-      // 模拟回滚
-      setDeployments(deployments.map(d => 
-        d.id === deployment.id 
-          ? { ...d, status: 'rolling_back' as const }
-          : d
-      ));
-      setTimeout(() => {
-        setDeployments(deployments.map(d => 
-          d.id === deployment.id 
-            ? { ...d, status: 'running' as const, modelVersion: 'v1.2.2' }
-            : d
-        ));
-      }, 2000);
-    }
-  };
-
   const handleStop = (deployment: Deployment) => {
     if (confirm(`确定停止部署 ${deployment.modelName}？`)) {
       setDeployments(deployments.map(d => 
@@ -292,42 +258,15 @@ const DeploymentManagementPage: React.FC = () => {
     ));
   };
 
-  const handleViewHistory = (deployment: Deployment) => {
-    setSelectedDeployment(deployment);
-    setHistoryDrawerOpen(true);
-  };
-
-  const handleVersionSwitch = () => {
-    if (!targetVersion) {
-      alert('请选择目标版本');
-      return;
-    }
-    if (selectedDeployment) {
-      setDeployments(deployments.map(d => 
-        d.id === selectedDeployment.id 
-          ? { ...d, status: 'updating' as const, modelVersion: targetVersion }
-          : d
-      ));
-      setTimeout(() => {
-        setDeployments(deployments.map(d => 
-          d.id === selectedDeployment.id 
-            ? { ...d, status: 'running' as const }
-            : d
-        ));
-      }, 3000);
-      setVersionSwitchDrawerOpen(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <MdCard>
         <MdCardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <MdCardTitle>部署管理</MdCardTitle>
+              <MdCardTitle>部署概览</MdCardTitle>
               <MdCardDescription>
-                管理模型在生产环境的部署实例，支持版本切换、回滚等操作
+                查看所有部署实例的全局视图，进行批量操作。版本切换、回滚等操作请在模型库中进行
               </MdCardDescription>
             </div>
             <MdButton onClick={handleDeploy}>
@@ -481,41 +420,21 @@ const DeploymentManagementPage: React.FC = () => {
                     <MdButton 
                       variant="outline" 
                       size="sm"
-                      onClick={() => handleViewHistory(deployment)}
+                      onClick={() => router.push(`/categories/model-center/model-registry/model-detail?id=${deployment.modelId}&tab=deployments`)}
                     >
-                      <History className="mr-2 h-4 w-4" />
-                      部署历史
-                    </MdButton>
-                    <MdButton 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleUpdateVersion(deployment)}
-                      disabled={deployment.status === 'updating' || deployment.status === 'rolling_back'}
-                    >
-                      <GitBranch className="mr-2 h-4 w-4" />
-                      版本切换
+                      <Settings className="mr-2 h-4 w-4" />
+                      部署管理
                     </MdButton>
                     {deployment.status === 'running' ? (
-                      <>
-                        <MdButton 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleRollback(deployment)}
-                          disabled={deployment.status === 'updating' || deployment.status === 'rolling_back'}
-                        >
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          回滚
-                        </MdButton>
-                        <MdButton 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleStop(deployment)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Power className="mr-2 h-4 w-4" />
-                          停止
-                        </MdButton>
-                      </>
+                      <MdButton 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleStop(deployment)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Power className="mr-2 h-4 w-4" />
+                        停止
+                      </MdButton>
                     ) : (
                       <MdButton 
                         variant="outline" 
@@ -533,105 +452,6 @@ const DeploymentManagementPage: React.FC = () => {
           </div>
         </MdCardContent>
       </MdCard>
-
-      {/* 部署历史抽屉 */}
-      <MdDrawer
-        open={historyDrawerOpen}
-        onClose={() => setHistoryDrawerOpen(false)}
-        title={`部署历史 - ${selectedDeployment?.modelName}`}
-        width="800px"
-      >
-        <div className="p-6 space-y-4">
-          {deploymentHistory
-            .filter(h => h.deploymentId === selectedDeployment?.id)
-            .map((history) => (
-              <div key={history.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">
-                      {history.action === 'deploy' && '部署'}
-                      {history.action === 'update' && '更新版本'}
-                      {history.action === 'rollback' && '回滚'}
-                      {history.action === 'stop' && '停止'}
-                      {history.action === 'start' && '启动'}
-                    </span>
-                    {history.fromVersion && history.toVersion && (
-                      <span className="text-sm text-muted-foreground">
-                        {history.fromVersion} → {history.toVersion}
-                      </span>
-                    )}
-                    {history.toVersion && !history.fromVersion && (
-                      <span className="text-sm text-muted-foreground">
-                        版本: {history.toVersion}
-                      </span>
-                    )}
-                  </div>
-                  <MdBadge variant={history.status === 'success' ? 'success' : 'danger'}>
-                    {history.status === 'success' ? '成功' : '失败'}
-                  </MdBadge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  操作人: {history.operator} | 时间: {history.operateTime}
-                </div>
-                {history.reason && (
-                  <div className="text-sm text-muted-foreground mt-1">
-                    原因: {history.reason}
-                  </div>
-                )}
-              </div>
-            ))}
-        </div>
-      </MdDrawer>
-
-      {/* 版本切换抽屉 */}
-      <MdDrawer
-        open={versionSwitchDrawerOpen}
-        onClose={() => setVersionSwitchDrawerOpen(false)}
-        title={`版本切换 - ${selectedDeployment?.modelName}`}
-        width="600px"
-      >
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">当前版本</label>
-            <div className="p-3 bg-muted rounded-lg">
-              {selectedDeployment?.modelVersion}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">目标版本</label>
-            <MdSelect
-              options={[
-                { value: 'v1.2.4', label: 'v1.2.4' },
-                { value: 'v1.2.2', label: 'v1.2.2' },
-                { value: 'v1.2.1', label: 'v1.2.1' }
-              ]}
-              value={targetVersion}
-              onChange={setTargetVersion}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">灰度比例 (%)</label>
-            <MdInput
-              type="number"
-              value={grayScaleRatio}
-              onChange={(e) => setGrayScaleRatio(Number(e.target.value))}
-              min={0}
-              max={100}
-            />
-            <div className="text-xs text-muted-foreground mt-1">
-              设置灰度发布的比例，0-100%
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <MdButton variant="outline" onClick={() => setVersionSwitchDrawerOpen(false)}>
-              取消
-            </MdButton>
-            <MdButton onClick={handleVersionSwitch}>
-              确认切换
-            </MdButton>
-          </div>
-        </div>
-      </MdDrawer>
 
       {/* 新建部署抽屉 */}
       <MdDrawer

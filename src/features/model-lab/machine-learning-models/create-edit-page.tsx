@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MdCard, MdCardContent, MdCardDescription, MdCardHeader, MdCardTitle } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
-import { ArrowLeft, Plus, X, Save, Upload } from 'lucide-react';
+import { ArrowLeft, Plus, X, Save, Upload, LayoutGrid, List } from 'lucide-react';
+import { VisualParameterEditor, ParameterSchemaConfig } from '@/components/model-parameter-editor/visual-parameter-editor';
 
 // 参数字段定义接口
 interface ParameterField {
@@ -142,6 +143,17 @@ const MachineLearningModelCreateEditPage: React.FC = () => {
     description: ''
   });
 
+  // 可视化编辑模式状态
+  const [useVisualEditor, setUseVisualEditor] = useState(false);
+  const [inputParamSchema, setInputParamSchema] = useState<ParameterSchemaConfig>({
+    title: '输入参数',
+    parameters: []
+  });
+  const [outputParamSchema, setOutputParamSchema] = useState<ParameterSchemaConfig>({
+    title: '输出参数',
+    parameters: []
+  });
+
   // 模型类型选项
   const modelTypeOptions = [
     { value: '分类模型', label: '分类模型' },
@@ -183,6 +195,49 @@ const MachineLearningModelCreateEditPage: React.FC = () => {
       setEvaluationMetrics(newMetrics);
     }
   }, [basicInfo.type]);
+
+  // 将 ParameterField 转换为 ParameterSchema
+  const convertToSchema = useCallback((params: ParameterField[]): ParameterSchemaConfig['parameters'] => {
+    return params.map(param => ({
+      name: param.name || `param_${Date.now()}`,
+      label: param.name || '未命名参数',
+      type: param.dataType === 'integer' ? 'integer' : 
+            param.dataType === 'float' ? 'float' :
+            param.dataType === 'number' ? 'number' :
+            param.dataType === 'boolean' ? 'boolean' : 'string',
+      widget: param.dataType === 'boolean' ? 'switch' : 'text',
+      default: param.dataType === 'number' || param.dataType === 'integer' || param.dataType === 'float' ? 0 : '',
+      description: param.description || '',
+      required: true
+    }));
+  }, []);
+
+  // 将 ParameterSchema 转换为 ParameterField
+  const convertFromSchema = useCallback((schemas: ParameterSchemaConfig['parameters']): ParameterField[] => {
+    return schemas.map(schema => ({
+      name: schema.name,
+      physicalFieldName: schema.name,
+      dataType: schema.type === 'integer' ? 'integer' :
+                schema.type === 'float' ? 'float' :
+                schema.type === 'number' ? 'number' :
+                schema.type === 'boolean' ? 'boolean' : 'string',
+      description: schema.description || ''
+    }));
+  }, []);
+
+  // 同步传统表单数据到可视化编辑器
+  useEffect(() => {
+    if (useVisualEditor) {
+      setInputParamSchema({
+        title: '输入参数',
+        parameters: convertToSchema(inputParameters)
+      });
+      setOutputParamSchema({
+        title: '输出参数',
+        parameters: convertToSchema(outputParameters)
+      });
+    }
+  }, [useVisualEditor, inputParameters, outputParameters, convertToSchema]);
 
   // 加载编辑数据
   useEffect(() => {
@@ -438,149 +493,203 @@ const MachineLearningModelCreateEditPage: React.FC = () => {
       {step === 2 && (
         <MdCard>
           <MdCardHeader>
-            <MdCardTitle>模型参数定义</MdCardTitle>
-            <MdCardDescription>定义模型的输入参数、输出参数和评估指标</MdCardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <MdCardTitle>模型参数定义</MdCardTitle>
+                <MdCardDescription>定义模型的输入参数、输出参数和评估指标</MdCardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <MdButton
+                  variant={!useVisualEditor ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => setUseVisualEditor(false)}
+                >
+                  <List className="mr-2 h-4 w-4" />
+                  传统表单
+                </MdButton>
+                <MdButton
+                  variant={useVisualEditor ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => setUseVisualEditor(true)}
+                >
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  可视化编辑
+                </MdButton>
+              </div>
+            </div>
           </MdCardHeader>
           <MdCardContent className="space-y-6">
-            {/* 输入参数 */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">输入参数</h3>
-                <MdButton variant="outline" size="sm" onClick={addInputParameter}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  添加参数
-                </MdButton>
-              </div>
-              <div className="space-y-2">
-                {inputParameters.map((param, index) => (
-                  <div key={index} className="border rounded-lg p-4 flex items-center justify-between">
-                    <div className="flex-1 grid grid-cols-4 gap-4">
-                      <div>
-                        <div className="text-xs text-muted-foreground">参数名称</div>
-                        <div className="font-medium">{param.name || '-'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">物理字段名</div>
-                        <div className="font-medium">{param.physicalFieldName || '-'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">数据类型</div>
-                        <MdBadge variant="outline">{param.dataType || '-'}</MdBadge>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">描述</div>
-                        <div className="text-sm">{param.description || '-'}</div>
-                      </div>
-                    </div>
-                    <MdButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeInputParameter(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </MdButton>
-                  </div>
-                ))}
-              </div>
-              <div className="border rounded-lg p-4 mt-4 space-y-2">
-                <div className="grid grid-cols-4 gap-2">
-                  <MdInput
-                    placeholder="参数名称"
-                    value={newInputParam.name}
-                    onChange={(e) => setNewInputParam({ ...newInputParam, name: e.target.value })}
-                  />
-                  <MdInput
-                    placeholder="物理字段名"
-                    value={newInputParam.physicalFieldName}
-                    onChange={(e) => setNewInputParam({ ...newInputParam, physicalFieldName: e.target.value })}
-                  />
-                  <MdSelect
-                    options={dataTypeOptions}
-                    value={newInputParam.dataType}
-                    onChange={(value) => setNewInputParam({ ...newInputParam, dataType: value })}
-                  />
-                  <MdInput
-                    placeholder="描述"
-                    value={newInputParam.description}
-                    onChange={(e) => setNewInputParam({ ...newInputParam, description: e.target.value })}
-                  />
-                </div>
-                <MdButton variant="outline" size="sm" onClick={addInputParameter}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  添加
-                </MdButton>
-              </div>
-            </div>
+            {useVisualEditor ? (
+              <>
+                {/* 可视化输入参数编辑 */}
+                <VisualParameterEditor
+                  initialSchema={inputParamSchema}
+                  onSchemaChange={(schema) => {
+                    setInputParamSchema(schema);
+                    setInputParameters(convertFromSchema(schema.parameters));
+                  }}
+                  title="输入参数"
+                  description="可视化编辑模型的输入参数"
+                  showSchemaEditor={true}
+                  showPreview={true}
+                />
 
-            {/* 输出参数 */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">输出参数</h3>
-                <MdButton variant="outline" size="sm" onClick={addOutputParameter}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  添加参数
-                </MdButton>
-              </div>
-              <div className="space-y-2">
-                {outputParameters.map((param, index) => (
-                  <div key={index} className="border rounded-lg p-4 flex items-center justify-between">
-                    <div className="flex-1 grid grid-cols-4 gap-4">
-                      <div>
-                        <div className="text-xs text-muted-foreground">参数名称</div>
-                        <div className="font-medium">{param.name || '-'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">物理字段名</div>
-                        <div className="font-medium">{param.physicalFieldName || '-'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">数据类型</div>
-                        <MdBadge variant="outline">{param.dataType || '-'}</MdBadge>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">描述</div>
-                        <div className="text-sm">{param.description || '-'}</div>
-                      </div>
-                    </div>
-                    <MdButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeOutputParameter(index)}
-                    >
-                      <X className="h-4 w-4" />
+                {/* 可视化输出参数编辑 */}
+                <VisualParameterEditor
+                  initialSchema={outputParamSchema}
+                  onSchemaChange={(schema) => {
+                    setOutputParamSchema(schema);
+                    setOutputParameters(convertFromSchema(schema.parameters));
+                  }}
+                  title="输出参数"
+                  description="可视化编辑模型的输出参数"
+                  showSchemaEditor={true}
+                  showPreview={true}
+                />
+              </>
+            ) : (
+              <>
+                    {/* 输入参数 */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">输入参数</h3>
+                    <MdButton variant="outline" size="sm" onClick={addInputParameter}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加参数
                     </MdButton>
                   </div>
-                ))}
-              </div>
-              <div className="border rounded-lg p-4 mt-4 space-y-2">
-                <div className="grid grid-cols-4 gap-2">
-                  <MdInput
-                    placeholder="参数名称"
-                    value={newOutputParam.name}
-                    onChange={(e) => setNewOutputParam({ ...newOutputParam, name: e.target.value })}
-                  />
-                  <MdInput
-                    placeholder="物理字段名"
-                    value={newOutputParam.physicalFieldName}
-                    onChange={(e) => setNewOutputParam({ ...newOutputParam, physicalFieldName: e.target.value })}
-                  />
-                  <MdSelect
-                    options={dataTypeOptions}
-                    value={newOutputParam.dataType}
-                    onChange={(value) => setNewOutputParam({ ...newOutputParam, dataType: value })}
-                  />
-                  <MdInput
-                    placeholder="描述"
-                    value={newOutputParam.description}
-                    onChange={(e) => setNewOutputParam({ ...newOutputParam, description: e.target.value })}
-                  />
+                  <div className="space-y-2">
+                    {inputParameters.map((param, index) => (
+                      <div key={index} className="border rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex-1 grid grid-cols-4 gap-4">
+                          <div>
+                            <div className="text-xs text-muted-foreground">参数名称</div>
+                            <div className="font-medium">{param.name || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">物理字段名</div>
+                            <div className="font-medium">{param.physicalFieldName || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">数据类型</div>
+                            <MdBadge variant="outline">{param.dataType || '-'}</MdBadge>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">描述</div>
+                            <div className="text-sm">{param.description || '-'}</div>
+                          </div>
+                        </div>
+                        <MdButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeInputParameter(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </MdButton>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border rounded-lg p-4 mt-4 space-y-2">
+                    <div className="grid grid-cols-4 gap-2">
+                      <MdInput
+                        placeholder="参数名称"
+                        value={newInputParam.name}
+                        onChange={(e) => setNewInputParam({ ...newInputParam, name: e.target.value })}
+                      />
+                      <MdInput
+                        placeholder="物理字段名"
+                        value={newInputParam.physicalFieldName}
+                        onChange={(e) => setNewInputParam({ ...newInputParam, physicalFieldName: e.target.value })}
+                      />
+                      <MdSelect
+                        options={dataTypeOptions}
+                        value={newInputParam.dataType}
+                        onChange={(value) => setNewInputParam({ ...newInputParam, dataType: value })}
+                      />
+                      <MdInput
+                        placeholder="描述"
+                        value={newInputParam.description}
+                        onChange={(e) => setNewInputParam({ ...newInputParam, description: e.target.value })}
+                      />
+                    </div>
+                    <MdButton variant="outline" size="sm" onClick={addInputParameter}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加
+                    </MdButton>
+                  </div>
                 </div>
-                <MdButton variant="outline" size="sm" onClick={addOutputParameter}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  添加
-                </MdButton>
-              </div>
-            </div>
+
+                {/* 输出参数 */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold">输出参数</h3>
+                    <MdButton variant="outline" size="sm" onClick={addOutputParameter}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加参数
+                    </MdButton>
+                  </div>
+                  <div className="space-y-2">
+                    {outputParameters.map((param, index) => (
+                      <div key={index} className="border rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex-1 grid grid-cols-4 gap-4">
+                          <div>
+                            <div className="text-xs text-muted-foreground">参数名称</div>
+                            <div className="font-medium">{param.name || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">物理字段名</div>
+                            <div className="font-medium">{param.physicalFieldName || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">数据类型</div>
+                            <MdBadge variant="outline">{param.dataType || '-'}</MdBadge>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">描述</div>
+                            <div className="text-sm">{param.description || '-'}</div>
+                          </div>
+                        </div>
+                        <MdButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeOutputParameter(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </MdButton>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border rounded-lg p-4 mt-4 space-y-2">
+                    <div className="grid grid-cols-4 gap-2">
+                      <MdInput
+                        placeholder="参数名称"
+                        value={newOutputParam.name}
+                        onChange={(e) => setNewOutputParam({ ...newOutputParam, name: e.target.value })}
+                      />
+                      <MdInput
+                        placeholder="物理字段名"
+                        value={newOutputParam.physicalFieldName}
+                        onChange={(e) => setNewOutputParam({ ...newOutputParam, physicalFieldName: e.target.value })}
+                      />
+                      <MdSelect
+                        options={dataTypeOptions}
+                        value={newOutputParam.dataType}
+                        onChange={(value) => setNewOutputParam({ ...newOutputParam, dataType: value })}
+                      />
+                      <MdInput
+                        placeholder="描述"
+                        value={newOutputParam.description}
+                        onChange={(e) => setNewOutputParam({ ...newOutputParam, description: e.target.value })}
+                      />
+                    </div>
+                    <MdButton variant="outline" size="sm" onClick={addOutputParameter}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加
+                    </MdButton>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* 评估指标 */}
             <div>
