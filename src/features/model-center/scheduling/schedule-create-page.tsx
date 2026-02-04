@@ -2,100 +2,187 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MdCard, MdCardHeader, MdCardTitle, MdCardContent } from '@/components/enterprise-ui/md-card';
+import { MdCard, MdCardHeader, MdCardTitle, MdCardContent, MdCardDescription } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
-import { Check, X, Clock, Settings, Save, ArrowLeft } from 'lucide-react';
+import { MdCheckbox } from '@/components/enterprise-ui/md-checkbox';
+import { OrganizationTree, OrgTreeNode } from '@/components/enterprise-ui/organization-tree';
+import { Save, ArrowLeft } from 'lucide-react';
 
-// 定义调度任务数据接口
-type TaskType = '定时调度' | '任务触发' | 'API调用';
-
-type TaskStatus = '运行中' | '已暂停' | '已完成' | '异常';
-
-interface ScheduleTask {
-  id: string;
-  taskName: string;
-  taskType: TaskType;
-  cronExpression?: string;
-  lastRunTime?: string;
-  nextRunTime?: string;
-  status: TaskStatus;
-  modelId: string;
-  modelName: string;
-  creator: string;
-  createTime: string;
-  description: string;
-  triggerCount?: number;
-  successCount?: number;
-  failureCount?: number;
+// 调度配置接口
+interface ScheduleConfig {
+  applicationScope: string[]; // 应用范围（组织ID列表）
+  taskType: '按时间' | '按任务' | 'API方式' | '单次触发';
+  // 按时间配置
+  scheduleType?: 'periodic' | 'interval'; // 周期性或区间运行
+  cronExpression?: string; // Cron表达式
+  periodType?: 'daily' | 'hourly' | 'weekly' | 'monthly' | 'custom'; // 周期类型
+  intervalStartTime?: string; // 区间开始时间
+  intervalEndTime?: string; // 区间结束时间
+  intervalFrequency?: '30min' | '1hour' | '6hour' | 'daily'; // 区间频率
+  // 失败重试策略
+  retryEnabled: boolean;
+  retryCount?: number;
+  retryInterval?: number; // 重试间隔（分钟）
+  // 高级选项
+  waitDataReady: boolean; // 等待数据源就绪
+  timeoutAlert: boolean; // 执行超时告警
+  timeoutMinutes?: number; // 超时时间（分钟）
 }
 
 interface ScheduleCreatePageProps {
-  onSave?: (schedule: Omit<ScheduleTask, 'id' | 'status' | 'createTime' | 'creator'> & { taskType: TaskType }) => void;
+  onSave?: (schedule: any) => void;
 }
 
 const ScheduleCreatePage: React.FC<ScheduleCreatePageProps> = ({ onSave }) => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    taskName: '',
-    taskType: '定时调度',
-    cronExpression: '',
-    modelId: '',
-    modelName: '',
-    description: ''
+  
+  // 任务基本信息
+  const [taskName, setTaskName] = useState('');
+  const [modelId, setModelId] = useState('');
+  const [description, setDescription] = useState('');
+  
+  // 调度配置
+  const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>({
+    applicationScope: [],
+    taskType: '按时间',
+    scheduleType: 'periodic',
+    retryEnabled: false,
+    waitDataReady: false,
+    timeoutAlert: false,
+    timeoutMinutes: 30
   });
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 模拟模型列表
-  const modelOptions = [
-    { value: 'model-001', label: '推荐算法模型' },
-    { value: 'model-002', label: '风控评分模型' },
-    { value: 'model-003', label: '数据清洗模型' },
-    { value: 'model-004', label: '销售预测模型' },
-    { value: 'model-005', label: '特征提取模型' }
+  // 组织树数据
+  const orgTreeData: OrgTreeNode[] = [
+    {
+      id: 'group',
+      name: '集团',
+      children: [
+        {
+          id: 'east',
+          name: '东大区',
+          children: [
+            {
+              id: 'taiyuan',
+              name: '太原区域公司',
+              children: [
+                { id: 'taiyuan-beijiao', name: '太原市北郊污水处理厂' },
+                { id: 'taiyuan-nanjiao', name: '太原市南郊污水处理厂' }
+              ]
+            },
+            {
+              id: 'hangzhou',
+              name: '杭湖区域公司',
+              children: [
+                { id: 'yuhang', name: '余杭污水处理厂' },
+                { id: 'xihu', name: '西湖污水处理厂' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'south',
+          name: '南大区',
+          children: [
+            {
+              id: 'guangzhou',
+              name: '广州区域公司',
+              children: [
+                { id: 'guangzhou-tianhe', name: '广州天河污水处理厂' },
+                { id: 'guangzhou-yuexiu', name: '广州越秀污水处理厂' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'west',
+          name: '西大区',
+          children: [
+            {
+              id: 'chengdu',
+              name: '成都区域公司',
+              children: [
+                { id: 'chengdu-jinjiang', name: '成都锦江污水处理厂' },
+                { id: 'chengdu-qingyang', name: '成都青羊污水处理厂' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'north',
+          name: '北大区',
+          children: [
+            {
+              id: 'beijing',
+              name: '北京区域公司',
+              children: [
+                { id: 'beijing-chaoyang', name: '北京朝阳污水处理厂' },
+                { id: 'beijing-haidian', name: '北京海淀污水处理厂' }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   ];
 
-  const taskTypeOptions = [
-    { value: '定时调度', label: '定时调度' },
-    { value: '任务触发', label: '任务触发' },
-    { value: 'API调用', label: 'API调用' }
+  // 模拟模型列表
+  const modelOptions = [
+    { value: 'model-001', label: '污水处理效果预测模型' },
+    { value: 'model-002', label: '水质监测预警模型' },
+    { value: 'model-003', label: '污水流量预测模型' },
+    { value: 'model-004', label: '污染物浓度预测模型' },
+    { value: 'model-005', label: '曝气系统控制模型' }
   ];
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.taskName.trim()) {
+    if (!taskName.trim()) {
       newErrors.taskName = '请输入任务名称';
     }
     
-    if (!formData.modelId) {
+    if (!modelId) {
       newErrors.modelId = '请选择关联模型';
     }
     
-    if (formData.taskType === '定时调度' && !formData.cronExpression.trim()) {
-      newErrors.cronExpression = '请输入Cron表达式';
+    if (scheduleConfig.applicationScope.length === 0) {
+      newErrors.applicationScope = '请至少选择一个应用范围';
+    }
+    
+    if (scheduleConfig.taskType === '按时间') {
+      if (scheduleConfig.scheduleType === 'periodic' && scheduleConfig.periodType === 'custom' && !scheduleConfig.cronExpression?.trim()) {
+        newErrors.cronExpression = '请输入Cron表达式';
+      }
+      if (scheduleConfig.scheduleType === 'interval') {
+        if (!scheduleConfig.intervalStartTime) {
+          newErrors.intervalStartTime = '请选择开始时间';
+        }
+        if (!scheduleConfig.intervalEndTime) {
+          newErrors.intervalEndTime = '请选择结束时间';
+        }
+        if (!scheduleConfig.intervalFrequency) {
+          newErrors.intervalFrequency = '请选择频率';
+        }
+      }
+    }
+    
+    if (scheduleConfig.retryEnabled) {
+      if (!scheduleConfig.retryCount || scheduleConfig.retryCount <= 0) {
+        newErrors.retryCount = '请输入有效的重试次数';
+      }
+      if (!scheduleConfig.retryInterval || scheduleConfig.retryInterval <= 0) {
+        newErrors.retryInterval = '请输入有效的重试间隔';
+      }
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // 清除对应字段的错误
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,11 +197,11 @@ const ScheduleCreatePage: React.FC<ScheduleCreatePageProps> = ({ onSave }) => {
     try {
       // 准备提交数据
       const submitData = {
-        ...formData,
-        // 确保taskType是正确的类型
-        taskType: formData.taskType as TaskType,
-        // 根据任务类型决定是否需要cron表达式
-        ...(formData.taskType !== '定时调度' && { cronExpression: undefined })
+        taskName,
+        modelId,
+        modelName: modelOptions.find(m => m.value === modelId)?.label || '',
+        description,
+        ...scheduleConfig
       };
       
       // 调用保存回调
@@ -146,7 +233,7 @@ const ScheduleCreatePage: React.FC<ScheduleCreatePageProps> = ({ onSave }) => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">创建调度任务</h1>
           <p className="text-sm text-muted-foreground">
-            配置新的模型调度任务，支持定时、触发和API三种调度方式
+            配置新的模型调度任务，支持按时间、按任务、API方式和单次触发
           </p>
         </div>
         <div className="flex space-x-2">
@@ -162,88 +249,42 @@ const ScheduleCreatePage: React.FC<ScheduleCreatePageProps> = ({ onSave }) => {
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? (
-              <>
-                <Clock className="h-4 w-4 mr-2 animate-spin" />
-                提交中...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                创建任务
-              </>
-            )}
+            <Save className="h-4 w-4 mr-2" />
+            {isSubmitting ? '提交中...' : '创建任务'}
           </MdButton>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* 基本配置 */}
         <MdCard>
           <MdCardHeader>
             <MdCardTitle>基本配置</MdCardTitle>
           </MdCardHeader>
           <MdCardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                任务名称 *
+              <label className="block text-sm font-medium mb-2">
+                任务名称 <span className="text-red-500">*</span>
               </label>
               <MdInput
                 placeholder="请输入调度任务名称"
-                value={formData.taskName}
-                onChange={(e) => handleChange('taskName', e.target.value)}
+                value={taskName}
+                onChange={(e) => setTaskName(e.target.value)}
                 className={errors.taskName ? 'border-red-500' : ''}
               />
               {errors.taskName && (
                 <p className="mt-1 text-sm text-red-600">{errors.taskName}</p>
               )}
-              <p className="mt-1 text-xs text-muted-foreground">
-                请输入一个具有描述性的任务名称
-              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                任务类型 *
-              </label>
-              <MdSelect
-                options={taskTypeOptions}
-                value={formData.taskType}
-                onChange={(value) => handleChange('taskType', value)}
-                className={errors.taskType ? 'border-red-500' : ''}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                选择调度任务的触发方式
-              </p>
-            </div>
-
-            {formData.taskType === '定时调度' && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Cron表达式 *
-                </label>
-                <MdInput
-                  placeholder="请输入Cron表达式，如：0 9 * * *"
-                  value={formData.cronExpression}
-                  onChange={(e) => handleChange('cronExpression', e.target.value)}
-                  className={errors.cronExpression ? 'border-red-500' : ''}
-                />
-                {errors.cronExpression && (
-                  <p className="mt-1 text-sm text-red-600">{errors.cronExpression}</p>
-                )}
-                <p className="mt-1 text-xs text-muted-foreground">
-                  请输入符合标准的Cron表达式，例如：0 9 * * * 表示每天上午9点执行
-                </p>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                关联模型 *
+              <label className="block text-sm font-medium mb-2">
+                关联模型 <span className="text-red-500">*</span>
               </label>
               <MdSelect
                 options={modelOptions}
-                value={formData.modelId}
-                onChange={(value) => handleChange('modelId', value)}
+                value={modelId}
+                onChange={(value) => setModelId(value)}
                 className={errors.modelId ? 'border-red-500' : ''}
               />
               {errors.modelId && (
@@ -255,85 +296,248 @@ const ScheduleCreatePage: React.FC<ScheduleCreatePageProps> = ({ onSave }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-medium mb-2">
                 描述
               </label>
               <textarea
                 placeholder="请输入任务描述..."
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
               />
-              <p className="mt-1 text-xs text-muted-foreground">
-                输入关于此调度任务的详细描述
-              </p>
             </div>
           </MdCardContent>
         </MdCard>
 
+        {/* 运行调度管理 */}
         <MdCard>
           <MdCardHeader>
-            <MdCardTitle>高级配置</MdCardTitle>
+            <MdCardTitle>运行调度管理</MdCardTitle>
+            <MdCardDescription>配置模型的运行调度策略</MdCardDescription>
           </MdCardHeader>
-          <MdCardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  参数配置
-                </label>
-                <textarea
-                  placeholder="请输入任务参数(JSON格式)..."
-                  rows={4}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+          <MdCardContent className="space-y-6">
+            {/* 选择应用范围 */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                选择应用范围 <span className="text-red-500">*</span>
+              </label>
+              <div className="border rounded-lg p-4 max-h-96 overflow-y-auto">
+                <div className="text-sm text-muted-foreground mb-3">从组织树中选择调度的应用范围（可多选）</div>
+                <OrganizationTree
+                  data={orgTreeData}
+                  selectedIds={scheduleConfig.applicationScope}
+                  onSelectionChange={(selectedIds) => {
+                    setScheduleConfig({
+                      ...scheduleConfig,
+                      applicationScope: selectedIds
+                    });
+                    // 清除错误
+                    if (errors.applicationScope) {
+                      setErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.applicationScope;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  defaultExpanded={true}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  输入任务执行时需要的参数，JSON格式
-                </p>
+                {errors.applicationScope && (
+                  <p className="mt-2 text-sm text-red-600">{errors.applicationScope}</p>
+                )}
+                {scheduleConfig.applicationScope.length > 0 && (
+                  <div className="mt-3 pt-3 border-t">
+                    <div className="text-xs text-muted-foreground mb-1">已选择 {scheduleConfig.applicationScope.length} 个组织</div>
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  通知配置
-                </label>
-                <textarea
-                  placeholder="请输入通知配置(JSON格式)..."
-                  rows={4}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            </div>
+
+            {/* 任务类型 */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                任务类型 <span className="text-red-500">*</span>
+              </label>
+              <MdSelect
+                options={[
+                  { value: '按时间', label: '按时间' },
+                  { value: '按任务', label: '按任务' },
+                  { value: 'API方式', label: 'API方式' },
+                  { value: '单次触发', label: '单次触发' }
+                ]}
+                value={scheduleConfig.taskType}
+                onChange={(value) => setScheduleConfig({ ...scheduleConfig, taskType: value as any })}
+              />
+            </div>
+
+            {/* 按时间时的运行机制配置 */}
+            {scheduleConfig.taskType === '按时间' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">运行机制</label>
+                  <MdSelect
+                    options={[
+                      { value: 'periodic', label: '周期性' },
+                      { value: 'interval', label: '区间运行' }
+                    ]}
+                    value={scheduleConfig.scheduleType}
+                    onChange={(value) => setScheduleConfig({ ...scheduleConfig, scheduleType: value as any })}
+                  />
+                </div>
+
+                {scheduleConfig.scheduleType === 'periodic' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">周期类型</label>
+                      <MdSelect
+                        options={[
+                          { value: 'daily', label: '每天' },
+                          { value: 'hourly', label: '每小时' },
+                          { value: 'weekly', label: '每周' },
+                          { value: 'monthly', label: '每月' },
+                          { value: 'custom', label: '自定义Cron' }
+                        ]}
+                        value={scheduleConfig.periodType}
+                        onChange={(value) => setScheduleConfig({ ...scheduleConfig, periodType: value as any })}
+                      />
+                    </div>
+                    {scheduleConfig.periodType === 'custom' && (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Cron表达式</label>
+                        <MdInput
+                          value={scheduleConfig.cronExpression || ''}
+                          onChange={(e) => setScheduleConfig({ ...scheduleConfig, cronExpression: e.target.value })}
+                          placeholder="例如: 0 9 * * *"
+                          className={errors.cronExpression ? 'border-red-500' : ''}
+                        />
+                        {errors.cronExpression && (
+                          <p className="mt-1 text-sm text-red-600">{errors.cronExpression}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {scheduleConfig.scheduleType === 'interval' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">开始时间</label>
+                      <MdInput
+                        type="datetime-local"
+                        value={scheduleConfig.intervalStartTime || ''}
+                        onChange={(e) => setScheduleConfig({ ...scheduleConfig, intervalStartTime: e.target.value })}
+                        className={errors.intervalStartTime ? 'border-red-500' : ''}
+                      />
+                      {errors.intervalStartTime && (
+                        <p className="mt-1 text-sm text-red-600">{errors.intervalStartTime}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">结束时间</label>
+                      <MdInput
+                        type="datetime-local"
+                        value={scheduleConfig.intervalEndTime || ''}
+                        onChange={(e) => setScheduleConfig({ ...scheduleConfig, intervalEndTime: e.target.value })}
+                        className={errors.intervalEndTime ? 'border-red-500' : ''}
+                      />
+                      {errors.intervalEndTime && (
+                        <p className="mt-1 text-sm text-red-600">{errors.intervalEndTime}</p>
+                      )}
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium mb-2">频率</label>
+                      <MdSelect
+                        options={[
+                          { value: '30min', label: '每30分钟' },
+                          { value: '1hour', label: '每小时' },
+                          { value: '6hour', label: '每6小时' },
+                          { value: 'daily', label: '每天' }
+                        ]}
+                        value={scheduleConfig.intervalFrequency}
+                        onChange={(value) => setScheduleConfig({ ...scheduleConfig, intervalFrequency: value as any })}
+                        className={errors.intervalFrequency ? 'border-red-500' : ''}
+                      />
+                      {errors.intervalFrequency && (
+                        <p className="mt-1 text-sm text-red-600">{errors.intervalFrequency}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 失败重试策略 */}
+            <div>
+              <div className="flex items-center mb-2">
+                <MdCheckbox
+                  checked={scheduleConfig.retryEnabled}
+                  onChange={(checked) => setScheduleConfig({ ...scheduleConfig, retryEnabled: checked })}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  输入任务执行通知的配置，JSON格式
-                </p>
+                <span className="ml-2">支持失败重试</span>
               </div>
+              {scheduleConfig.retryEnabled && (
+                <div className="grid grid-cols-2 gap-4 ml-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">重试次数</label>
+                    <MdInput
+                      type="number"
+                      value={scheduleConfig.retryCount?.toString() || ''}
+                      onChange={(e) => setScheduleConfig({ ...scheduleConfig, retryCount: parseInt(e.target.value) || 0 })}
+                      className={errors.retryCount ? 'border-red-500' : ''}
+                    />
+                    {errors.retryCount && (
+                      <p className="mt-1 text-sm text-red-600">{errors.retryCount}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">重试间隔（分钟）</label>
+                    <MdInput
+                      type="number"
+                      value={scheduleConfig.retryInterval?.toString() || ''}
+                      onChange={(e) => setScheduleConfig({ ...scheduleConfig, retryInterval: parseInt(e.target.value) || 0 })}
+                      className={errors.retryInterval ? 'border-red-500' : ''}
+                    />
+                    {errors.retryInterval && (
+                      <p className="mt-1 text-sm text-red-600">{errors.retryInterval}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 高级选项 */}
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <MdCheckbox
+                  checked={scheduleConfig.waitDataReady}
+                  onChange={(checked) => setScheduleConfig({ ...scheduleConfig, waitDataReady: checked })}
+                />
+                <span className="ml-2">任务调度上游依赖检查（是否等待数据源（DW_PUMP_SENSOR）就绪后再执行）</span>
+              </div>
+              <div className="flex items-center">
+                <MdCheckbox
+                  checked={scheduleConfig.timeoutAlert}
+                  onChange={(checked) => setScheduleConfig({ ...scheduleConfig, timeoutAlert: checked })}
+                />
+                <span className="ml-2">执行超时告警（运行超过 {scheduleConfig.timeoutMinutes || 30} 分钟发送告警给负责人）</span>
+              </div>
+              {scheduleConfig.timeoutAlert && (
+                <div className="ml-6">
+                  <label className="block text-sm font-medium mb-2">超时时间（分钟）</label>
+                  <MdInput
+                    type="number"
+                    value={scheduleConfig.timeoutMinutes?.toString() || '30'}
+                    onChange={(e) => setScheduleConfig({ ...scheduleConfig, timeoutMinutes: parseInt(e.target.value) || 30 })}
+                    className="w-48"
+                  />
+                </div>
+              )}
             </div>
           </MdCardContent>
         </MdCard>
       </form>
     </div>
-  );
-};
-
-// 定义MdTextarea组件（如果不存在的话）
-const MdTextarea = ({ 
-  placeholder, 
-  value, 
-  onChange, 
-  rows = 3,
-  className = '' 
-}: {
-  placeholder?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  rows?: number;
-  className?: string;
-}) => {
-  return (
-    <textarea
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      rows={rows}
-      className={`w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring ${className}`}
-    />
   );
 };
 

@@ -6,7 +6,7 @@ import { MdCard, MdCardHeader, MdCardTitle, MdCardContent } from '@/components/e
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import BeTable from '@/components/enterprise-ui/table';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
-import { Search, Eye, Plus, Play, Pause, Edit, Trash2, Clock, Calendar, User, Settings } from 'lucide-react';
+import { Search, Eye, Plus, Play, Pause, Edit, Trash2, Clock, Calendar, User, Settings, BarChart3 } from 'lucide-react';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 
@@ -44,31 +44,31 @@ const CronSchedulePage: React.FC = () => {
     const mockData: ScheduleTask[] = [
       {
         id: '1',
-        taskName: '每日推荐模型调度',
+        taskName: '每日水质预测调度',
         taskType: '定时调度',
         cronExpression: '0 9 * * *',
         lastRunTime: '2024-01-20 09:00:00',
         nextRunTime: '2024-01-21 09:00:00',
         status: '运行中',
         modelId: 'model-001',
-        modelName: '推荐算法模型',
+        modelName: '污水处理效果预测模型',
         creator: '张三',
         createTime: '2024-01-15 10:30:00',
-        description: '每天上午9点执行推荐模型预测任务',
+        description: '每天上午9点执行污水处理效果预测任务',
         triggerCount: 20,
         successCount: 18,
         failureCount: 2
       },
       {
         id: '2',
-        taskName: '实时风控模型调度',
+        taskName: '实时水质监测调度',
         taskType: 'API调用',
         status: '运行中',
         modelId: 'model-002',
-        modelName: '风控评分模型',
+        modelName: '水质监测预警模型',
         creator: '李四',
         createTime: '2024-01-16 14:22:15',
-        description: '接收API请求触发风控模型执行',
+        description: '接收API请求触发水质监测模型执行',
         triggerCount: 156,
         successCount: 154,
         failureCount: 2
@@ -82,43 +82,43 @@ const CronSchedulePage: React.FC = () => {
         nextRunTime: '2024-01-21 02:00:00',
         status: '已暂停',
         modelId: 'model-003',
-        modelName: '数据清洗模型',
+        modelName: '污水流量预测模型',
         creator: '王五',
         createTime: '2024-01-17 09:15:00',
-        description: '每天凌晨2点执行数据预处理任务',
+        description: '每天凌晨2点执行污水流量预测任务',
         triggerCount: 15,
         successCount: 15,
         failureCount: 0
       },
       {
         id: '4',
-        taskName: '批量预测调度',
+        taskName: '污染物浓度预测调度',
         taskType: '任务触发',
         lastRunTime: '2024-01-19 16:30:00',
         nextRunTime: '2024-01-21 16:30:00',
         status: '异常',
         modelId: 'model-004',
-        modelName: '销售预测模型',
+        modelName: '污染物浓度预测模型',
         creator: '赵六',
         createTime: '2024-01-18 11:20:00',
-        description: '每两天下午4点半执行销售预测任务',
+        description: '每两天下午4点半执行污染物浓度预测任务',
         triggerCount: 8,
         successCount: 6,
         failureCount: 2
       },
       {
         id: '5',
-        taskName: '特征工程调度',
+        taskName: '曝气系统优化调度',
         taskType: '定时调度',
         cronExpression: '0 0 * * 0',
         lastRunTime: '2024-01-14 00:00:00',
         nextRunTime: '2024-01-21 00:00:00',
         status: '运行中',
         modelId: 'model-005',
-        modelName: '特征提取模型',
+        modelName: '曝气系统控制模型',
         creator: '孙七',
         createTime: '2024-01-10 15:45:20',
-        description: '每周日凌晨执行特征工程任务',
+        description: '每周日凌晨执行曝气系统优化任务',
         triggerCount: 3,
         successCount: 3,
         failureCount: 0
@@ -335,8 +335,94 @@ const CronSchedulePage: React.FC = () => {
     }
   ];
 
+  // 计算统计数据
+  const totalTasks = schedules.length;
+  const runningTasks = schedules.filter(s => s.status === '运行中').length;
+  const totalTriggers = schedules.reduce((sum, s) => sum + (s.triggerCount || 0), 0);
+  const totalSuccess = schedules.reduce((sum, s) => sum + (s.successCount || 0), 0);
+  const successRate = totalTriggers > 0 ? ((totalSuccess / totalTriggers) * 100).toFixed(1) : '0';
+
+  // 获取执行历史数据（用于图表）
+  const getExecutionHistory = () => {
+    return schedules
+      .filter(s => s.triggerCount && s.triggerCount > 0)
+      .map(s => ({
+        name: s.taskName,
+        success: s.successCount || 0,
+        failure: s.failureCount || 0,
+        total: s.triggerCount || 0
+      }));
+  };
+
   return (
     <div className="space-y-6">
+      {/* 统计概览 */}
+      <MdCard>
+        <MdCardHeader>
+          <MdCardTitle>调度统计</MdCardTitle>
+        </MdCardHeader>
+        <MdCardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">{totalTasks}</div>
+              <div className="text-xs text-muted-foreground">任务总数</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-green-600">{runningTasks}</div>
+              <div className="text-xs text-muted-foreground">运行中</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">{totalTriggers}</div>
+              <div className="text-xs text-muted-foreground">总触发次数</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-green-600">{totalSuccess}</div>
+              <div className="text-xs text-muted-foreground">成功次数</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">{successRate}%</div>
+              <div className="text-xs text-muted-foreground">成功率</div>
+            </div>
+          </div>
+        </MdCardContent>
+      </MdCard>
+
+      {/* 执行统计图表 */}
+      <MdCard>
+        <MdCardHeader>
+          <MdCardTitle>执行统计</MdCardTitle>
+        </MdCardHeader>
+        <MdCardContent>
+          <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/50">
+            <div className="text-center w-full p-4">
+              <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <div className="space-y-2">
+                {getExecutionHistory().map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-medium w-32 text-left truncate">{item.name}</span>
+                    <div className="flex-1 flex items-center gap-2">
+                      <div className="flex-1 bg-muted rounded-full h-4 relative">
+                        <div 
+                          className="bg-green-600 h-4 rounded-full"
+                          style={{ width: `${(item.success / item.total) * 100}%` }}
+                        />
+                        <div 
+                          className="bg-red-600 h-4 rounded-full absolute top-0 right-0"
+                          style={{ width: `${(item.failure / item.total) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground w-20 text-right">
+                        {item.success}/{item.total}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </MdCardContent>
+      </MdCard>
+
       <MdCard>
         <MdCardHeader className="border-b">
           <div className="flex flex-col lg:flex-row gap-4">

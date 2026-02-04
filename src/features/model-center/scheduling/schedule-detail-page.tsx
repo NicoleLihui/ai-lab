@@ -5,12 +5,31 @@ import { useSearchParams } from 'next/navigation';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent, MdCardDescription } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
+import { OrganizationTree, OrgTreeNode } from '@/components/enterprise-ui/organization-tree';
 import { Check, X, Eye, User, Calendar, Clock, Settings, Play, Pause, RefreshCw, AlertTriangle, Activity } from 'lucide-react';
+
+// 调度配置接口
+interface ScheduleConfig {
+  applicationScope: string[]; // 应用范围（组织ID列表）
+  taskType: '按时间' | '按任务' | 'API方式' | '单次触发';
+  scheduleType?: 'periodic' | 'interval'; // 周期性或区间运行
+  cronExpression?: string; // Cron表达式
+  periodType?: 'daily' | 'hourly' | 'weekly' | 'monthly' | 'custom'; // 周期类型
+  intervalStartTime?: string; // 区间开始时间
+  intervalEndTime?: string; // 区间结束时间
+  intervalFrequency?: '30min' | '1hour' | '6hour' | 'daily'; // 区间频率
+  retryEnabled: boolean;
+  retryCount?: number;
+  retryInterval?: number; // 重试间隔（分钟）
+  waitDataReady: boolean; // 等待数据源就绪
+  timeoutAlert: boolean; // 执行超时告警
+  timeoutMinutes?: number; // 超时时间（分钟）
+}
 
 interface ScheduleTask {
   id: string;
   taskName: string;
-  taskType: '定时调度' | '任务触发' | 'API调用';
+  taskType: '按时间' | '按任务' | 'API方式' | '单次触发';
   cronExpression?: string;
   lastRunTime?: string;
   nextRunTime?: string;
@@ -23,6 +42,7 @@ interface ScheduleTask {
   triggerCount?: number;
   successCount?: number;
   failureCount?: number;
+  scheduleConfig?: ScheduleConfig; // 调度配置
   parameters?: Record<string, any>;
   logs?: Array<{
     timestamp: string;
@@ -45,6 +65,80 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
   const searchParams = useSearchParams();
   const [schedule, setSchedule] = useState<ScheduleTask | null>(externalSchedule || null);
 
+  // 组织树数据（用于回显）
+  const orgTreeData: OrgTreeNode[] = [
+    {
+      id: 'group',
+      name: '集团',
+      children: [
+        {
+          id: 'east',
+          name: '东大区',
+          children: [
+            {
+              id: 'taiyuan',
+              name: '太原区域公司',
+              children: [
+                { id: 'taiyuan-beijiao', name: '太原市北郊污水处理厂' },
+                { id: 'taiyuan-nanjiao', name: '太原市南郊污水处理厂' }
+              ]
+            },
+            {
+              id: 'hangzhou',
+              name: '杭湖区域公司',
+              children: [
+                { id: 'yuhang', name: '余杭污水处理厂' },
+                { id: 'xihu', name: '西湖污水处理厂' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'south',
+          name: '南大区',
+          children: [
+            {
+              id: 'guangzhou',
+              name: '广州区域公司',
+              children: [
+                { id: 'guangzhou-tianhe', name: '广州天河污水处理厂' },
+                { id: 'guangzhou-yuexiu', name: '广州越秀污水处理厂' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'west',
+          name: '西大区',
+          children: [
+            {
+              id: 'chengdu',
+              name: '成都区域公司',
+              children: [
+                { id: 'chengdu-jinjiang', name: '成都锦江污水处理厂' },
+                { id: 'chengdu-qingyang', name: '成都青羊污水处理厂' }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'north',
+          name: '北大区',
+          children: [
+            {
+              id: 'beijing',
+              name: '北京区域公司',
+              children: [
+                { id: 'beijing-chaoyang', name: '北京朝阳污水处理厂' },
+                { id: 'beijing-haidian', name: '北京海淀污水处理厂' }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ];
+
   // 如果没有传入外部数据，则从URL参数获取ID并加载数据
   useEffect(() => {
     if (!externalSchedule) {
@@ -54,19 +148,32 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
         const mockSchedule: ScheduleTask = {
           id: id,
           taskName: '每日推荐模型调度',
-          taskType: '定时调度',
+          taskType: '按时间',
           cronExpression: '0 9 * * *',
           lastRunTime: '2024-01-20 09:00:00',
           nextRunTime: '2024-01-21 09:00:00',
           status: '运行中',
           modelId: 'model-001',
-          modelName: '推荐算法模型',
+          modelName: '污水处理效果预测模型',
           creator: '张三',
           createTime: '2024-01-15 10:30:00',
           description: '每天上午9点执行推荐模型预测任务',
           triggerCount: 20,
           successCount: 18,
           failureCount: 2,
+          scheduleConfig: {
+            applicationScope: ['taiyuan-beijiao', 'yuhang', 'guangzhou-tianhe'],
+            taskType: '按时间',
+            scheduleType: 'periodic',
+            periodType: 'daily',
+            cronExpression: '0 9 * * *',
+            retryEnabled: true,
+            retryCount: 3,
+            retryInterval: 5,
+            waitDataReady: true,
+            timeoutAlert: true,
+            timeoutMinutes: 30
+          },
           parameters: {
             'input_path': '/data/input/recommendation_data.csv',
             'output_path': '/data/output/predictions.csv',
@@ -194,7 +301,7 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
                 <MdCardTitle>执行统计</MdCardTitle>
                 <MdCardDescription>调度任务的执行情况统计</MdCardDescription>
               </MdCardHeader>
-              <MdCardContent>
+              <MdCardContent className="space-y-6">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-primary">
@@ -221,6 +328,21 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
                     <div className="text-xs text-muted-foreground mt-1">成功率</div>
                   </div>
                 </div>
+                
+                {/* 应用范围 */}
+                {schedule.scheduleConfig && schedule.scheduleConfig.applicationScope && schedule.scheduleConfig.applicationScope.length > 0 && (
+                  <div>
+                    <div className="text-sm font-medium mb-3">应用范围</div>
+                    <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-muted/30">
+                      <OrganizationTree
+                        data={orgTreeData}
+                        selectedIds={schedule.scheduleConfig.applicationScope || []}
+                        defaultExpanded={true}
+                        readonly={true}
+                      />
+                    </div>
+                  </div>
+                )}
               </MdCardContent>
             </MdCard>
 

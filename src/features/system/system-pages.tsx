@@ -2,6 +2,10 @@ import React from "react";
 import { TrainingTasksPage } from "../model-training/training-tasks-page";
 import { ModelTrainingPage } from "../model-training/model-training-page";
 import { MachineLearningModelsPage } from "../model-training/machine-learning-models-page";
+import MachineLearningModelsPageLab from "../model-lab/machine-learning-models/page";
+import MachineLearningModelCreateEditPage from "../model-lab/machine-learning-models/create-edit-page";
+import ModelDeployPage from "../model-lab/machine-learning-models/deploy-page";
+import MachineLearningModelDetailPage from "../model-lab/machine-learning-models/detail-page";
 import { OrganizationManagementPage as OrgPage } from "./organization-page";
 import { EnvironmentConfigPage } from "../environment-config/environment-config-page";
 import { AgentModelsPage } from "../model-development/agent-models/agent-models-page";
@@ -12,13 +16,16 @@ import { MLEvaluationPage } from "../model-lab/ml-evaluation/ml-evaluation-page"
 import { EvaluationMgmtPage } from "../model-lab/ml-evaluation/evaluation-mgmt-page";
 import { ModelPlazaPage } from "../model-lab/model-plaza/page";
 import { ModelDetailPage } from "../model-lab/model-plaza/model-detail-page";
-import { ModelRegistryPage } from "../model-lab/model-registry/model-registry-page";
-import { ModelDetailPage as RegistryModelDetailPage } from "../model-lab/model-registry/model-detail-page";
-import { ModelEditPage as ModelEditPageType } from "../model-lab/model-registry/model-edit-page";
+import { ModelRegistryPage } from "../model-center/model-registry/model-registry-page";
+import { ModelRegisterPage } from "../model-center/model-registry/model-register-page";
+import { ModelDetailPage as RegistryModelDetailPage } from "../model-center/model-registry/model-detail-page";
+import { ModelEditPage as ModelEditPageType } from "../model-center/model-registry/model-edit-page";
+import { DeploymentManagementPage } from "../model-center/release-governance/deployment-management-page";
 import { AdmissionCheckPage } from "../model-center/release-governance/admission-check-page";
 import { AdmissionCheckCreatePage } from "../model-center/release-governance/admission-check-create-page";
 import { AdmissionCheckDetailPage } from "../model-center/release-governance/admission-check-detail-page";
 import { AdmissionCheckEditPage } from "../model-center/release-governance/admission-check-edit-page";
+import { ModelDetailPageWrapper as ReleaseModelDetailPageWrapper } from "../model-center/release-governance/model-detail-page";
 import { PerformanceMonitorPage } from "../model-center/monitoring/performance-monitor-page";
 import { AlertingPage } from "../model-center/monitoring/alerting-page";
 import { CronSchedulePage, ScheduleDetailPage, ScheduleCreatePage, ScheduleEditPage } from "../model-center/scheduling";
@@ -381,11 +388,24 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   // 模型训练
   "model-lab-training:model-training": ModelTrainingPage,
   "model-lab-training:training-tasks": TrainingTasksPage,
-  "model-lab-model-development:machine-learning-models": MachineLearningModelsPage,
+  // 模型开发 - 机器学习模型（模型实验室）
+  "model-lab-model-development:machine-learning-models": MachineLearningModelsPageLab,
+  "model-lab-model-development:machine-learning-models-create": MachineLearningModelCreateEditPage,
+  "model-lab-model-development:machine-learning-models-deploy": ModelDeployPage,
+  "model-lab-model-development:machine-learning-models-detail": MachineLearningModelDetailPage,
   // 模型开发 - 智能体模型
   "model-lab-model-development:agent-models": AgentModelsPage,
   // 模型开发 - 数据规则模型
   "model-lab-model-development:data-rule-models": DataRuleModelsPage,
+  // 模型上线（模型实验室）
+  "model-lab-release-governance:admission-check": AdmissionCheckPage,
+  "model-lab-release-governance:admission-check-create": AdmissionCheckCreatePage,
+  "model-lab-release-governance:admission-check-detail": AdmissionCheckDetailPage,
+  "model-lab-release-governance:admission-check-edit": AdmissionCheckEditPage,
+  "model-lab-release-governance:model-release-review": ReviewModelReleasePage,
+  "model-lab-release-governance:model-deploy-review": ReviewModelDeployPage,
+  "model-lab-release-governance:deployment-management": DeploymentManagementPage,
+  "model-lab-release-governance:model-detail": ReleaseModelDetailPageWrapper,
   // 环境配置
   "model-lab-environment:environment-config": EnvironmentConfigPage,
   // 效益评估
@@ -397,23 +417,16 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   // 模型广场
   "model-lab-model-plaza:model-plaza": ModelPlazaPage,
   "model-lab-model-plaza:model-detail": ModelDetailPage,
-  // 模型库
+  // 模型库（模型中心 - 仅展示已部署到生产环境的模型）
   "model-center-model-registry:model-registry": ModelRegistryPage,
+  "model-center-model-registry:model-register": ModelRegisterPage,
   "model-center-model-registry:model-detail": ModelDetailPageWrapper,
   "model-center-model-registry:model-edit": ModelEditPageWrapper,
-  // 准入检测
-  "model-center-release-governance:admission-check": AdmissionCheckPage,
-  "model-center-release-governance:admission-check-create": AdmissionCheckCreatePage,
-  "model-center-release-governance:admission-check-detail": AdmissionCheckDetailPage,
-  "model-center-release-governance:admission-check-edit": AdmissionCheckEditPage,
   // 模型调度
   "model-center-scheduling:cron-schedule": CronSchedulePage,
   "model-center-scheduling:schedule-detail": ScheduleDetailPage,
   "model-center-scheduling:schedule-create": ScheduleCreatePage,
   "model-center-scheduling:schedule-edit": ScheduleEditPage,
-  // 模型上线
-  "model-center-release-governance:model-release-review": ReviewModelReleasePage,
-  "model-center-release-governance:model-deploy-review": ReviewModelDeployPage,
   // 模型监控
   "model-center-monitoring:performance-monitor": PerformanceMonitorPage,
   "model-center-monitoring:alerting": AlertingPage,

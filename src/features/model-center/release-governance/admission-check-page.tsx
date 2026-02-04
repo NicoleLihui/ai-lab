@@ -7,7 +7,8 @@ import { MdButton } from '@/components/enterprise-ui/md-button';
 import BeTable from '@/components/enterprise-ui/table';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { AdvancedSearch } from '@/components/enterprise-ui/advanced-search';
-import { Plus, Eye, Edit, Play, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Eye, Edit, Play, CheckCircle, XCircle, Clock, AlertCircle, Download, BarChart3, CheckSquare } from 'lucide-react';
+import { MdCheckbox } from '@/components/enterprise-ui/md-checkbox';
 
 // 定义准入检测数据接口
 interface AdmissionCheck {
@@ -39,6 +40,8 @@ const AdmissionCheckPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
+  const [selectedTests, setSelectedTests] = useState<Set<string>>(new Set());
+  const [showChart, setShowChart] = useState(false);
   
   // 搜索表单数据
   const [formData, setFormData] = useState({
@@ -297,8 +300,129 @@ const AdmissionCheckPage: React.FC = () => {
     loadTableData();
   };
 
+  // 批量执行测试
+  const handleBatchRun = () => {
+    if (selectedTests.size === 0) {
+      alert('请先选择要执行的测试');
+      return;
+    }
+    const selected = filteredTests.filter(t => selectedTests.has(t.id));
+    const canRun = selected.filter(t => t.testStatus === '待执行' || t.testStatus === '已失败');
+    if (canRun.length === 0) {
+      alert('选中的测试中没有可执行的任务');
+      return;
+    }
+    if (confirm(`确定执行选中的 ${canRun.length} 个测试？`)) {
+      const updatedTests = tests.map(test => {
+        if (selectedTests.has(test.id) && (test.testStatus === '待执行' || test.testStatus === '已失败')) {
+          return { ...test, testStatus: '执行中' as const };
+        }
+        return test;
+      });
+      setTests(updatedTests);
+      setSelectedTests(new Set());
+      loadTableData();
+    }
+  };
+
+  // 下载测试报告
+  const handleDownloadReport = (row: AdmissionCheck) => {
+    if (row.testStatus !== '已完成') {
+      alert('只有已完成的测试才能下载报告');
+      return;
+    }
+    // 模拟生成报告
+    const reportData = {
+      testName: row.testName,
+      modelName: row.modelName,
+      testType: row.testType,
+      testResult: row.testResult,
+      passRate: row.passRate,
+      testCases: row.testCases,
+      passedCases: row.passedCases,
+      testDuration: row.testDuration,
+      createTime: row.createTime,
+      updateTime: row.updateTime
+    };
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `test_report_${row.testName}_${row.updateTime.replace(/[: ]/g, '_')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 批量下载报告
+  const handleBatchDownload = () => {
+    if (selectedTests.size === 0) {
+      alert('请先选择要下载的测试');
+      return;
+    }
+    const selected = filteredTests.filter(t => selectedTests.has(t.id) && t.testStatus === '已完成');
+    if (selected.length === 0) {
+      alert('选中的测试中没有已完成的测试报告');
+      return;
+    }
+    selected.forEach(test => handleDownloadReport(test));
+  };
+
+  // 全选/取消全选
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTests(new Set(filteredTests.map(t => t.id)));
+    } else {
+      setSelectedTests(new Set());
+    }
+  };
+
+  // 切换单个选择
+  const toggleSelectTest = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedTests);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedTests(newSelected);
+  };
+
+  // 获取通过率趋势数据
+  const getPassRateTrendData = () => {
+    const completedTests = filteredTests.filter(t => t.testStatus === '已完成' && t.passRate !== undefined);
+    return completedTests
+      .sort((a, b) => new Date(a.updateTime).getTime() - new Date(b.updateTime).getTime())
+      .map((test, index) => ({
+        name: `测试${index + 1}`,
+        passRate: test.passRate || 0,
+        date: test.updateTime
+      }));
+  };
+
+  const allSelected = filteredTests.length > 0 && filteredTests.every(t => selectedTests.has(t.id));
+  const someSelected = selectedTests.size > 0 && selectedTests.size < filteredTests.length;
+
   // 表格列定义
   const columns = [
+    {
+      prop: 'select',
+      label: (
+        <MdCheckbox
+          checked={allSelected}
+          indeterminate={someSelected}
+          onChange={toggleSelectAll}
+        />
+      ),
+      align: 'center',
+      width: 60,
+      render: (row: AdmissionCheck) => (
+        <MdCheckbox
+          checked={selectedTests.has(row.id)}
+          onChange={(checked) => toggleSelectTest(row.id, checked)}
+        />
+      )
+    },
     {
       type: 'index',
       prop: 'index',
@@ -464,6 +588,15 @@ const AdmissionCheckPage: React.FC = () => {
           });
         }
         
+        // 下载报告 - 已完成状态显示
+        if (row.testStatus === '已完成') {
+          btns.push({
+            name: '下载报告',
+            type: 'primary',
+            command: 'download'
+          });
+        }
+        
         return btns;
       }
     }
@@ -513,16 +646,124 @@ const AdmissionCheckPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* 统计概览 */}
+      <MdCard>
+        <MdCardHeader className="flex items-center justify-between">
+          <MdCardTitle>测试统计</MdCardTitle>
+          <MdButton 
+            variant="outline"
+            onClick={() => setShowChart(!showChart)}
+          >
+            <BarChart3 className="mr-2 h-4 w-4" />
+            {showChart ? '隐藏图表' : '显示图表'}
+          </MdButton>
+        </MdCardHeader>
+        <MdCardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">{filteredTests.length}</div>
+              <div className="text-xs text-muted-foreground">测试总数</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-green-600">
+                {filteredTests.filter(t => t.testStatus === '已完成' && t.testResult === '通过').length}
+              </div>
+              <div className="text-xs text-muted-foreground">通过数量</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-yellow-600">
+                {filteredTests.filter(t => t.testStatus === '已完成' && t.testResult === '未通过').length}
+              </div>
+              <div className="text-xs text-muted-foreground">未通过数量</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-blue-600">
+                {filteredTests.filter(t => t.testStatus === '执行中').length}
+              </div>
+              <div className="text-xs text-muted-foreground">执行中</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">
+                {filteredTests.filter(t => t.passRate !== undefined).length > 0
+                  ? (filteredTests.filter(t => t.passRate !== undefined).reduce((sum, t) => sum + (t.passRate || 0), 0) / 
+                     filteredTests.filter(t => t.passRate !== undefined).length).toFixed(1)
+                  : '0'}%
+              </div>
+              <div className="text-xs text-muted-foreground">平均通过率</div>
+            </div>
+          </div>
+        </MdCardContent>
+      </MdCard>
+      {/* 通过率趋势图 */}
+      {showChart && (
+        <MdCard>
+          <MdCardHeader>
+            <MdCardTitle>通过率趋势</MdCardTitle>
+          </MdCardHeader>
+          <MdCardContent>
+            <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/50">
+              <div className="text-center">
+                <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                <div className="text-sm text-muted-foreground">
+                  {getPassRateTrendData().length > 0 ? (
+                    <div className="space-y-2">
+                      {getPassRateTrendData().map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between gap-4">
+                          <span className="text-xs">{item.name}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-32 bg-muted rounded-full h-2">
+                              <div 
+                                className={`h-2 rounded-full ${
+                                  item.passRate >= 90 ? 'bg-green-600' : 
+                                  item.passRate >= 70 ? 'bg-yellow-600' : 'bg-red-600'
+                                }`}
+                                style={{ width: `${item.passRate}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-medium w-12 text-right">{item.passRate.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    '暂无已完成的测试数据'
+                  )}
+                </div>
+              </div>
+            </div>
+          </MdCardContent>
+        </MdCard>
+      )}
       <MdCard>
         <MdCardHeader className="border-b flex items-center justify-between">
           <MdCardTitle>准入检测列表</MdCardTitle>
-          <MdButton 
-            variant="primary" 
-            leftIcon={<Plus className="h-4 w-4" />}
-            onClick={handleCreate}
-          >
-            新增测试
-          </MdButton>
+          <div className="flex gap-2">
+            {selectedTests.size > 0 && (
+              <>
+                <MdButton 
+                  variant="outline" 
+                  onClick={handleBatchRun}
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  批量执行 ({selectedTests.size})
+                </MdButton>
+                <MdButton 
+                  variant="outline" 
+                  onClick={handleBatchDownload}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  批量下载报告
+                </MdButton>
+              </>
+            )}
+            <MdButton 
+              variant="primary" 
+              onClick={handleCreate}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              新增测试
+            </MdButton>
+          </div>
         </MdCardHeader>
         <MdCardContent className="p-0">
           <div className="p-4 border-b">
@@ -555,6 +796,9 @@ const AdmissionCheckPage: React.FC = () => {
                   break;
                 case 'run':
                   handleRunTest(test);
+                  break;
+                case 'download':
+                  handleDownloadReport(test);
                   break;
               }
             }}

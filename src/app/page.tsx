@@ -24,6 +24,7 @@ const HomePage = () => {
         { name: '模型评估', path: '/categories/model-lab/benefit-evaluation/benefit-evaluation', desc: '离线评估 / 模型回测' },
         { name: '模型广场', path: '/categories/model-lab/model-plaza/model-plaza', desc: '预训练模型浏览与在线试用' },
         { name: '模型开发', path: '/categories/model-lab/model-development/machine-learning-models', desc: '机器学习模型、智能体模型、数据规则模型' },
+        { name: '模型上线', path: '/categories/model-lab/release-governance/model-release-review', desc: '发布审批流与准入检测' },
       ]
     },
     {
@@ -32,10 +33,9 @@ const HomePage = () => {
       description: '生产环境 - 提供模型库、上线、调度和监控功能',
       icon: DashboardOutlined,
       modules: [
-        { name: '模型库', path: '/categories/model-center/model-registry/registry', desc: '模型库注册与签名' },
-        { name: '模型上线', path: '/categories/model-center/release-governance/model-release-review', desc: '发布审批流与准入检测' },
+        { name: '模型库', path: '/categories/model-center/model-registry/model-registry', desc: '已部署到生产环境的模型库' },
         { name: '模型调度', path: '/categories/model-center/scheduling/cron-schedule', desc: '定时 / 触发 / API 调度' },
-        { name: '模型监控', path: '/categories/model-center/monitoring/usage-stats', desc: '性能、漂移、用量与告警' },
+        { name: '模型监控', path: '/categories/model-center/monitoring/performance-monitor', desc: '性能、漂移、用量与告警' },
       ]
     },
     {

@@ -58,6 +58,27 @@ export const categories: PrimaryCategory[] = [
             existingPath: "model-evaluation/model-train/index.vue"
           },
           {
+            key: "machine-learning-models-create",
+            name: "创建/编辑模型",
+            description: "创建或编辑机器学习模型，包含模型参数定义（输入参数、输出参数、评估指标）",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "machine-learning-models-deploy",
+            name: "模型部署",
+            description: "模型部署三步流程：编辑模型基础信息、数据目录注册、运行调度管理",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "machine-learning-models-detail",
+            name: "模型详情",
+            description: "查看机器学习模型的详细信息",
+            status: "已具备",
+            show: false
+          },
+          {
             key: "agent-models",
             name: "智能体模型",
             description: "Agent 开发列表，支持新增、编辑、删除、版本管理、发布",
@@ -149,41 +170,6 @@ export const categories: PrimaryCategory[] = [
             existingPath: "model-management/model-plaza/index.vue"
           }
         ]
-      }
-    ]
-  },
-  {
-    key: "model-center",
-    name: "模型中心",
-    description: "生产环境",
-    icon: "🏭",
-    modules: [
-      {
-        key: "model-registry",
-        name: "模型库",
-        description: "模型库注册与签名",
-        pages: [
-          {
-            key: "model-registry",
-            name: "模型库管理",
-            description: "版本化注册，支持 Staging/Prod、输入输出 Schema 及兼容性检查、环境自动打包与依赖版本固定",
-            status: "已具备"
-          },
-          {
-            key: "model-detail",
-            name: "模型详情",
-            description: "模型详细信息",
-            status: "已具备",
-            show: false
-          },
-          {
-            key: "model-edit",
-            name: "模型编辑",
-            description: "模型编辑功能",
-            status: "已具备",
-            show: false
-          }
-        ]
       },
       {
         key: "release-governance",
@@ -195,6 +181,27 @@ export const categories: PrimaryCategory[] = [
             name: "准入检测",
             description: "冒烟测试 / 基准测试",
             status: "已具备"
+          },
+          {
+            key: "admission-check-create",
+            name: "创建准入检测",
+            description: "创建新的准入检测任务",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "admission-check-detail",
+            name: "准入检测详情",
+            description: "查看准入检测任务详情",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "admission-check-edit",
+            name: "编辑准入检测",
+            description: "编辑准入检测任务",
+            status: "已具备",
+            show: false
           },
           {
             key: "model-release-review",
@@ -209,6 +216,61 @@ export const categories: PrimaryCategory[] = [
             description: "模型部署审核",
             status: "已具备",
             existingPath: "backend-management/review-model-deploy/index.vue"
+          },
+          {
+            key: "deployment-management",
+            name: "部署管理",
+            description: "部署实例列表、版本切换、部署历史、回滚功能",
+            status: "已具备"
+          },
+          {
+            key: "model-detail",
+            name: "模型详情",
+            description: "模型发布审核详情页面",
+            status: "已具备",
+            show: false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    key: "model-center",
+    name: "模型中心",
+    description: "生产环境 - 所有模型均为已审批通过并已部署到生产环境的模型",
+    icon: "🏭",
+    modules: [
+      {
+        key: "model-registry",
+        name: "模型库",
+        description: "已部署到生产环境的模型库",
+        pages: [
+          {
+            key: "model-registry",
+            name: "模型库管理",
+            description: "展示所有已部署到生产环境的模型，支持查看、版本对比、归档等操作",
+            status: "已具备"
+          },
+          {
+            key: "model-register",
+            name: "模型注册",
+            description: "注册新模型功能已移至模型实验室-模型开发-机器学习模型-创建模型",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "model-detail",
+            name: "模型详情",
+            description: "模型详细信息",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "model-edit",
+            name: "模型编辑",
+            description: "模型编辑功能",
+            status: "已具备",
+            show: false
           }
         ]
       },

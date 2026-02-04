@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent, MdCardDescription } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
-import { Check, X, Eye, User, Calendar, Database, FileText, BarChart3, Package, Tag } from 'lucide-react';
+import { Check, X, Eye, User, Calendar, Database, FileText, BarChart3, Package, Tag, ArrowLeft, GitBranch, Activity } from 'lucide-react';
 
 interface ModelReleaseReview {
   id: string;
@@ -27,57 +27,185 @@ interface ModelReleaseReview {
   evaluationDate?: string;
   fileSize?: string;
   framework?: string;
+  workflowId?: string;
+  admissionCheckId?: string;
+  admissionCheckResult?: '通过' | '未通过';
 }
 
+interface WorkflowHistory {
+  taskName: string;
+  userName: string;
+  endTime: string;
+  status: string;
+  message: string;
+}
+
+// 独立的页面组件
+const ModelDetailPageWrapper: React.FC = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const modelId = searchParams.get('id');
+  const [model, setModel] = useState<ModelReleaseReview | null>(null);
+  const [workflowDrawerOpen, setWorkflowDrawerOpen] = useState(false);
+  const [workflowHistory, setWorkflowHistory] = useState<WorkflowHistory[]>([]);
+
+  useEffect(() => {
+    if (modelId) {
+      // 模拟加载数据
+      const mockModel: ModelReleaseReview = {
+        id: modelId,
+        modelName: '污水处理效果预测模型',
+        modelType: '机器学习',
+        version: 'v1.2.3',
+        submitter: '张三',
+        submitTime: '2024-01-15 10:30:00',
+        status: '待审核',
+        description: '基于历史污水处理数据预测出水水质指标，支持COD、BOD、NH3-N等关键参数预测',
+        accuracy: 0.92,
+        precision: 0.89,
+        recall: 0.91,
+        f1Score: 0.90,
+        evaluationDate: '2024-01-14',
+        fileSize: '125MB',
+        framework: 'TensorFlow',
+        workflowId: 'wf-001',
+        admissionCheckId: 'test-001',
+        admissionCheckResult: '通过'
+      };
+      setModel(mockModel);
+
+      // 模拟工作流历史
+      setWorkflowHistory([
+        {
+          taskName: '提交审核',
+          userName: '张三',
+          endTime: '2024-01-15 10:30:00',
+          status: '已完成',
+          message: '提交模型发布申请'
+        },
+        {
+          taskName: '技术审核',
+          userName: '李四',
+          endTime: '2024-01-15 14:20:00',
+          status: '已完成',
+          message: '技术审核通过'
+        },
+        {
+          taskName: '业务审核',
+          userName: '王五',
+          endTime: '2024-01-16 09:15:00',
+          status: '进行中',
+          message: ''
+        }
+      ]);
+    }
+  }, [modelId]);
+
+  const handleApprove = (model: ModelReleaseReview) => {
+    // 调用工作流API审批通过
+    console.log('审批通过:', model);
+    alert('审批通过成功！');
+    router.back();
+  };
+
+  const handleReject = (model: ModelReleaseReview, reason?: string) => {
+    // 调用工作流API审批驳回
+    console.log('审批驳回:', model, reason);
+    alert('审批驳回成功！');
+    router.back();
+  };
+
+  if (!model) {
+    return <div>加载中...</div>;
+  }
+
+  return (
+    <ModelDetailPage 
+      model={model} 
+      onApprove={handleApprove} 
+      onReject={handleReject}
+      workflowHistory={workflowHistory}
+      workflowDrawerOpen={workflowDrawerOpen}
+      setWorkflowDrawerOpen={setWorkflowDrawerOpen}
+    />
+  );
+};
+
+// 原始组件（保持向后兼容）
 interface ModelDetailPageProps {
   model: ModelReleaseReview;
-  onApprove: (model: ModelReleaseReview) => void;
-  onReject: (model: ModelReleaseReview, reason?: string) => void;
+  onApprove?: (model: ModelReleaseReview) => void;
+  onReject?: (model: ModelReleaseReview, reason?: string) => void;
+  workflowHistory?: WorkflowHistory[];
+  workflowDrawerOpen?: boolean;
+  setWorkflowDrawerOpen?: (open: boolean) => void;
 }
 
-const ModelDetailPage: React.FC<ModelDetailPageProps> = ({ model, onApprove, onReject }) => {
+const ModelDetailPage: React.FC<ModelDetailPageProps> = ({ 
+  model, 
+  onApprove, 
+  onReject,
+  workflowHistory = [],
+  workflowDrawerOpen = false,
+  setWorkflowDrawerOpen
+}) => {
+  const router = useRouter();
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
-  const handleApprove = () => {
-    onApprove(model);
+  const handleApproveClick = () => {
+    if (onApprove) {
+      onApprove(model);
+    }
   };
 
   const handleRejectConfirm = () => {
-    onReject(model, rejectReason);
+    if (onReject) {
+      onReject(model, rejectReason);
+    }
     setShowRejectModal(false);
     setRejectReason('');
   };
 
   return (
-    <div className="h-screen overflow-y-auto p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{model.modelName}</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              模型详情 - {model.id}
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <MdButton 
-              variant="success" 
-              onClick={handleApprove}
-              disabled={model.status !== '待审核'}
-            >
-              <Check className="h-4 w-4 mr-2" />
-              通过
-            </MdButton>
-            <MdButton 
-              variant="danger" 
-              onClick={() => setShowRejectModal(true)}
-              disabled={model.status !== '待审核'}
-            >
-              <X className="h-4 w-4 mr-2" />
-              拒绝
-            </MdButton>
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{model.modelName}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            模型详情 - {model.id}
+          </p>
         </div>
+        <div className="flex space-x-2">
+          <MdButton variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            返回
+          </MdButton>
+          {model.workflowId && setWorkflowDrawerOpen && (
+            <MdButton variant="outline" onClick={() => setWorkflowDrawerOpen(true)}>
+              <GitBranch className="h-4 w-4 mr-2" />
+              工作流
+            </MdButton>
+          )}
+          {model.status === '待审核' && (
+            <>
+              <MdButton 
+                onClick={handleApproveClick}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                通过
+              </MdButton>
+              <MdButton 
+                variant="danger" 
+                onClick={() => setShowRejectModal(true)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                拒绝
+              </MdButton>
+            </>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -200,6 +328,24 @@ const ModelDetailPage: React.FC<ModelDetailPageProps> = ({ model, onApprove, onR
                   <div className="font-medium">{model.approveTime}</div>
                 </div>
               )}
+              {model.admissionCheckId && (
+                <div className="pt-3 border-t">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">准入检测:</span>
+                    <MdBadge variant={model.admissionCheckResult === '通过' ? 'success' : 'danger'}>
+                      {model.admissionCheckResult}
+                    </MdBadge>
+                    <MdButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push(`/categories/model-center/release-governance/admission-check-detail?id=${model.admissionCheckId}`)}
+                    >
+                      查看详情
+                    </MdButton>
+                  </div>
+                </div>
+              )}
             </MdCardContent>
           </MdCard>
 
@@ -224,10 +370,6 @@ const ModelDetailPage: React.FC<ModelDetailPageProps> = ({ model, onApprove, onR
               <MdButton variant="outline" className="w-full">
                 <Package className="h-4 w-4 mr-2" />
                 下载模型
-              </MdButton>
-              <MdButton variant="outline" className="w-full">
-                <Tag className="h-4 w-4 mr-2" />
-                查看标签
               </MdButton>
             </MdCardContent>
           </MdCard>
@@ -269,9 +411,77 @@ const ModelDetailPage: React.FC<ModelDetailPageProps> = ({ model, onApprove, onR
           </div>
         </div>
       </MdDrawer>
+
+      {/* 工作流进度抽屉 */}
+      {model.workflowId && workflowHistory.length > 0 && setWorkflowDrawerOpen && (
+        <MdDrawer
+          open={workflowDrawerOpen}
+          onClose={() => setWorkflowDrawerOpen(false)}
+          title={`工作流进度 - ${model.modelName}`}
+          width="700px"
+        >
+          <div className="p-6 space-y-6">
+            {/* 关联的准入检测结果 */}
+            {model.admissionCheckId && (
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center gap-2 text-sm mb-2">
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">准入检测:</span>
+                  <MdBadge variant={model.admissionCheckResult === '通过' ? 'success' : 'danger'}>
+                    {model.admissionCheckResult}
+                  </MdBadge>
+                  <MdButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/categories/model-center/release-governance/admission-check-detail?id=${model.admissionCheckId}`)}
+                  >
+                    查看详情
+                  </MdButton>
+                </div>
+              </div>
+            )}
+
+            {/* 工作流历史时间轴 */}
+            <div>
+              <h3 className="font-semibold mb-4">审批历史</h3>
+              <div className="space-y-4">
+                {workflowHistory.map((history, index) => (
+                  <div key={index} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-3 h-3 rounded-full ${
+                        history.status === '已完成' ? 'bg-green-600' :
+                        history.status === '进行中' ? 'bg-blue-600' :
+                        'bg-gray-400'
+                      }`} />
+                      {index < workflowHistory.length - 1 && (
+                        <div className="w-0.5 h-full bg-gray-300 mt-2" />
+                      )}
+                    </div>
+                    <div className="flex-1 border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{history.taskName}</div>
+                        <MdBadge variant={history.status === '已完成' ? 'success' : history.status === '进行中' ? 'primary' : 'secondary'}>
+                          {history.status}
+                        </MdBadge>
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-1">
+                        执行人: {history.userName} | 时间: {history.endTime}
+                      </div>
+                      {history.message && (
+                        <div className="text-sm mt-2 p-2 bg-muted rounded">
+                          {history.message}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </MdDrawer>
+      )}
     </div>
-  </div>
   );
 };
 
-export { ModelDetailPage };
+export { ModelDetailPage, ModelDetailPageWrapper };

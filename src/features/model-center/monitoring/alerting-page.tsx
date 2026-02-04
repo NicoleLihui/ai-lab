@@ -8,7 +8,7 @@ import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
-import { Search, Plus, Edit, Trash2, Mail, MessageSquare, Bell, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Mail, MessageSquare, Bell, CheckCircle, XCircle, BarChart3, Settings, Wand2 } from 'lucide-react';
 
 // 定义告警规则接口
 interface AlertRule {
@@ -52,6 +52,18 @@ export const AlertingPage: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState('all');
   const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<AlertRule | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [channelConfigOpen, setChannelConfigOpen] = useState(false);
+  const [newRule, setNewRule] = useState<Partial<AlertRule>>({
+    ruleName: '',
+    alertType: '性能告警',
+    condition: '',
+    threshold: '',
+    notificationChannels: [],
+    recipients: [],
+    status: '启用'
+  });
 
   // 模拟告警规则数据
   useEffect(() => {
@@ -159,7 +171,7 @@ export const AlertingPage: React.FC = () => {
         id: '1',
         ruleName: '错误率告警',
         alertType: '错误率告警',
-        modelName: '销售预测模型',
+        modelName: '污染物浓度预测模型',
         severity: '高',
         message: '错误率超过阈值 2%，当前值: 3.2%',
         status: '已触发',
@@ -169,7 +181,7 @@ export const AlertingPage: React.FC = () => {
         id: '2',
         ruleName: 'PSI漂移告警',
         alertType: '数据漂移告警',
-        modelName: '风控评分模型',
+        modelName: '水质监测预警模型',
         severity: '中',
         message: 'PSI 值超过阈值 0.25，当前值: 0.35',
         status: '已处理',
@@ -181,7 +193,7 @@ export const AlertingPage: React.FC = () => {
         id: '3',
         ruleName: '延迟过高告警',
         alertType: '延迟告警',
-        modelName: '推荐算法模型',
+        modelName: '污水处理效果预测模型',
         severity: '低',
         message: '延迟超过阈值 200ms，当前值: 245ms',
         status: '已处理',
@@ -203,7 +215,7 @@ export const AlertingPage: React.FC = () => {
         id: '5',
         ruleName: '错误率告警',
         alertType: '错误率告警',
-        modelName: '特征提取模型',
+        modelName: '曝气系统控制模型',
         severity: '中',
         message: '错误率超过阈值 2%，当前值: 2.5%',
         status: '已忽略',
@@ -528,8 +540,85 @@ export const AlertingPage: React.FC = () => {
     }
   ];
 
+  // 计算告警统计
+  const totalRules = rules.length;
+  const enabledRules = rules.filter(r => r.status === '启用').length;
+  const totalAlerts = records.length;
+  const unprocessedAlerts = records.filter(r => r.status === '已触发').length;
+  const highSeverityAlerts = records.filter(r => r.severity === '高' || r.severity === '紧急').length;
+
+  // 规则创建向导处理
+  const handleWizardNext = () => {
+    if (wizardStep < 4) {
+      setWizardStep(wizardStep + 1);
+    } else {
+      // 完成创建
+      const rule: AlertRule = {
+        id: `rule-${Date.now()}`,
+        ruleName: newRule.ruleName || '',
+        alertType: newRule.alertType as AlertRule['alertType'],
+        condition: newRule.condition || '',
+        threshold: newRule.threshold || '',
+        notificationChannels: newRule.notificationChannels || [],
+        status: newRule.status as '启用' | '禁用',
+        recipients: newRule.recipients || [],
+        createTime: new Date().toLocaleString('zh-CN'),
+        updateTime: new Date().toLocaleString('zh-CN')
+      };
+      setRules([...rules, rule]);
+      setWizardOpen(false);
+      setWizardStep(1);
+      setNewRule({
+        ruleName: '',
+        alertType: '性能告警',
+        condition: '',
+        threshold: '',
+        notificationChannels: [],
+        recipients: [],
+        status: '启用'
+      });
+    }
+  };
+
+  const handleWizardBack = () => {
+    if (wizardStep > 1) {
+      setWizardStep(wizardStep - 1);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* 告警统计 */}
+      <MdCard>
+        <MdCardHeader>
+          <MdCardTitle>告警统计</MdCardTitle>
+        </MdCardHeader>
+        <MdCardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">{totalRules}</div>
+              <div className="text-xs text-muted-foreground">告警规则总数</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-green-600">{enabledRules}</div>
+              <div className="text-xs text-muted-foreground">已启用规则</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold">{totalAlerts}</div>
+              <div className="text-xs text-muted-foreground">告警记录总数</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-yellow-600">{unprocessedAlerts}</div>
+              <div className="text-xs text-muted-foreground">待处理告警</div>
+            </div>
+            <div className="rounded-lg border bg-card p-4">
+              <div className="text-2xl font-bold text-red-600">{highSeverityAlerts}</div>
+              <div className="text-xs text-muted-foreground">高严重性告警</div>
+            </div>
+          </div>
+        </MdCardContent>
+      </MdCard>
+
       {/* 标签页切换 */}
       <div className="flex border-b">
         <button
@@ -584,7 +673,25 @@ export const AlertingPage: React.FC = () => {
                   className="w-[150px]"
                 />
                 <MdButton 
+                  variant="outline"
+                  onClick={() => setChannelConfigOpen(true)}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  通知渠道配置
+                </MdButton>
+                <MdButton 
                   variant="primary" 
+                  onClick={() => {
+                    setWizardOpen(true);
+                    setWizardStep(1);
+                    setEditingRule(null);
+                  }}
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  创建向导
+                </MdButton>
+                <MdButton 
+                  variant="outline" 
                   onClick={() => {
                     setEditingRule(null);
                     setRuleDialogOpen(true);
