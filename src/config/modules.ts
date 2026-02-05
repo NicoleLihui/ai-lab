@@ -154,6 +154,20 @@ export const categories: PrimaryCategory[] = [
             description: "评估管理",
             status: "已具备",
             existingPath: "system-management/system-backtesting/systemMachineEvaluation/index.vue"
+          },
+          {
+            key: "evaluation-create",
+            name: "新增评估",
+            description: "新增评估",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "evaluation-edit",
+            name: "编辑评估",
+            description: "编辑评估",
+            status: "已具备",
+            show: false
           }
         ]
       },

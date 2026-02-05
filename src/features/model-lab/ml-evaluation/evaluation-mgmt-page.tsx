@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Search, RotateCcw, FileText, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, RotateCcw, FileText, X, Plus, Edit } from "lucide-react";
 import { MdInput, MdButton, MdTable, MdBadge, type Column } from "@/components/enterprise-ui";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getMockEvaluationMgmtData, type EvaluationMgmtModel } from "../benefit-evaluation/mock-evaluation-mgmt-data";
 
 export function EvaluationMgmtPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState<EvaluationMgmtModel[]>([]);
   const [pagination, setPagination] = useState({
@@ -20,6 +22,16 @@ export function EvaluationMgmtPage() {
   // 详情弹窗状态
   const [isShowDetail, setIsShowDetail] = useState(false);
   const [currentModel, setCurrentModel] = useState<EvaluationMgmtModel | null>(null);
+
+  // 新增评估
+  const handleAdd = () => {
+    router.push("/categories/model-lab/ml-evaluation/evaluation-create");
+  };
+
+  // 编辑评估
+  const handleEdit = (model: EvaluationMgmtModel) => {
+    router.push(`/categories/model-lab/ml-evaluation/evaluation-edit?id=${model.modelId}`);
+  };
 
   // 加载数据
   const loadData = useCallback(async (page = pagination.current, size = pagination.pageSize, query = searchQuery) => {
@@ -233,17 +245,27 @@ export function EvaluationMgmtPage() {
     {
       title: "操作",
       key: "actions",
-      width: 100,
+      width: 180,
       align: "center",
       render: (_: unknown, record: EvaluationMgmtModel) => (
-        <MdButton
-          variant="ghost"
-          size="sm"
-          onClick={() => handleDetail(record)}
-          leftIcon={<FileText className="h-3 w-3" />}
-        >
-          详情
-        </MdButton>
+        <div className="flex items-center justify-center gap-2">
+          <MdButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(record)}
+            leftIcon={<Edit className="h-3 w-3" />}
+          >
+            编辑
+          </MdButton>
+          <MdButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDetail(record)}
+            leftIcon={<FileText className="h-3 w-3" />}
+          >
+            详情
+          </MdButton>
+        </div>
       ),
     },
   ], [pagination.current, pagination.pageSize]);
@@ -285,6 +307,12 @@ export function EvaluationMgmtPage() {
 
       {/* 表格区域 */}
       <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden p-4">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">评估列表</h2>
+          <MdButton onClick={handleAdd} leftIcon={<Plus className="h-4 w-4" />}>
+            新增评估
+          </MdButton>
+        </div>
         <MdTable
           columns={columns}
           data={tableData}

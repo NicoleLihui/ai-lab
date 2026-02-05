@@ -14,6 +14,7 @@ import { BenefitEvaluationPage } from "../model-lab/benefit-evaluation/benefit-e
 import { BenefitEvaluationMgmtPage } from "../model-lab/benefit-evaluation/benefit-evaluation-mgmt-page";
 import { MLEvaluationPage } from "../model-lab/ml-evaluation/ml-evaluation-page";
 import { EvaluationMgmtPage } from "../model-lab/ml-evaluation/evaluation-mgmt-page";
+import { EvaluationCreateEditPage } from "../model-lab/ml-evaluation/evaluation-create-edit-page";
 import { ModelPlazaPage } from "../model-lab/model-plaza/page";
 import { ModelDetailPage } from "../model-lab/model-plaza/model-detail-page";
 import { ModelRegistryPage } from "../model-center/model-registry/model-registry-page";
@@ -414,6 +415,8 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   // 模型评估
   "model-lab-ml-evaluation:ml-evaluation": MLEvaluationPage,
   "model-lab-ml-evaluation:evaluation-mgmt": EvaluationMgmtPage,
+  "model-lab-ml-evaluation:evaluation-create": EvaluationCreateEditPage,
+  "model-lab-ml-evaluation:evaluation-edit": EvaluationCreateEditPage,
   // 模型广场
   "model-lab-model-plaza:model-plaza": ModelPlazaPage,
   "model-lab-model-plaza:model-detail": ModelDetailPage,
