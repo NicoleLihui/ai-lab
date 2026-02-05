@@ -119,29 +119,7 @@ export const PerformanceMonitorPage: React.FC = () => {
       }
     ];
     
-    // 为每个数据项添加操作按钮
-    const mockDataWithActions = mockData.map(item => ({
-      ...item,
-      actions: (
-        <div className="flex space-x-2">
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              setSelectedMonitor(item);
-              setDetailOpen(true);
-            }}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            详情
-          </MdButton>
-        </div>
-      )
-    }));
-    
     setMonitors(mockData);
-    setMonitors(mockData);
-    setFilteredMonitors(mockDataWithActions);
   }, []);
 
   // 获取性能趋势数据（模拟）
@@ -350,23 +328,21 @@ export const PerformanceMonitorPage: React.FC = () => {
       result = result.filter(monitor => monitor.status === statusFilter);
     }
     
-    // 为过滤后的数据项添加操作按钮
+    // 为过滤后的数据项添加操作按钮（只有一个按钮，直接显示）
     const resultWithActions = result.map(item => ({
       ...item,
       actions: (
-        <div className="flex space-x-2">
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              setSelectedMonitor(item);
-              setDetailOpen(true);
-            }}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            详情
-          </MdButton>
-        </div>
+        <MdButton 
+          variant="ghost" 
+          size="sm"
+          onClick={() => {
+            setSelectedMonitor(item);
+            setDetailOpen(true);
+          }}
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          详情
+        </MdButton>
       )
     }));
     

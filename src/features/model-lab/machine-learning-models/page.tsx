@@ -378,12 +378,30 @@ const MachineLearningModelsPage: React.FC = () => {
     ].filter(item => item.show);
 
     const getMenuPosition = () => {
-      if (!buttonRef.current) return { top: 0, left: 0 };
+      if (!buttonRef.current) return { top: 0, left: 0, maxHeight: 'none' };
       const rect = buttonRef.current.getBoundingClientRect();
-      // 菜单宽度约140px，从按钮右侧向左展开
+      const menuHeight = menuItems.length * 36 + 8;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuWidth = 140;
+      
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      if (left + menuWidth > viewportWidth - 8) left = viewportWidth - menuWidth - 8;
+      
+      const showAbove = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+      const top = showAbove ? rect.top - menuHeight - 4 : rect.bottom + 4;
+      
+      const maxHeight = showAbove 
+        ? Math.min(menuHeight, spaceAbove - 8)
+        : Math.min(menuHeight, spaceBelow - 8);
+      
       return {
-        top: rect.bottom + 4,
-        left: rect.right - 140, // 向左偏移菜单宽度
+        top,
+        left,
+        maxHeight: maxHeight > 100 ? maxHeight : 100,
       };
     };
 
@@ -402,10 +420,11 @@ const MachineLearningModelsPage: React.FC = () => {
           createPortal(
             <div
               ref={menuRef}
-              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px]"
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px] overflow-y-auto"
               style={{
                 top: getMenuPosition().top,
                 left: getMenuPosition().left,
+                maxHeight: getMenuPosition().maxHeight,
               }}
             >
               {menuItems.map((item, index) => {

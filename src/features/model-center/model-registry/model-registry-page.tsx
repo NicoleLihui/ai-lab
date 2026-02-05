@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { MdCard, MdCardContent, MdCardDescription, MdCardHeader, MdCardTitle } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdInput } from '@/components/enterprise-ui/md-input';
@@ -9,7 +10,7 @@ import { MdTable } from '@/components/enterprise-ui/md-table';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { MdCheckbox } from '@/components/enterprise-ui/md-checkbox';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
-import { Search, Plus, Eye, Archive, Filter, Download, GitCompare, Trash2, Settings, RotateCcw, GitBranch, Power, Activity, History, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, Eye, Archive, Filter, Download, GitCompare, Trash2, Settings, RotateCcw, GitBranch, Power, Activity, History, ChevronDown, ChevronUp, MoreVertical } from 'lucide-react';
 
 // 部署实例摘要
 interface DeploymentSummary {
@@ -397,6 +398,143 @@ const ModelRegistryPage: React.FC = () => {
     setExpandedModelIds(newExpanded);
   };
 
+  // 操作菜单组件
+  const ActionMenu: React.FC<{ row: ModelInfo }> = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: '查看',
+        icon: Eye,
+        onClick: () => {
+          router.push(`/categories/model-center/model-registry/model-detail?id=${row.id}`);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+      {
+        label: '部署管理',
+        icon: Settings,
+        onClick: () => {
+          handleOpenDeploymentDrawer(row);
+          setIsOpen(false);
+        },
+        show: (row.deploymentCount || 0) > 0,
+      },
+      {
+        label: '归档',
+        icon: Archive,
+        onClick: () => {
+          if (confirm('确定归档此模型？')) {
+            setModels(models.map(m => 
+              m.id === row.id ? { ...m, status: 'archived' as const } : m
+            ));
+          }
+          setIsOpen(false);
+        },
+        show: true,
+        danger: true,
+      },
+    ].filter(item => item.show);
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0, maxHeight: 'none' };
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = menuItems.length * 36 + 8; // 每个菜单项约36px，加上padding
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuWidth = 140;
+      
+      // 计算左侧位置（确保不超出视口）
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8; // 最小左边距
+      if (left + menuWidth > viewportWidth - 8) left = viewportWidth - menuWidth - 8;
+      
+      // 判断显示在上方还是下方
+      const showAbove = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+      const top = showAbove ? rect.top - menuHeight - 4 : rect.bottom + 4;
+      
+      // 计算最大高度（确保不超出视口）
+      const maxHeight = showAbove 
+        ? Math.min(menuHeight, spaceAbove - 8)
+        : Math.min(menuHeight, spaceBelow - 8);
+      
+      return {
+        top,
+        left,
+        maxHeight: maxHeight > 100 ? maxHeight : 100, // 最小高度100px
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px] overflow-y-auto"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+                maxHeight: getMenuPosition().maxHeight,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={item.onClick}
+                    className={`flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                      item.danger 
+                        ? 'text-red-600 hover:bg-red-50' 
+                        : 'text-foreground hover:bg-primary-light'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <MdCard>
@@ -625,45 +763,7 @@ const ModelRegistryPage: React.FC = () => {
               {
                 key: 'actions',
                 title: '操作',
-                render: (value, row) => (
-                  <div className="flex gap-2">
-                    <MdButton 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => {
-                        router.push(`/categories/model-center/model-registry/model-detail?id=${row.id}`);
-                      }}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      查看
-                    </MdButton>
-                    {(row.deploymentCount || 0) > 0 && (
-                      <MdButton 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleOpenDeploymentDrawer(row)}
-                      >
-                        <Settings className="h-4 w-4 mr-1" />
-                        部署管理
-                      </MdButton>
-                    )}
-                    <MdButton 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-red-600 hover:text-red-700"
-                      onClick={() => {
-                        if (confirm('确定归档此模型？')) {
-                          setModels(models.map(m => 
-                            m.id === row.id ? { ...m, status: 'archived' as const } : m
-                          ));
-                        }
-                      }}
-                    >
-                      <Archive className="h-4 w-4 mr-1" />
-                      归档
-                    </MdButton>
-                  </div>
-                )
+                render: (value, row) => <ActionMenu row={row} />
               }
             ]}
           />

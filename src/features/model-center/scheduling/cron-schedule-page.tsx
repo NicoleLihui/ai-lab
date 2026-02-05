@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import BeTable from '@/components/enterprise-ui/table';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
-import { Search, Eye, Plus, Play, Pause, Edit, Trash2, Clock, Calendar, User, Settings, BarChart3 } from 'lucide-react';
+import { Search, Eye, Plus, Play, Pause, Edit, Trash2, Clock, Calendar, User, Settings, BarChart3, MoreVertical } from 'lucide-react';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 
@@ -38,6 +39,132 @@ const CronSchedulePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [taskTypeFilter, setTaskTypeFilter] = useState('all');
+
+  // 操作菜单组件
+  const ActionMenu: React.FC<{ row: ScheduleTask }> = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: '详情',
+        icon: Eye,
+        onClick: () => {
+          router.push(`/categories/model-center/scheduling/schedule-detail?id=${row.id}`);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+      {
+        label: '编辑',
+        icon: Edit,
+        onClick: () => {
+          router.push(`/categories/model-center/scheduling/schedule-edit?id=${row.id}`);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+      {
+        label: row.status === '运行中' ? '暂停' : '启动',
+        icon: row.status === '运行中' ? Pause : Play,
+        onClick: () => {
+          // 实现暂停/启动功能
+          console.log(`切换任务状态: ${row.id}`);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+    ];
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0, maxHeight: 'none' };
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = menuItems.length * 36 + 8;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuWidth = 140;
+      
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      if (left + menuWidth > viewportWidth - 8) left = viewportWidth - menuWidth - 8;
+      
+      const showAbove = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+      const top = showAbove ? rect.top - menuHeight - 4 : rect.bottom + 4;
+      
+      const maxHeight = showAbove 
+        ? Math.min(menuHeight, spaceAbove - 8)
+        : Math.min(menuHeight, spaceBelow - 8);
+      
+      return {
+        top,
+        left,
+        maxHeight: maxHeight > 100 ? maxHeight : 100,
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px] overflow-y-auto"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+                maxHeight: getMenuPosition().maxHeight,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={item.onClick}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary-light transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
 
   // 模拟数据
   useEffect(() => {
@@ -125,44 +252,7 @@ const CronSchedulePage: React.FC = () => {
       }
     ];
     
-    // 为每个数据项添加操作按钮
-    const mockDataWithActions = mockData.map(item => ({
-      ...item,
-      actions: (
-        <div className="flex space-x-2">
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => router.push(`/categories/model-center/scheduling/schedule-detail?id=${item.id}`)}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            详情
-          </MdButton>
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => router.push(`/categories/model-center/scheduling/schedule-edit?id=${item.id}`)}
-          >
-            <Edit className="h-4 w-4 mr-1" />
-            编辑
-          </MdButton>
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              // 实现暂停/启动功能
-              console.log(`切换任务状态: ${item.id}`);
-            }}
-          >
-            {item.status === '运行中' ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
-            {item.status === '运行中' ? '暂停' : '启动'}
-          </MdButton>
-        </div>
-      )
-    }));
-    
     setSchedules(mockData);
-    setFilteredSchedules(mockDataWithActions);
   }, []);
 
   // 过滤数据
@@ -188,40 +278,10 @@ const CronSchedulePage: React.FC = () => {
       result = result.filter(schedule => schedule.taskType === taskTypeFilter);
     }
     
-    // 为过滤后的数据项添加操作按钮
+    // 为过滤后的数据项添加操作菜单
     const resultWithActions = result.map(item => ({
       ...item,
-      actions: (
-        <div className="flex space-x-2">
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => router.push(`/categories/model-center/scheduling/schedule-detail?id=${item.id}`)}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            详情
-          </MdButton>
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => router.push(`/categories/model-center/scheduling/schedule-edit?id=${item.id}`)}
-          >
-            <Edit className="h-4 w-4 mr-1" />
-            编辑
-          </MdButton>
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              // 实现暂停/启动功能
-              console.log(`切换任务状态: ${item.id}`);
-            }}
-          >
-            {item.status === '运行中' ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
-            {item.status === '运行中' ? '暂停' : '启动'}
-          </MdButton>
-        </div>
-      )
+      actions: <ActionMenu row={item} />
     }));
     
     setFilteredSchedules(resultWithActions);

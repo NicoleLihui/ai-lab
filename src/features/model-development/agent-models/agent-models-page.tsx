@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { Search, RotateCcw, Plus, Edit, Settings, Play, Send, Trash2, ExternalLink } from "lucide-react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Search, RotateCcw, Plus, Edit, Settings, Play, Send, Trash2, ExternalLink, MoreVertical } from "lucide-react";
 import { MdInput, MdButton, MdTable, MdBadge } from "@/components/enterprise-ui";
 import type { Column } from "@/components/enterprise-ui";
 import { getMockAgentModelList, deleteMockAgentModel, type AgentModelItem } from "./mock-data";
@@ -141,6 +142,143 @@ export function AgentModelsPage() {
     // router.push(`/modules/model-development/agent-models/detail?modelId=${row.id}&versionState=1`);
   };
 
+  // 操作菜单组件
+  const ActionMenu: React.FC<{ row: AgentModelItem }> = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: "编辑",
+        icon: Edit,
+        onClick: () => handleEdit(row),
+        show: row.releaseStatus === "未发布",
+      },
+      {
+        label: "版本管理",
+        icon: Settings,
+        onClick: () => handleVersion(row),
+        show: true,
+      },
+      {
+        label: "试用",
+        icon: Play,
+        onClick: () => handleTrial(row),
+        show: true,
+      },
+      {
+        label: "发布",
+        icon: Send,
+        onClick: () => handleRelease(row),
+        show: row.releaseStatus === "未发布",
+      },
+      {
+        label: "调试",
+        icon: ExternalLink,
+        onClick: () => handleDebug(row),
+        show: true,
+      },
+      {
+        label: "删除",
+        icon: Trash2,
+        onClick: () => handleDelete(row),
+        show: row.releaseStatus === "未发布",
+      },
+    ].filter((item) => item.show);
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0, maxHeight: 'none' };
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = menuItems.length * 36 + 8;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuWidth = 140;
+      
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      if (left + menuWidth > viewportWidth - 8) left = viewportWidth - menuWidth - 8;
+      
+      const showAbove = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+      const top = showAbove ? rect.top - menuHeight - 4 : rect.bottom + 4;
+      
+      const maxHeight = showAbove 
+        ? Math.min(menuHeight, spaceAbove - 8)
+        : Math.min(menuHeight, spaceBelow - 8);
+      
+      return {
+        top,
+        left,
+        maxHeight: maxHeight > 100 ? maxHeight : 100,
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px] overflow-y-auto"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+                maxHeight: getMenuPosition().maxHeight,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      item.onClick();
+                      setIsOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary-light transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
+
   // 定义表格列
   const columns: Column<Record<string, unknown>>[] = [
     {
@@ -253,69 +391,12 @@ export function AgentModelsPage() {
     {
       key: "actions",
       title: "操作",
-      width: 300,
+      width: 80,
       align: "center" as const,
       fixed: "right" as const,
       render: (_: unknown, row: Record<string, unknown>) => {
         const item = row as AgentModelItem;
-        return (
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            {item.releaseStatus === "未发布" && (
-              <MdButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEdit(item)}
-                leftIcon={<Edit className="h-3 w-3" />}
-              >
-                编辑
-              </MdButton>
-            )}
-            <MdButton
-              variant="ghost"
-              size="sm"
-              onClick={() => handleVersion(item)}
-              leftIcon={<Settings className="h-3 w-3" />}
-            >
-              版本管理
-            </MdButton>
-            <MdButton
-              variant="ghost"
-              size="sm"
-              onClick={() => handleTrial(item)}
-              leftIcon={<Play className="h-3 w-3" />}
-            >
-              试用
-            </MdButton>
-            {item.releaseStatus === "未发布" && (
-              <MdButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleRelease(item)}
-                leftIcon={<Send className="h-3 w-3" />}
-              >
-                发布
-              </MdButton>
-            )}
-            <MdButton
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDebug(item)}
-              leftIcon={<ExternalLink className="h-3 w-3" />}
-            >
-              调试
-            </MdButton>
-            {item.releaseStatus === "未发布" && (
-              <MdButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(item)}
-                leftIcon={<Trash2 className="h-3 w-3" />}
-              >
-                删除
-              </MdButton>
-            )}
-          </div>
-        );
+        return <ActionMenu row={item} />;
       },
     },
   ];

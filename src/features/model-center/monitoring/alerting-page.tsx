@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import BeTable from '@/components/enterprise-ui/table';
@@ -8,7 +9,7 @@ import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
-import { Search, Plus, Edit, Trash2, Mail, MessageSquare, Bell, CheckCircle, XCircle, BarChart3, Settings, Wand2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Mail, MessageSquare, Bell, CheckCircle, XCircle, BarChart3, Settings, Wand2, MoreVertical } from 'lucide-react';
 
 // 定义告警规则接口
 interface AlertRule {
@@ -130,38 +131,7 @@ export const AlertingPage: React.FC = () => {
       }
     ];
 
-    const mockRulesWithActions = mockRules.map(item => ({
-      ...item,
-      actions: (
-        <div className="flex space-x-2">
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              setEditingRule(item);
-              setRuleDialogOpen(true);
-            }}
-          >
-            <Edit className="h-4 w-4 mr-1" />
-            编辑
-          </MdButton>
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              // 删除规则
-              console.log('删除规则:', item.id);
-            }}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            删除
-          </MdButton>
-        </div>
-      )
-    }));
-
     setRules(mockRules);
-    setFilteredRules(mockRulesWithActions);
   }, []);
 
   // 模拟告警记录数据
@@ -223,42 +193,7 @@ export const AlertingPage: React.FC = () => {
       }
     ];
 
-    const mockRecordsWithActions = mockRecords.map(item => ({
-      ...item,
-      actions: (
-        <div className="flex space-x-2">
-          {item.status === '已触发' && (
-            <>
-              <MdButton 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  // 处理告警
-                  console.log('处理告警:', item.id);
-                }}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                处理
-              </MdButton>
-              <MdButton 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  // 忽略告警
-                  console.log('忽略告警:', item.id);
-                }}
-              >
-                <XCircle className="h-4 w-4 mr-1" />
-                忽略
-              </MdButton>
-            </>
-          )}
-        </div>
-      )
-    }));
-
     setRecords(mockRecords);
-    setFilteredRecords(mockRecordsWithActions);
   }, []);
 
   // 过滤规则数据
@@ -279,31 +214,7 @@ export const AlertingPage: React.FC = () => {
       
       const resultWithActions = result.map(item => ({
         ...item,
-        actions: (
-          <div className="flex space-x-2">
-            <MdButton 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                setEditingRule(item);
-                setRuleDialogOpen(true);
-              }}
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              编辑
-            </MdButton>
-            <MdButton 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                console.log('删除规则:', item.id);
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              删除
-            </MdButton>
-          </div>
-        )
+        actions: <RuleActionMenu row={item} />
       }));
       
       setFilteredRules(resultWithActions);
@@ -329,34 +240,7 @@ export const AlertingPage: React.FC = () => {
       
       const resultWithActions = result.map(item => ({
         ...item,
-        actions: (
-          <div className="flex space-x-2">
-            {item.status === '已触发' && (
-              <>
-                <MdButton 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    console.log('处理告警:', item.id);
-                  }}
-                >
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  处理
-                </MdButton>
-                <MdButton 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    console.log('忽略告警:', item.id);
-                  }}
-                >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  忽略
-                </MdButton>
-              </>
-            )}
-          </div>
-        )
+        actions: <RecordActionMenu row={item} />
       }));
       
       setFilteredRecords(resultWithActions);
@@ -391,6 +275,249 @@ export const AlertingPage: React.FC = () => {
       default:
         return 'secondary';
     }
+  };
+
+  // 告警规则操作菜单组件
+  const RuleActionMenu: React.FC<{ row: AlertRule }> = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: '编辑',
+        icon: Edit,
+        onClick: () => {
+          setEditingRule(row);
+          setRuleDialogOpen(true);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+      {
+        label: '删除',
+        icon: Trash2,
+        onClick: () => {
+          console.log('删除规则:', row.id);
+          setIsOpen(false);
+        },
+        show: true,
+        danger: true,
+      },
+    ];
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0, maxHeight: 'none' };
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = menuItems.length * 36 + 8;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuWidth = 140;
+      
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      if (left + menuWidth > viewportWidth - 8) left = viewportWidth - menuWidth - 8;
+      
+      const showAbove = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+      const top = showAbove ? rect.top - menuHeight - 4 : rect.bottom + 4;
+      
+      const maxHeight = showAbove 
+        ? Math.min(menuHeight, spaceAbove - 8)
+        : Math.min(menuHeight, spaceBelow - 8);
+      
+      return {
+        top,
+        left,
+        maxHeight: maxHeight > 100 ? maxHeight : 100,
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px] overflow-y-auto"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+                maxHeight: getMenuPosition().maxHeight,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={item.onClick}
+                    className={`flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                      item.danger 
+                        ? 'text-red-600 hover:bg-red-50' 
+                        : 'text-foreground hover:bg-primary-light'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
+
+  // 告警记录操作菜单组件
+  const RecordActionMenu: React.FC<{ row: AlertRecord }> = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: '处理',
+        icon: CheckCircle,
+        onClick: () => {
+          console.log('处理告警:', row.id);
+          setIsOpen(false);
+        },
+        show: row.status === '已触发',
+      },
+      {
+        label: '忽略',
+        icon: XCircle,
+        onClick: () => {
+          console.log('忽略告警:', row.id);
+          setIsOpen(false);
+        },
+        show: row.status === '已触发',
+      },
+    ].filter(item => item.show);
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0, maxHeight: 'none' };
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuHeight = menuItems.length * 36 + 8;
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuWidth = 140;
+      
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      if (left + menuWidth > viewportWidth - 8) left = viewportWidth - menuWidth - 8;
+      
+      const showAbove = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+      const top = showAbove ? rect.top - menuHeight - 4 : rect.bottom + 4;
+      
+      const maxHeight = showAbove 
+        ? Math.min(menuHeight, spaceAbove - 8)
+        : Math.min(menuHeight, spaceBelow - 8);
+      
+      return {
+        top,
+        left,
+        maxHeight: maxHeight > 100 ? maxHeight : 100,
+      };
+    };
+
+    // 如果没有可显示的操作项，返回空
+    if (menuItems.length === 0) {
+      return <span className="text-muted-foreground text-sm">-</span>;
+    }
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px] overflow-y-auto"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+                maxHeight: getMenuPosition().maxHeight,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={item.onClick}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary-light transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
   };
 
   // 告警规则表格列
