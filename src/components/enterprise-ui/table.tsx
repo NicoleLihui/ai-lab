@@ -35,9 +35,14 @@ const BeTable: React.FC<BeTableProps> = ({
       return {
         title: col.label,
         key: 'actions',
-        width: col.minWidth,
+        width: col.width || col.minWidth,
         align: col.align,
         render: (_: any, record: any) => {
+          // 如果提供了自定义render函数，优先使用
+          if (col.render) {
+            return col.render(record);
+          }
+          // 否则使用buttons函数生成按钮
           const buttons = col.buttons ? col.buttons(record) : [];
           return (
             <div className="flex items-center justify-center gap-2 flex-wrap">

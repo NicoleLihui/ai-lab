@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import BeTable from '@/components/enterprise-ui/table';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
-import { Search, Eye, Check, X, Clock, User, Calendar, GitBranch, FileText, Activity } from 'lucide-react';
+import { Search, Eye, Check, X, Clock, User, Calendar, GitBranch, FileText, Activity, MoreVertical } from 'lucide-react';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 
@@ -263,28 +264,8 @@ const ReviewModelReleasePage: React.FC = () => {
         message: ''
       }
     ]);
-    // 为每个数据项添加操作按钮
-    const mockDataWithActions = mockData.map(item => ({
-      ...item,
-      actions: (
-        <div className="flex space-x-2">
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              // 导航到详情页面
-                            router.push(`/categories/model-lab/release-governance/model-detail?id=${item.id}`)
-            }}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            详情
-          </MdButton>
-        </div>
-      )
-    }));
-    
     setReviews(mockData);
-    setFilteredReviews(mockDataWithActions);
+    setFilteredReviews(mockData);
   }, []);
 
   // 过滤数据
@@ -304,28 +285,105 @@ const ReviewModelReleasePage: React.FC = () => {
       result = result.filter(review => review.status === statusFilter);
     }
     
-    // 为过滤后的数据项添加操作按钮
-    const resultWithActions = result.map(item => ({
-      ...item,
-      actions: (
-        <div className="flex space-x-2">
-          <MdButton 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              // 导航到详情页面
-                            router.push(`/categories/model-lab/release-governance/model-detail?id=${item.id}`)
-            }}
-          >
-            <Eye className="h-4 w-4 mr-1" />
-            详情
-          </MdButton>
-        </div>
-      )
-    }));
-    
-    setFilteredReviews(resultWithActions);
+    setFilteredReviews(result);
   }, [searchTerm, statusFilter, reviews]);
+
+  // 操作菜单组件
+  const ActionMenu: React.FC<{ row: ModelReleaseReview }> = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: '详情',
+        icon: Eye,
+        onClick: () => {
+          router.push(`/categories/model-lab/release-governance/model-detail?id=${row.id}`);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+      {
+        label: '工作流',
+        icon: GitBranch,
+        onClick: () => {
+          setSelectedModel(row);
+          setWorkflowDrawerOpen(true);
+          setIsOpen(false);
+        },
+        show: !!row.workflowId,
+      },
+    ].filter(item => item.show);
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0 };
+      const rect = buttonRef.current.getBoundingClientRect();
+      return {
+        top: rect.bottom + 4,
+        left: rect.right - 140,
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px]"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={item.onClick}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary-light transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
 
   // 处理审核操作
   const handleReviewAction = (model: ModelReleaseReview, action: 'approve' | 'reject') => {
@@ -530,10 +588,11 @@ const ReviewModelReleasePage: React.FC = () => {
       )
     },
     {
-      prop: 'actions',
+      type: 'actions',
       label: '操作',
-      width: 180,
-      align: 'center'
+      width: 80,
+      align: 'center',
+      render: (row: ModelReleaseReview) => <ActionMenu row={row} />
     }
   ];
 

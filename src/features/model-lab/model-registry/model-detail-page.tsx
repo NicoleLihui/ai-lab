@@ -59,17 +59,17 @@ const ModelDetailPage: React.FC = () => {
   // 暂时使用模拟数据
   const modelDetail: ModelDetail = {
     id: modelId,
-    name: modelId === '1' ? '推荐算法模型' : modelId === '2' ? '风控评分模型' : 'NLP文本分类',
-    description: modelId === '1' ? '基于协同过滤和深度学习的个性化推荐模型，适用于电商商品推荐场景' : 
-                modelId === '2' ? '基于机器学习的风险评估模型，用于信用风险评分' : 
-                '自然语言处理模型，用于文本分类和情感分析',
-    framework: modelId === '1' ? 'TensorFlow' : modelId === '2' ? 'PyTorch' : 'Transformers',
+    name: modelId === '1' ? '水质预测模型' : modelId === '2' ? '用水量预测模型' : '管网漏损检测模型',
+    description: modelId === '1' ? '基于历史水质数据预测pH、浊度、余氯等水质指标，适用于供水水质监测场景' : 
+                modelId === '2' ? '基于时间序列的用水量预测模型，用于供水调度优化' : 
+                '基于压力、流量数据检测管网漏损位置，用于管网维护',
+    framework: modelId === '1' ? 'TensorFlow' : modelId === '2' ? 'PyTorch' : 'Scikit-learn',
     version: 'v1.2.3',
     stage: 'production',
     createdTime: '2024-01-15 10:30:00',
     updatedTime: '2024-01-20 14:22:15',
     creator: '张三',
-    tags: ['推荐系统', '深度学习', '协同过滤'],
+    tags: ['水质监测', '回归模型', '时间序列'],
     versions: [
       {
         id: 'v1.0.0',

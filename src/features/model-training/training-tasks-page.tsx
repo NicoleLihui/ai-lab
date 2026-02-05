@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
-import { Search, RotateCcw, Play, BarChart2, X } from "lucide-react"
+import { Search, RotateCcw, BarChart2, X } from "lucide-react"
 import { MdInput, MdButton, MdTable, MdBadge } from "@/components/enterprise-ui"
 import type { Column } from "@/components/enterprise-ui"
-import { getMockTrainingPage, getMockTrainingResult, mockDeployTest, TrainingResult, TrainingTask } from "./mock-data"
+import { getMockTrainingPage, getMockTrainingResult, TrainingResult, TrainingTask } from "./mock-data"
 import { toast } from "sonner"
 
 export function TrainingTasksPage() {
@@ -67,23 +67,6 @@ export function TrainingTasksPage() {
     loadData(1, pagination.pageSize, "")
   }
 
-  const handleDeployTest = async (row: TrainingTask) => {
-    try {
-      const res = mockDeployTest({
-        modelId: row.modelId,
-        runId: row.runId,
-        modelKey: row.modelKey,
-        modelName: row.modelName,
-        version: row.version,
-      })
-      if (res.success) {
-        toast.success(res.message)
-        loadData()
-      }
-    } catch (error) {
-      toast.error("部署测试失败")
-    }
-  }
 
   const handleViewResults = async (row: TrainingTask) => {
     setSelectedTask(row)
@@ -220,7 +203,7 @@ export function TrainingTasksPage() {
     },
     {
       key: "deployTestStatus",
-      title: "是否部署测试",
+      title: "测试部署状态",
       width: 130,
       align: "center" as const,
       render: (value: unknown) => {
@@ -264,15 +247,6 @@ export function TrainingTasksPage() {
         const task = row as TrainingTask
         return (
           <div className="flex items-center justify-center gap-2">
-            <MdButton
-              variant="ghost"
-              size="sm"
-              disabled={task.deployTestStatus === 1}
-              onClick={() => handleDeployTest(task)}
-              leftIcon={<Play className="h-3 w-3" />}
-            >
-              部署测试
-            </MdButton>
             <MdButton
               variant="ghost"
               size="sm"

@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import BeTable from '@/components/enterprise-ui/table';
@@ -9,7 +11,7 @@ import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
 import { AdvancedSearch } from '@/components/enterprise-ui/advanced-search';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
-import { Search, Eye, User, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Search, Eye, User, Calendar, CheckCircle, XCircle, Clock, MoreVertical, Check, X } from 'lucide-react';
 
 // 定义模型部署审核数据接口
 interface ModelDeployReview {
@@ -34,83 +36,10 @@ interface ModelDeployReview {
   busType?: string;
 }
 
-// 审核操作弹窗组件
-interface ReviewActionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: (action: 'approve' | 'reject', reason?: string) => void;
-  model: ModelDeployReview | null;
-  actionType: 'approve' | 'reject';
-}
-
-const ReviewActionModal: React.FC<ReviewActionModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  model,
-  actionType
-}) => {
-  const [reason, setReason] = useState('');
-
-  useEffect(() => {
-    if (!isOpen) {
-      setReason('');
-    }
-  }, [isOpen]);
-
-  if (!isOpen || !model) return null;
-
-  const handleSubmit = () => {
-    if (actionType === 'reject' && !reason.trim()) {
-      alert('请输入驳回原因');
-      return;
-    }
-    onConfirm(actionType, reason);
-  };
-
-  return (
-    <MdDrawer
-      open={isOpen}
-      onClose={onClose}
-      title={`${actionType === 'approve' ? '审核通过' : '审核驳回'} - ${model?.modelName || ''}`}
-      width="500px"
-    >
-      <div className="p-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {actionType === 'approve' ? '审核意见:' : '驳回原因:'}
-          </label>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
-            rows={6}
-            placeholder={actionType === 'approve' ? '请输入审核意见（可选）' : '请输入驳回原因'}
-            maxLength={500}
-          />
-          <div className="text-xs text-muted-foreground mt-1 text-right">
-            {reason.length}/500
-          </div>
-        </div>
-        
-        <div className="flex justify-end space-x-3 pt-4 border-t">
-          <MdButton variant="outline" onClick={onClose}>
-            取消
-          </MdButton>
-          <MdButton 
-            variant={actionType === 'approve' ? 'primary' : 'danger'} 
-            onClick={handleSubmit}
-          >
-            {actionType === 'approve' ? '确认通过' : '确认驳回'}
-          </MdButton>
-        </div>
-      </div>
-    </MdDrawer>
-  );
-};
 
 // 主页面组件
 const ReviewModelDeployPage: React.FC = () => {
+  const router = useRouter();
   const [reviews, setReviews] = useState<ModelDeployReview[]>([]);
   const [filteredReviews, setFilteredReviews] = useState<ModelDeployReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,10 +54,6 @@ const ReviewModelDeployPage: React.FC = () => {
     applicationStatus: ''
   });
   
-  // 弹窗状态
-  const [showActionModal, setShowActionModal] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<ModelDeployReview | null>(null);
-  const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
 
   // 状态选项
   const statusOptions = [
@@ -172,15 +97,15 @@ const ReviewModelDeployPage: React.FC = () => {
       {
         id: '2',
         modelId: 'ML002',
-        modelName: '客户流失预测模型',
+        modelName: '用水量预测模型',
         modelType: '机器学习',
-        version: 'v1.2.0',
+        version: 'v2.1.0',
         reviewStatus: '审核中',
-        description: '预测客户流失概率',
-        paramInStr: '客户年龄、消费金额、活跃度',
-        paramOutStr: '流失概率',
-        applicableScenario: '客户管理',
-        paramEva: '准确率 92%',
+        description: '预测未来用水量，支持日、周、月预测',
+        paramInStr: '历史用水量、温度、节假日',
+        paramOutStr: '预测用水量',
+        applicableScenario: '供水调度',
+        paramEva: '准确率 87%',
         trialTimes: 1520,
         instructions: '使用说明',
         createBy: '李四',
@@ -319,59 +244,116 @@ const ReviewModelDeployPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // 处理审核操作
-  const handleReviewAction = (model: ModelDeployReview, action: 'approve' | 'reject') => {
-    setSelectedModel(model);
-    setActionType(action);
-    setShowActionModal(true);
+  // 操作菜单组件
+  const ActionMenu: React.FC<{ row: ModelDeployReview; onCommand: (command: string, row: ModelDeployReview) => void }> = ({ row, onCommand }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: row.reviewStatus === '审核中' ? '审批' : '详情',
+        icon: row.reviewStatus === '审核中' ? CheckCircle : Eye,
+        onClick: () => {
+          onCommand('detail', row);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+    ].filter(item => item.show);
+
+    // 如果只有一个操作项，直接显示按钮，不使用折叠菜单
+    if (menuItems.length === 1) {
+      const item = menuItems[0];
+      const Icon = item.icon;
+      return (
+        <MdButton
+          variant="ghost"
+          size="sm"
+          onClick={() => item.onClick()}
+          className="h-8"
+        >
+          <Icon className="h-4 w-4 mr-1" />
+          {item.label}
+        </MdButton>
+      );
+    }
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0 };
+      const rect = buttonRef.current.getBoundingClientRect();
+      return {
+        top: rect.bottom + 4,
+        left: rect.right - 140,
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px]"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={item.onClick}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary-light transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
   };
 
-  // 确认审核操作
-  const confirmReviewAction = (action: 'approve' | 'reject', reason?: string) => {
-    if (!selectedModel) return;
-    
-    // TODO: 调用实际API
-    // const params = {
-    //   taskId: selectedModel.taskId,
-    //   pageType: 5,
-    //   busType: selectedModel.busType,
-    //   reason: reason || (action === 'approve' ? '审核通过' : '')
-    // };
-    // if (action === 'approve') {
-    //   reviewApproval(params);
-    // } else {
-    //   reviewBack({ ...params, dataId: selectedModel.busId, id: selectedModel.modelId });
-    // }
-    
-    console.log(`对模型 ${selectedModel.modelName} 执行${action === 'approve' ? '通过' : '驳回'}操作`, reason);
-    
-    // 更新本地状态
-    const updatedReviews = reviews.map(review => {
-      if (review.id === selectedModel.id) {
-        return {
-          ...review,
-          reviewStatus: action === 'approve' ? '审核通过' : '审核未通过' as '审核中' | '审核通过' | '审核未通过'
-        };
-      }
-      return review;
-    });
-    
-    setReviews(updatedReviews);
-    setShowActionModal(false);
-    setSelectedModel(null);
-    loadTableData();
-  };
 
   // 查看详情
   const handleViewDetail = (row: ModelDeployReview) => {
-    // TODO: 跳转到详情页
-    console.log('查看详情:', row);
-  };
-
-  // 查看试用详情
-  const handleViewTrialDetail = (row: ModelDeployReview) => {
-    // TODO: 打开试用详情弹窗
-    console.log('查看试用详情:', row);
+    router.push(
+      `/categories/model-lab/release-governance/deploy-review-detail?id=${row.id}&busId=${row.busId || row.modelId}&modelId=${row.modelId}`
+    );
   };
 
   // 表格列定义
@@ -488,50 +470,20 @@ const ReviewModelDeployPage: React.FC = () => {
     {
       type: 'actions',
       label: '操作',
-      minWidth: 200,
+      width: 80,
       align: 'center',
-      buttons: (row: ModelDeployReview) => {
-        const btns = [];
-        
-        // 试用详情 - 所有状态都显示
-        if (row.reviewStatus) {
-          btns.push({
-            name: '试用详情',
-            type: 'primary',
-            command: 'trialDetail'
-          });
-        }
-        
-        // 详情 - 非审核中状态显示
-        if (row.reviewStatus !== '审核中') {
-          btns.push({
-            name: '详情',
-            type: 'primary',
-            command: 'detail'
-          });
-        }
-        
-        // 审核 - 审核中状态显示
-        if (row.reviewStatus === '审核中') {
-          btns.push({
-            name: '审核',
-            type: 'primary',
-            command: 'review'
-          });
-          btns.push({
-            name: '通过',
-            type: 'success',
-            command: 'approve'
-          });
-          btns.push({
-            name: '驳回',
-            type: 'danger',
-            command: 'reject'
-          });
-        }
-        
-        return btns;
-      }
+      render: (row: ModelDeployReview) => (
+        <ActionMenu row={row} onCommand={(command, r) => {
+          switch (command) {
+            case 'detail':
+              handleViewDetail(r);
+              break;
+            case 'trialDetail':
+              handleViewTrialDetail(r);
+              break;
+          }
+        }} />
+      )
     }
   ];
 
@@ -592,32 +544,12 @@ const ReviewModelDeployPage: React.FC = () => {
                 case 'detail':
                   handleViewDetail(model);
                   break;
-                case 'trialDetail':
-                  handleViewTrialDetail(model);
-                  break;
-                case 'review':
-                  // TODO: 跳转到审核详情页
-                  console.log('审核:', model);
-                  break;
-                case 'approve':
-                  handleReviewAction(model, 'approve');
-                  break;
-                case 'reject':
-                  handleReviewAction(model, 'reject');
-                  break;
               }
             }}
           />
         </MdCardContent>
       </MdCard>
 
-      <ReviewActionModal
-        isOpen={showActionModal}
-        onClose={() => setShowActionModal(false)}
-        onConfirm={confirmReviewAction}
-        model={selectedModel}
-        actionType={actionType}
-      />
     </div>
   );
 };

@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import BeTable from '@/components/enterprise-ui/table';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { AdvancedSearch } from '@/components/enterprise-ui/advanced-search';
-import { Plus, Eye, Edit, Play, CheckCircle, XCircle, Clock, AlertCircle, Download, BarChart3, CheckSquare } from 'lucide-react';
+import { Plus, Eye, Edit, Play, CheckCircle, XCircle, Clock, AlertCircle, Download, BarChart3, CheckSquare, MoreVertical } from 'lucide-react';
 import { MdCheckbox } from '@/components/enterprise-ui/md-checkbox';
 
 // 定义准入检测数据接口
@@ -100,11 +101,11 @@ const AdmissionCheckPage: React.FC = () => {
       },
       {
         id: '2',
-        testName: '客户流失预测模型-基准测试',
+        testName: '用水量预测模型-基准测试',
         modelId: 'ML002',
-        modelName: '客户流失预测模型',
+        modelName: '用水量预测模型',
         modelType: '机器学习',
-        modelVersion: 'v1.2.0',
+        modelVersion: 'v2.1.0',
         testType: '基准测试',
         testStatus: '执行中',
         testDuration: 0,
@@ -148,11 +149,11 @@ const AdmissionCheckPage: React.FC = () => {
       },
       {
         id: '5',
-        testName: '推荐系统模型-冒烟测试',
+        testName: 'COD去除率预测模型-冒烟测试',
         modelId: 'ML003',
-        modelName: '推荐系统模型',
+        modelName: 'COD去除率预测模型',
         modelType: '机器学习',
-        modelVersion: 'v2.5.0',
+        modelVersion: 'v2.0.1',
         testType: '冒烟测试',
         testStatus: '已失败',
         testResult: '未通过',
@@ -403,6 +404,120 @@ const AdmissionCheckPage: React.FC = () => {
   const allSelected = filteredTests.length > 0 && filteredTests.every(t => selectedTests.has(t.id));
   const someSelected = selectedTests.size > 0 && selectedTests.size < filteredTests.length;
 
+  // 操作菜单组件
+  const ActionMenu: React.FC<{ row: AdmissionCheck; onCommand: (command: string, row: AdmissionCheck) => void }> = ({ row, onCommand }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: '详情',
+        icon: Eye,
+        onClick: () => {
+          onCommand('detail', row);
+          setIsOpen(false);
+        },
+        show: true,
+      },
+      {
+        label: '编辑',
+        icon: Edit,
+        onClick: () => {
+          onCommand('edit', row);
+          setIsOpen(false);
+        },
+        show: row.testStatus === '待执行',
+      },
+      {
+        label: '执行',
+        icon: Play,
+        onClick: () => {
+          onCommand('run', row);
+          setIsOpen(false);
+        },
+        show: row.testStatus === '待执行' || row.testStatus === '已失败',
+      },
+      {
+        label: '下载报告',
+        icon: Download,
+        onClick: () => {
+          onCommand('download', row);
+          setIsOpen(false);
+        },
+        show: row.testStatus === '已完成',
+      },
+    ].filter(item => item.show);
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0 };
+      const rect = buttonRef.current.getBoundingClientRect();
+      return {
+        top: rect.bottom + 4,
+        left: rect.right - 140,
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px]"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={item.onClick}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary-light transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -558,47 +673,26 @@ const AdmissionCheckPage: React.FC = () => {
     {
       type: 'actions',
       label: '操作',
-      minWidth: 200,
+      width: 80,
       align: 'center',
-      buttons: (row: AdmissionCheck) => {
-        const btns = [];
-        
-        // 详情 - 所有状态都显示
-        btns.push({
-          name: '详情',
-          type: 'primary',
-          command: 'detail'
-        });
-        
-        // 编辑 - 待执行状态显示
-        if (row.testStatus === '待执行') {
-          btns.push({
-            name: '编辑',
-            type: 'primary',
-            command: 'edit'
-          });
-        }
-        
-        // 执行 - 待执行或已失败状态显示
-        if (row.testStatus === '待执行' || row.testStatus === '已失败') {
-          btns.push({
-            name: '执行',
-            type: 'success',
-            command: 'run'
-          });
-        }
-        
-        // 下载报告 - 已完成状态显示
-        if (row.testStatus === '已完成') {
-          btns.push({
-            name: '下载报告',
-            type: 'primary',
-            command: 'download'
-          });
-        }
-        
-        return btns;
-      }
+      render: (row: AdmissionCheck) => (
+        <ActionMenu row={row} onCommand={(command, r) => {
+          switch (command) {
+            case 'detail':
+              handleViewDetail(r);
+              break;
+            case 'edit':
+              handleEdit(r);
+              break;
+            case 'run':
+              handleRunTest(r);
+              break;
+            case 'download':
+              handleDownloadReport(r);
+              break;
+          }
+        }} />
+      )
     }
   ];
 

@@ -65,9 +65,16 @@ export const categories: PrimaryCategory[] = [
             show: false
           },
           {
-            key: "machine-learning-models-deploy",
-            name: "模型部署",
-            description: "模型部署三步流程：编辑模型基础信息、数据目录注册、运行调度管理",
+            key: "machine-learning-models-deploy-test",
+            name: "部署测试",
+            description: "部署到开发/测试环境，无需审核，用于模型试用和评估",
+            status: "已具备",
+            show: false
+          },
+          {
+            key: "machine-learning-models-deploy-prod",
+            name: "部署生产",
+            description: "部署到生产环境，需要审核工作流，发布到模型中心并进入模型库",
             status: "已具备",
             show: false
           },
@@ -100,16 +107,16 @@ export const categories: PrimaryCategory[] = [
         description: "训练任务创建、执行和监控",
         pages: [
           {
-            key: "model-training",
-            name: "模型训练",
-            description: "模型训练",
+            key: "training-task-create",
+            name: "创建训练任务",
+            description: "参考TIONE任务式建模：配置基本信息、资源配置、数据来源、训练参数，支持从MLflow选择已上传的模型资产",
             status: "已具备",
-            existingPath: "model-evaluation/model-train/index.vue"
+            show: false
           },
           {
             key: "training-tasks",
             name: "训练任务管理",
-            description: "对数据规则模型和机器学习模型的训练任务列表，支持对训练的模型进行部署测试、支持训练结果查看",
+            description: "训练任务列表，支持部署测试（开发/测试环境，无需审核）、部署生产（生产环境，需审核）、训练结果查看",
             status: "已具备",
             existingPath: "model-evaluation/model-train/index.vue"
           }
@@ -237,6 +244,13 @@ export const categories: PrimaryCategory[] = [
             description: "模型部署审核",
             status: "已具备",
             existingPath: "backend-management/review-model-deploy/index.vue"
+          },
+          {
+            key: "deploy-review-detail",
+            name: "模型部署审核详情",
+            description: "模型部署审核详情页面，包含基本信息、试用结果、评估报告、训练数据、下载模型等功能",
+            status: "已具备",
+            show: false
           },
           {
             key: "deployment-management",

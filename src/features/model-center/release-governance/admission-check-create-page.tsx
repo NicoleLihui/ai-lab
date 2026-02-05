@@ -57,7 +57,7 @@ const AdmissionCheckCreatePage: React.FC = () => {
   // 模拟模型列表（实际应该从API获取）
   const modelOptions = [
     { value: 'ML001', label: 'A2O外回流比推理模型 (v3.0)' },
-    { value: 'ML002', label: '客户流失预测模型 (v1.2.0)' },
+    { value: 'ML002', label: '用水量预测模型 (v2.1.0)' },
     { value: 'AG001', label: '智能客服助手 (v2.1.0)' },
     { value: 'DR001', label: '数据规则模型 (v1.0.5)' },
   ];

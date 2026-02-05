@@ -69,6 +69,7 @@ interface ModelInfo {
   updatedTime: string;
   creator: string;
   status: 'draft' | 'registered' | 'archived';
+  published?: boolean; // 是否已发布到模型广场
   // 新增部署相关字段
   deployments?: DeploymentSummary[];
   deploymentCount?: number;
@@ -92,6 +93,7 @@ const ModelRegistryPage: React.FC = () => {
       updatedTime: '2024-01-20 14:22:15',
       creator: '张三',
       status: 'registered',
+      published: true,
       deployments: [
         {
           id: 'deploy-1',
@@ -118,6 +120,7 @@ const ModelRegistryPage: React.FC = () => {
       updatedTime: '2024-01-19 16:45:22',
       creator: '李四',
       status: 'registered',
+      published: false,
       deployments: [],
       deploymentCount: 0,
       runningDeploymentCount: 0,
@@ -135,6 +138,7 @@ const ModelRegistryPage: React.FC = () => {
       updatedTime: '2024-01-21 10:10:05',
       creator: '王五',
       status: 'registered',
+      published: false,
       deployments: [],
       deploymentCount: 0,
       runningDeploymentCount: 0,

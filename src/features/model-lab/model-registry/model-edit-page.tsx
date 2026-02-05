@@ -47,16 +47,16 @@ const ModelEditPage: React.FC = () => {
   // 根据模型ID加载不同的模型数据
   const initialModelData = {
     '1': {
-      name: '推荐算法模型',
-      description: '基于协同过滤和深度学习的个性化推荐模型，适用于电商商品推荐场景',
+      name: '水质预测模型',
+      description: '基于历史水质数据预测pH、浊度、余氯等水质指标，适用于供水水质监测场景',
       framework: 'tensorflow',
       version: 'v1.2.4',
       stage: 'staging',
-      tags: ['推荐系统', '深度学习', '协同过滤']
+      tags: ['水质监测', '回归模型', '时间序列']
     },
     '2': {
-      name: '风控评分模型',
-      description: '基于机器学习的风险评估模型，用于信用风险评分',
+      name: '用水量预测模型',
+      description: '基于时间序列的用水量预测模型，用于供水调度优化',
       framework: 'pytorch',
       version: 'v2.1.1',
       stage: 'production',

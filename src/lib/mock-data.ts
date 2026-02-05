@@ -2,8 +2,8 @@
 export const mockTrainingTasks = [
   {
     id: 1,
-    taskName: "销售预测模型训练",
-    modelName: "Sales Prediction Model",
+    taskName: "水质预测模型训练",
+    modelName: "Water Quality Prediction Model",
     version: "v1.2.0",
     modelType: "机器学习",
     developLanguage: "Python",
@@ -15,8 +15,8 @@ export const mockTrainingTasks = [
   },
   {
     id: 2,
-    taskName: "客户流失预测",
-    modelName: "Churn Prediction Model",
+    taskName: "用水量预测模型训练",
+    modelName: "Water Consumption Prediction Model",
     version: "v2.1.0",
     modelType: "深度学习",
     developLanguage: "Python",
@@ -28,8 +28,8 @@ export const mockTrainingTasks = [
   },
   {
     id: 3,
-    taskName: "推荐算法优化",
-    modelName: "Recommendation Algorithm",
+    taskName: "管网漏损检测模型优化",
+    modelName: "Pipeline Leak Detection Model",
     version: "v3.0.1",
     modelType: "机器学习",
     developLanguage: "R",
@@ -45,36 +45,36 @@ export const mockTrainingTasks = [
 export const mockModels = [
   {
     id: 1,
-    name: "销售预测模型",
-    modelName: "Sales Prediction Model",
-    description: "基于历史销售数据预测未来销售额",
+    name: "水质预测模型",
+    modelName: "Water Quality Prediction Model",
+    description: "基于历史水质数据预测pH、浊度、余氯等水质指标",
     version: "v1.2.0",
     modelType: "机器学习",
     statusName: "启用",
     createTime: "2024-01-10",
-    orgName: "数据分析部"
+    orgName: "水质监测部"
   },
   {
     id: 2,
-    name: "客户分群模型",
-    modelName: "Customer Segmentation Model",
-    description: "根据客户行为特征进行分群",
+    name: "用水量预测模型",
+    modelName: "Water Consumption Prediction Model",
+    description: "预测未来用水量，支持日、周、月预测",
     version: "v2.0.0",
-    modelType: "聚类",
+    modelType: "时间序列",
     statusName: "启用",
     createTime: "2024-01-08",
-    orgName: "市场部"
+    orgName: "供水调度部"
   },
   {
     id: 3,
-    name: "欺诈检测模型",
-    modelName: "Fraud Detection Model",
-    description: "实时检测潜在的欺诈交易",
+    name: "管网漏损检测模型",
+    modelName: "Pipeline Leak Detection Model",
+    description: "基于压力、流量数据检测管网漏损位置",
     version: "v1.5.0",
     modelType: "深度学习",
     statusName: "禁用",
     createTime: "2024-01-05",
-    orgName: "风控部"
+    orgName: "管网维护部"
   }
 ];
 
@@ -145,8 +145,8 @@ export const mockOrgTree = [
 export const mockEvaluationData = [
   {
     id: 1,
-    modelName: "销售预测模型",
-    scenario: "电商销售",
+    modelName: "水质预测模型",
+    scenario: "供水水质监测",
     evaluator: "系统评估",
     evaluationTime: "2024-01-15",
     status: "通过",
@@ -154,8 +154,8 @@ export const mockEvaluationData = [
   },
   {
     id: 2,
-    modelName: "客户流失模型",
-    scenario: "电信客户",
+    modelName: "用水量预测模型",
+    scenario: "城市供水调度",
     evaluator: "人工评估",
     evaluationTime: "2024-01-14",
     status: "待评估",

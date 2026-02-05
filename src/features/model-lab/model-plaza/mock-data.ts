@@ -156,17 +156,17 @@ export const mockModelList: ModelInfo[] = [
   {
     id: "model-10",
     modelId: "MLModel-010",
-    modelName: "推荐系统模型",
-    name: "推荐系统模型",
+    modelName: "COD去除率预测模型",
+    name: "COD去除率预测模型",
     modelType: "机器学习",
     version: "V2.0.1",
     statusName: "已发布",
-    description: "基于协同过滤和内容推荐的混合推荐算法",
+    description: "预测污水处理过程中COD去除率，优化处理工艺",
     createTime: "2024-06-12 11:20:00",
-    orgName: "推荐组",
-    applicableScenarioStr: "推荐系统",
+    orgName: "污水处理组",
+    applicableScenarioStr: "污水处理",
     releaseStatus: 2,
-    tags: ["推荐系统", "协同过滤"]
+    tags: ["污水处理", "回归模型"]
   }
 ];
 
@@ -241,7 +241,7 @@ export const mockTags: TagInfo[] = [
   { id: 3, tagName: "时序预测" },
   { id: 4, tagName: "自然语言处理" },
   { id: 5, tagName: "计算机视觉" },
-  { id: 6, tagName: "推荐系统" },
+  { id: 6, tagName: "污水处理" },
   { id: 7, tagName: "预测性维护" },
   { id: 8, tagName: "成本分析" },
 ];

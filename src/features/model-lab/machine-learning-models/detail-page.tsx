@@ -13,12 +13,12 @@ interface MachineLearningModel {
   name: string;
   type: string;
   version: string;
-  status: string;
   createdTime: string;
   accuracy: number;
   description: string;
   published: boolean;
-  deployed: boolean;
+  testDeployed: boolean;
+  prodDeployed: boolean;
   owner: string;
   applicableScenario: string[];
   inputParameters?: Array<{
@@ -57,23 +57,23 @@ const MachineLearningModelDetailPage: React.FC = () => {
         // 模拟数据
         const mockModel: MachineLearningModel = {
           id: Number(modelId),
-          name: '客户流失预测模型',
-          type: '分类模型',
+          name: '水质预测模型',
+          type: '回归模型',
           version: 'v1.2.0',
-          status: '已发布',
           createdTime: '2023-06-15',
           accuracy: 0.92,
-          description: '基于历史客户数据预测客户流失概率',
+          description: '基于历史水质数据预测pH、浊度、余氯等水质指标',
           published: true,
-          deployed: true,
+          testDeployed: true,
+          prodDeployed: false,
           owner: '张三',
           applicableScenario: ['水质分析'],
           inputParameters: [
-            { name: '客户ID', physicalFieldName: 'customer_id', dataType: 'string', description: '客户唯一标识' },
-            { name: '年龄', physicalFieldName: 'age', dataType: 'number', description: '客户年龄' }
+            { name: '采样点ID', physicalFieldName: 'sampling_point_id', dataType: 'string', description: '水质采样点唯一标识' },
+            { name: '历史pH值', physicalFieldName: 'historical_ph', dataType: 'number', description: '历史pH值数据' }
           ],
           outputParameters: [
-            { name: '流失概率', physicalFieldName: 'churn_probability', dataType: 'float', description: '客户流失概率' }
+            { name: '预测pH值', physicalFieldName: 'predicted_ph', dataType: 'float', description: '预测的pH值' }
           ],
           evaluationMetrics: [
             { metricType: 'Accuracy', value: 0.92, enabled: true },
@@ -103,7 +103,7 @@ const MachineLearningModelDetailPage: React.FC = () => {
   };
 
   const handleDeploy = () => {
-    if (model && !model.deployed) {
+    if (model) {
       router.push(`/categories/model-lab/model-development/machine-learning-models-deploy?id=${model.id}`);
     }
   };
@@ -137,22 +137,17 @@ const MachineLearningModelDetailPage: React.FC = () => {
             返回
           </MdButton>
           <h1 className="text-2xl font-bold tracking-tight">{model.name}</h1>
-          <MdBadge variant={model.status === '已发布' ? 'success' : model.status === '测试中' ? 'warning' : 'secondary'}>
-            {model.status}
-          </MdBadge>
         </div>
         <div className="flex gap-2">
-          {model.status !== '已发布' && (
-            <MdButton variant="outline" onClick={handleEdit} leftIcon={<Edit className="h-4 w-4" />}>
-              编辑
-            </MdButton>
-          )}
-          {!model.published && model.status !== '开发中' && (
+          <MdButton variant="outline" onClick={handleEdit} leftIcon={<Edit className="h-4 w-4" />}>
+            编辑
+          </MdButton>
+          {!model.published && (
             <MdButton variant="outline" onClick={handlePublish} leftIcon={<Send className="h-4 w-4" />}>
               发布
             </MdButton>
           )}
-          {!model.deployed && model.status !== '开发中' && (
+          {(!model.testDeployed || !model.prodDeployed) && (
             <MdButton variant="outline" onClick={handleDeploy} leftIcon={<Rocket className="h-4 w-4" />}>
               部署
             </MdButton>
@@ -190,14 +185,6 @@ const MachineLearningModelDetailPage: React.FC = () => {
                   <div className="mt-1 text-sm">{model.version}</div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">状态</label>
-                  <div className="mt-1">
-                    <MdBadge variant={model.status === '已发布' ? 'success' : model.status === '测试中' ? 'warning' : 'secondary'}>
-                      {model.status}
-                    </MdBadge>
-                  </div>
-                </div>
-                <div>
                   <label className="text-sm font-medium text-muted-foreground">负责人</label>
                   <div className="mt-1 text-sm">{model.owner}</div>
                 </div>
@@ -214,10 +201,18 @@ const MachineLearningModelDetailPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">部署状态</label>
+                  <label className="text-sm font-medium text-muted-foreground">测试部署</label>
                   <div className="mt-1">
-                    <MdBadge variant={model.deployed ? 'success' : 'secondary'}>
-                      {model.deployed ? '已部署' : '未部署'}
+                    <MdBadge variant={model.testDeployed ? 'success' : 'secondary'}>
+                      {model.testDeployed ? '已部署' : '未部署'}
+                    </MdBadge>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">生产部署</label>
+                  <div className="mt-1">
+                    <MdBadge variant={model.prodDeployed ? 'success' : 'secondary'}>
+                      {model.prodDeployed ? '已部署' : '未部署'}
                     </MdBadge>
                   </div>
                 </div>

@@ -21,83 +21,83 @@ interface MachineLearningModel {
 const mockData: MachineLearningModel[] = [
     {
       id: 1,
-      name: '客户流失预测模型',
-      type: '分类模型',
+      name: '水质预测模型',
+      type: '回归模型',
       version: 'v1.2.0',
       status: '已发布',
       createdTime: '2023-06-15',
       accuracy: 0.92,
-      description: '基于历史客户数据预测客户流失概率'
+      description: '基于历史水质数据预测pH、浊度、余氯等水质指标'
     },
     {
       id: 2,
-      name: '销售预测模型',
-      type: '回归模型',
+      name: '用水量预测模型',
+      type: '时间序列',
       version: 'v2.1.0',
       status: '已发布',
       createdTime: '2023-06-20',
       accuracy: 0.87,
-      description: '预测未来销售额'
+      description: '预测未来用水量，支持日、周、月预测'
     },
     {
       id: 3,
-      name: '信用评分模型',
+      name: '管网漏损检测模型',
       type: '分类模型',
       version: 'v1.0.5',
       status: '测试中',
       createdTime: '2023-07-01',
       accuracy: 0.94,
-      description: '评估客户信用风险等级'
+      description: '基于压力、流量数据检测管网漏损位置'
     },
     {
       id: 4,
-      name: '需求预测模型',
+      name: '水压预测模型',
       type: '时间序列',
       version: 'v1.1.2',
       status: '开发中',
       createdTime: '2023-07-05',
       accuracy: 0.89,
-      description: '预测产品需求量'
+      description: '预测管网各节点水压变化趋势'
     },
     {
       id: 5,
-      name: '欺诈检测模型',
+      name: '水质异常检测模型',
       type: '分类模型',
       version: 'v1.3.0',
       status: '已发布',
       createdTime: '2023-05-20',
       accuracy: 0.96,
-      description: '实时检测交易欺诈行为'
+      description: '实时检测水质异常，及时预警'
     },
     {
       id: 6,
-      name: '推荐系统模型',
-      type: '协同过滤',
+      name: 'COD去除率预测模型',
+      type: '回归模型',
       version: 'v2.0.1',
       status: '测试中',
       createdTime: '2023-06-30',
       accuracy: 0.85,
-      description: '个性化商品推荐'
+      description: '预测污水处理过程中COD去除率'
     },
     {
       id: 7,
-      name: '情感分析模型',
-      type: 'NLP模型',
+      name: '曝气池溶解氧预测模型',
+      type: '时间序列',
       version: 'v1.0.8',
       status: '已发布',
       createdTime: '2023-07-10',
       accuracy: 0.91,
-      description: '分析文本情感倾向'
+      description: '预测曝气池溶解氧浓度，优化曝气控制'
     },
     {
       id: 8,
-      name: '图像识别模型',
+      name: '污泥浓度识别模型',
       type: 'CNN模型',
       version: 'v1.5.0',
       status: '已发布',
       createdTime: '2023-06-25',
       accuracy: 0.95,
-      description: '识别图像中的物体'
+      description: '基于图像识别技术检测污泥浓度'
     }
   ]
 

@@ -5,6 +5,7 @@ import { MachineLearningModelsPage } from "../model-training/machine-learning-mo
 import MachineLearningModelsPageLab from "../model-lab/machine-learning-models/page";
 import MachineLearningModelCreateEditPage from "../model-lab/machine-learning-models/create-edit-page";
 import ModelDeployPage from "../model-lab/machine-learning-models/deploy-page";
+import { DeployProductionPage } from "../model-lab/machine-learning-models/deploy-prod-page";
 import MachineLearningModelDetailPage from "../model-lab/machine-learning-models/detail-page";
 import { OrganizationManagementPage as OrgPage } from "./organization-page";
 import { EnvironmentConfigPage } from "../environment-config/environment-config-page";
@@ -32,6 +33,7 @@ import { AlertingPage } from "../model-center/monitoring/alerting-page";
 import { CronSchedulePage, ScheduleDetailPage, ScheduleCreatePage, ScheduleEditPage } from "../model-center/scheduling";
 import { ReviewModelReleasePage } from "../model-center/release-governance/review-model-release-page";
 import { ReviewModelDeployPage } from "../model-center/release-governance/review-model-deploy-page";
+import { DeployReviewDetailPageWrapper } from "../model-center/release-governance/deploy-review-detail-page";
 import { MetadataManagementPage } from "../data-platform/metadata-management";
 import { MetadataListPage } from "../data-platform/metadata-list";
 import { DataDictionaryPage } from "../data-platform/data-dictionary";
@@ -393,6 +395,7 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   "model-lab-model-development:machine-learning-models": MachineLearningModelsPageLab,
   "model-lab-model-development:machine-learning-models-create": MachineLearningModelCreateEditPage,
   "model-lab-model-development:machine-learning-models-deploy": ModelDeployPage,
+  "model-lab-model-development:machine-learning-models-deploy-prod": DeployProductionPage,
   "model-lab-model-development:machine-learning-models-detail": MachineLearningModelDetailPage,
   // 模型开发 - 智能体模型
   "model-lab-model-development:agent-models": AgentModelsPage,
@@ -405,6 +408,7 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   "model-lab-release-governance:admission-check-edit": AdmissionCheckEditPage,
   "model-lab-release-governance:model-release-review": ReviewModelReleasePage,
   "model-lab-release-governance:model-deploy-review": ReviewModelDeployPage,
+  "model-lab-release-governance:deploy-review-detail": DeployReviewDetailPageWrapper,
   "model-lab-release-governance:deployment-management": DeploymentManagementPage,
   "model-lab-release-governance:model-detail": ReleaseModelDetailPageWrapper,
   // 环境配置

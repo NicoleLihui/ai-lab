@@ -387,42 +387,6 @@ const CronSchedulePage: React.FC = () => {
         </MdCardContent>
       </MdCard>
 
-      {/* 执行统计图表 */}
-      <MdCard>
-        <MdCardHeader>
-          <MdCardTitle>执行统计</MdCardTitle>
-        </MdCardHeader>
-        <MdCardContent>
-          <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/50">
-            <div className="text-center w-full p-4">
-              <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <div className="space-y-2">
-                {getExecutionHistory().map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium w-32 text-left truncate">{item.name}</span>
-                    <div className="flex-1 flex items-center gap-2">
-                      <div className="flex-1 bg-muted rounded-full h-4 relative">
-                        <div 
-                          className="bg-green-600 h-4 rounded-full"
-                          style={{ width: `${(item.success / item.total) * 100}%` }}
-                        />
-                        <div 
-                          className="bg-red-600 h-4 rounded-full absolute top-0 right-0"
-                          style={{ width: `${(item.failure / item.total) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground w-20 text-right">
-                        {item.success}/{item.total}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </MdCardContent>
-      </MdCard>
-
       <MdCard>
         <MdCardHeader className="border-b">
           <div className="flex flex-col lg:flex-row gap-4">

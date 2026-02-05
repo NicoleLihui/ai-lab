@@ -5,7 +5,7 @@ import { MdCard, MdCardContent, MdCardDescription, MdCardHeader, MdCardTitle } f
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
 import { MdTable } from '@/components/enterprise-ui/md-table';
-import { ArrowLeft, Edit, Download, Eye, Activity, Package, FileText, GitBranch, Clock, Settings, RotateCcw, Power, History as HistoryIcon } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Eye, Activity, Package, FileText, GitBranch, Clock, Settings, RotateCcw, Power, History as HistoryIcon, Send } from 'lucide-react';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
 import { MdInput } from '@/components/enterprise-ui/md-input';
 import { MdSelect } from '@/components/enterprise-ui/md-select';
@@ -29,6 +29,7 @@ interface ModelInfo {
   createdTime: string;
   updatedTime: string;
   status: 'draft' | 'registered' | 'archived';
+  published?: boolean; // 是否已发布到模型广场
 }
 
 interface VersionHistory {
@@ -91,7 +92,7 @@ const ModelDetailPage: React.FC = () => {
   const [versionHistory, setVersionHistory] = useState<VersionHistory[]>([]);
   const [relatedRecords, setRelatedRecords] = useState<RelatedRecord[]>([]);
   const [activeTab, setActiveTab] = useState<'info' | 'schema' | 'dependencies' | 'versions' | 'related' | 'deployments'>(
-    (tabParam === 'deployments' ? 'deployments' : 'info') as typeof activeTab
+    (tabParam === 'deployments' ? 'deployments' : 'info') as 'info' | 'schema' | 'dependencies' | 'versions' | 'related' | 'deployments'
   );
   // 部署管理相关状态
   const [deployments, setDeployments] = useState<Deployment[]>([]);
@@ -152,7 +153,8 @@ const ModelDetailPage: React.FC = () => {
         creator: '张三',
         createdTime: '2024-01-15 10:30:00',
         updatedTime: '2024-01-20 14:22:15',
-        status: 'registered'
+        status: 'registered',
+        published: true
       };
       setModel(mockModel);
 
@@ -310,9 +312,12 @@ const ModelDetailPage: React.FC = () => {
                 <Edit className="mr-2 h-4 w-4" />
                 编辑
               </MdButton>
-              <MdButton onClick={() => router.push(`/categories/model-lab/release-governance/model-release-review?modelId=${model.id}`)}>
-                发布
-              </MdButton>
+              {!model.published && (
+                <MdButton onClick={() => router.push(`/categories/model-lab/release-governance/model-release-review?modelId=${model.id}`)}>
+                  <Send className="mr-2 h-4 w-4" />
+                  发布
+                </MdButton>
+              )}
             </div>
           </div>
         </MdCardHeader>

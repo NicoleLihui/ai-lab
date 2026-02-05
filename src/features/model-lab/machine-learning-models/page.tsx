@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, RotateCcw, Plus, Edit, Eye, Send, Rocket, Trash2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Search, RotateCcw, Plus, Edit, Eye, Send, Rocket, Trash2, Play, MoreVertical } from 'lucide-react';
 import { MdInput, MdButton, MdTable, MdBadge } from '@/components/enterprise-ui';
 import type { Column } from '@/components/enterprise-ui';
 import { toast } from 'sonner';
@@ -17,8 +18,135 @@ interface MachineLearningModel {
   accuracy: number;
   description: string;
   published: boolean; // 是否已发布到模型广场
-  deployed: boolean; // 是否已部署到生产环境
+  deployTestStatus: number; // 部署测试状态：0-未部署，1-已部署
+  deployProdStatus: number; // 部署生产状态：0-未部署，1-已部署，2-审核中
+  runId?: string; // MLflow Run ID
+  modelId?: string; // 模型ID
 }
+
+// Mock data for machine learning models
+const mockData: MachineLearningModel[] = [
+    {
+      id: 1,
+      name: '水质预测模型',
+      type: '回归模型',
+      version: 'v1.2.0',
+      status: '已发布',
+      createdTime: '2023-06-15',
+      accuracy: 0.92,
+      description: '基于历史水质数据预测pH、浊度、余氯等水质指标',
+      published: true,
+      deployTestStatus: 1,
+      deployProdStatus: 1,
+      runId: 'run-001',
+      modelId: 'model-001'
+    },
+    {
+      id: 2,
+      name: '用水量预测模型',
+      type: '时间序列',
+      version: 'v2.1.0',
+      status: '已发布',
+      createdTime: '2023-06-20',
+      accuracy: 0.87,
+      description: '预测未来用水量，支持日、周、月预测',
+      published: true,
+      deployTestStatus: 1,
+      deployProdStatus: 0,
+      runId: 'run-002',
+      modelId: 'model-002'
+    },
+    {
+      id: 3,
+      name: '管网漏损检测模型',
+      type: '分类模型',
+      version: 'v1.0.5',
+      status: '测试中',
+      createdTime: '2023-07-01',
+      accuracy: 0.94,
+      description: '基于压力、流量数据检测管网漏损位置',
+      published: false,
+      deployTestStatus: 0,
+      deployProdStatus: 0,
+      runId: 'run-003',
+      modelId: 'model-003'
+    },
+    {
+      id: 4,
+      name: '水压预测模型',
+      type: '时间序列',
+      version: 'v1.1.2',
+      status: '开发中',
+      createdTime: '2023-07-05',
+      accuracy: 0.89,
+      description: '预测管网各节点水压变化趋势',
+      published: false,
+      deployTestStatus: 0,
+      deployProdStatus: 0,
+      runId: 'run-004',
+      modelId: 'model-004'
+    },
+    {
+      id: 5,
+      name: '水质异常检测模型',
+      type: '分类模型',
+      version: 'v1.3.0',
+      status: '已发布',
+      createdTime: '2023-05-20',
+      accuracy: 0.96,
+      description: '实时检测水质异常，及时预警',
+      published: true,
+      deployTestStatus: 1,
+      deployProdStatus: 1,
+      runId: 'run-005',
+      modelId: 'model-005'
+    },
+    {
+      id: 6,
+      name: 'COD去除率预测模型',
+      type: '回归模型',
+      version: 'v2.0.1',
+      status: '测试中',
+      createdTime: '2023-06-30',
+      accuracy: 0.85,
+      description: '预测污水处理过程中COD去除率',
+      published: false,
+      deployTestStatus: 1,
+      deployProdStatus: 2, // 审核中
+      runId: 'run-006',
+      modelId: 'model-006'
+    },
+    {
+      id: 7,
+      name: '曝气池溶解氧预测模型',
+      type: '时间序列',
+      version: 'v1.0.8',
+      status: '已发布',
+      createdTime: '2023-07-10',
+      accuracy: 0.91,
+      description: '预测曝气池溶解氧浓度，优化曝气控制',
+      published: true,
+      deployTestStatus: 1,
+      deployProdStatus: 0,
+      runId: 'run-007',
+      modelId: 'model-007'
+    },
+    {
+      id: 8,
+      name: '污泥浓度识别模型',
+      type: 'CNN模型',
+      version: 'v1.5.0',
+      status: '已发布',
+      createdTime: '2023-06-25',
+      accuracy: 0.95,
+      description: '基于图像识别技术检测污泥浓度',
+      published: true,
+      deployTestStatus: 1,
+      deployProdStatus: 1,
+      runId: 'run-008',
+      modelId: 'model-008'
+    }
+];
 
 const MachineLearningModelsPage: React.FC = () => {
   const router = useRouter();
@@ -32,106 +160,6 @@ const MachineLearningModelsPage: React.FC = () => {
   });
 
   const { current: currentPage, pageSize } = pagination;
-
-  // Mock data for machine learning models
-  const mockData: MachineLearningModel[] = [
-    {
-      id: 1,
-      name: '客户流失预测模型',
-      type: '分类模型',
-      version: 'v1.2.0',
-      status: '已发布',
-      createdTime: '2023-06-15',
-      accuracy: 0.92,
-      description: '基于历史客户数据预测客户流失概率',
-      published: true,
-      deployed: true
-    },
-    {
-      id: 2,
-      name: '销售预测模型',
-      type: '回归模型',
-      version: 'v2.1.0',
-      status: '已发布',
-      createdTime: '2023-06-20',
-      accuracy: 0.87,
-      description: '预测未来销售额',
-      published: true,
-      deployed: false
-    },
-    {
-      id: 3,
-      name: '信用评分模型',
-      type: '分类模型',
-      version: 'v1.0.5',
-      status: '测试中',
-      createdTime: '2023-07-01',
-      accuracy: 0.94,
-      description: '评估客户信用风险等级',
-      published: false,
-      deployed: false
-    },
-    {
-      id: 4,
-      name: '需求预测模型',
-      type: '时间序列',
-      version: 'v1.1.2',
-      status: '开发中',
-      createdTime: '2023-07-05',
-      accuracy: 0.89,
-      description: '预测产品需求量',
-      published: false,
-      deployed: false
-    },
-    {
-      id: 5,
-      name: '欺诈检测模型',
-      type: '分类模型',
-      version: 'v1.3.0',
-      status: '已发布',
-      createdTime: '2023-05-20',
-      accuracy: 0.96,
-      description: '实时检测交易欺诈行为',
-      published: true,
-      deployed: true
-    },
-    {
-      id: 6,
-      name: '推荐系统模型',
-      type: '协同过滤',
-      version: 'v2.0.1',
-      status: '测试中',
-      createdTime: '2023-06-30',
-      accuracy: 0.85,
-      description: '个性化商品推荐',
-      published: false,
-      deployed: true
-    },
-    {
-      id: 7,
-      name: '情感分析模型',
-      type: 'NLP模型',
-      version: 'v1.0.8',
-      status: '已发布',
-      createdTime: '2023-07-10',
-      accuracy: 0.91,
-      description: '分析文本情感倾向',
-      published: true,
-      deployed: false
-    },
-    {
-      id: 8,
-      name: '图像识别模型',
-      type: 'CNN模型',
-      version: 'v1.5.0',
-      status: '已发布',
-      createdTime: '2023-06-25',
-      accuracy: 0.95,
-      description: '识别图像中的物体',
-      published: true,
-      deployed: true
-    }
-  ];
 
   // 加载数据
   const loadData = useCallback(
@@ -219,17 +247,53 @@ const MachineLearningModelsPage: React.FC = () => {
     }
   };
 
-  // 部署
-  const handleDeploy = (row: MachineLearningModel) => {
-    if (row.deployed) {
-      toast.warning('模型已部署');
+  // 部署测试（开发/测试环境，无需审核）
+  const handleDeployTest = async (row: MachineLearningModel) => {
+    if (row.deployTestStatus === 1) {
+      toast.warning('模型已部署到测试环境');
       return;
     }
     if (row.status === '开发中') {
       toast.warning('开发中的模型不能部署');
       return;
     }
-    router.push(`/categories/model-lab/model-development/machine-learning-models-deploy?id=${row.id}`);
+    if (!row.runId || !row.modelId) {
+      toast.error('模型缺少必要的训练信息，请先完成训练');
+      return;
+    }
+    
+    try {
+      // TODO: 调用部署测试API
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      toast.success('部署测试成功');
+      loadData();
+    } catch (error) {
+      toast.error('部署测试失败');
+    }
+  };
+
+  // 部署生产（生产环境，需要审核）
+  const handleDeployProduction = (row: MachineLearningModel) => {
+    if (row.deployProdStatus === 1) {
+      toast.warning('模型已部署到生产环境');
+      return;
+    }
+    if (row.deployProdStatus === 2) {
+      toast.warning('模型正在审核中，请等待审核结果');
+      return;
+    }
+    if (row.status === '开发中') {
+      toast.warning('开发中的模型不能部署');
+      return;
+    }
+    if (!row.runId || !row.modelId) {
+      toast.error('模型缺少必要的训练信息，请先完成训练');
+      return;
+    }
+    
+    router.push(
+      `/categories/model-lab/model-development/machine-learning-models-deploy-prod?id=${row.id}&runId=${row.runId}&version=${row.version}`
+    );
   };
 
   // 删除
@@ -250,6 +314,124 @@ const MachineLearningModelsPage: React.FC = () => {
     handleView(row);
   };
 
+  // 操作菜单组件
+  const ActionMenu: React.FC<{ row: MachineLearningModel }> = ({ row }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          menuRef.current &&
+          buttonRef.current &&
+          !menuRef.current.contains(event.target as Node) &&
+          !buttonRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+
+    const menuItems = [
+      {
+        label: '查看',
+        icon: Eye,
+        onClick: () => handleView(row),
+        show: true,
+      },
+      {
+        label: '编辑',
+        icon: Edit,
+        onClick: () => handleEdit(row),
+        show: row.status !== '已发布',
+      },
+      {
+        label: '发布',
+        icon: Send,
+        onClick: () => handlePublish(row),
+        show: !row.published && row.status !== '开发中',
+      },
+      {
+        label: '部署测试',
+        icon: Play,
+        onClick: () => handleDeployTest(row),
+        show: row.status !== '开发中' && row.deployTestStatus !== 1,
+      },
+      {
+        label: '部署生产',
+        icon: Rocket,
+        onClick: () => handleDeployProduction(row),
+        show: row.status !== '开发中' && row.deployProdStatus !== 1 && row.deployProdStatus !== 2,
+      },
+      {
+        label: '删除',
+        icon: Trash2,
+        onClick: () => handleDelete(row),
+        show: row.status === '开发中',
+      },
+    ].filter(item => item.show);
+
+    const getMenuPosition = () => {
+      if (!buttonRef.current) return { top: 0, left: 0 };
+      const rect = buttonRef.current.getBoundingClientRect();
+      // 菜单宽度约140px，从按钮右侧向左展开
+      return {
+        top: rect.bottom + 4,
+        left: rect.right - 140, // 向左偏移菜单宽度
+      };
+    };
+
+    return (
+      <div className="relative">
+        <button
+          ref={buttonRef}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted transition-colors"
+          aria-label="更多操作"
+        >
+          <MoreVertical className="h-4 w-4 text-foreground" />
+        </button>
+        {isOpen &&
+          typeof document !== 'undefined' &&
+          createPortal(
+            <div
+              ref={menuRef}
+              className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95 py-1 min-w-[140px]"
+              style={{
+                top: getMenuPosition().top,
+                left: getMenuPosition().left,
+              }}
+            >
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      item.onClick();
+                      setIsOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-primary-light transition-colors"
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>,
+            document.body
+          )}
+      </div>
+    );
+  };
+
   // 定义表格列
   const columns: Column<Record<string, unknown>>[] = [
     {
@@ -264,9 +446,9 @@ const MachineLearningModelsPage: React.FC = () => {
       key: 'name',
       title: '模型名称',
       align: 'center' as const,
-      minWidth: 150,
+      width: 150,
       render: (value: unknown, row: Record<string, unknown>) => {
-        const item = row as MachineLearningModel;
+        const item = row as unknown as MachineLearningModel;
         return (
           <span
             className="text-primary-600 cursor-pointer hover:underline"
@@ -281,51 +463,67 @@ const MachineLearningModelsPage: React.FC = () => {
       key: 'type',
       title: '模型类型',
       align: 'center' as const,
-      minWidth: 120,
+      width: 120,
     },
     {
       key: 'version',
       title: '版本',
       align: 'center' as const,
-      minWidth: 100,
-    },
-    {
-      key: 'status',
-      title: '状态',
-      align: 'center' as const,
-      minWidth: 100,
-      render: (value: unknown) => {
-        const status = String(value ?? '');
-        let variant: 'success' | 'warning' | 'secondary' = 'secondary';
-        if (status === '已发布') variant = 'success';
-        if (status === '测试中') variant = 'warning';
-        return <MdBadge variant={variant}>{status}</MdBadge>;
+      width: 150,
+      render: (value: unknown, row: Record<string, unknown>) => {
+        const item = row as unknown as MachineLearningModel;
+        const version = String(value || '');
+        const published = item.published;
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <span>{version}</span>
+            <MdBadge variant={published ? 'success' : 'secondary'}>
+              {published ? '已发布' : '未发布'}
+            </MdBadge>
+          </div>
+        );
       },
     },
+    // {
+    //   key: 'status',
+    //   title: '状态',
+    //   align: 'center' as const,
+    //   minWidth: 100,
+    //   render: (value: unknown) => {
+    //     const status = String(value ?? '');
+    //     let variant: 'success' | 'warning' | 'secondary' = 'secondary';
+    //     if (status === '已发布') variant = 'success';
+    //     if (status === '测试中') variant = 'warning';
+    //     return <MdBadge variant={variant}>{status}</MdBadge>;
+    //   },
+    // },
     {
-      key: 'published',
-      title: '发布状态',
+      key: 'deployTestStatus',
+      title: '测试部署',
       align: 'center' as const,
-      minWidth: 120,
+      width: 120,
       render: (value: unknown) => {
-        const published = Boolean(value);
+        const status = Number(value ?? 0);
         return (
-          <MdBadge variant={published ? 'success' : 'secondary'}>
-            {published ? '已发布' : '未发布'}
+          <MdBadge variant={status === 1 ? 'success' : 'secondary'}>
+            {status === 1 ? '已部署' : '未部署'}
           </MdBadge>
         );
       },
     },
     {
-      key: 'deployed',
-      title: '部署状态',
+      key: 'deployProdStatus',
+      title: '生产部署',
       align: 'center' as const,
-      minWidth: 120,
+      width: 120,
       render: (value: unknown) => {
-        const deployed = Boolean(value);
+        const status = Number(value ?? 0);
+        if (status === 2) {
+          return <MdBadge variant="warning">审核中</MdBadge>;
+        }
         return (
-          <MdBadge variant={deployed ? 'success' : 'secondary'}>
-            {deployed ? '已部署' : '未部署'}
+          <MdBadge variant={status === 1 ? 'success' : 'secondary'}>
+            {status === 1 ? '已部署' : '未部署'}
           </MdBadge>
         );
       },
@@ -334,7 +532,7 @@ const MachineLearningModelsPage: React.FC = () => {
       key: 'accuracy',
       title: '准确率',
       align: 'center' as const,
-      minWidth: 100,
+      width: 100,
       render: (value: unknown) => {
         const accuracy = Number(value ?? 0);
         return <span>{(accuracy * 100).toFixed(2)}%</span>;
@@ -344,74 +542,23 @@ const MachineLearningModelsPage: React.FC = () => {
       key: 'createdTime',
       title: '创建时间',
       align: 'center' as const,
-      minWidth: 120,
+      width: 120,
     },
     {
       key: 'description',
       title: '描述',
       align: 'center' as const,
-      minWidth: 200,
+      width: 200,
     },
     {
       key: 'actions',
       title: '操作',
-      width: 350,
+      width: 80,
       align: 'center' as const,
       fixed: 'right' as const,
       render: (_: unknown, row: Record<string, unknown>) => {
-        const item = row as MachineLearningModel;
-        return (
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <MdButton
-              variant="ghost"
-              size="sm"
-              onClick={() => handleView(item)}
-              leftIcon={<Eye className="h-3 w-3" />}
-            >
-              查看
-            </MdButton>
-            {item.status !== '已发布' && (
-              <MdButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleEdit(item)}
-                leftIcon={<Edit className="h-3 w-3" />}
-              >
-                编辑
-              </MdButton>
-            )}
-            {!item.published && item.status !== '开发中' && (
-              <MdButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handlePublish(item)}
-                leftIcon={<Send className="h-3 w-3" />}
-              >
-                发布
-              </MdButton>
-            )}
-            {!item.deployed && item.status !== '开发中' && (
-              <MdButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeploy(item)}
-                leftIcon={<Rocket className="h-3 w-3" />}
-              >
-                部署
-              </MdButton>
-            )}
-            {item.status === '开发中' && (
-              <MdButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDelete(item)}
-                leftIcon={<Trash2 className="h-3 w-3" />}
-              >
-                删除
-              </MdButton>
-            )}
-          </div>
-        );
+        const item = row as unknown as MachineLearningModel;
+        return <ActionMenu row={item} />;
       },
     },
   ];

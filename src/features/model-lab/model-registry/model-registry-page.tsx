@@ -29,7 +29,7 @@ const ModelRegistryPage: React.FC = () => {
   const [models, setModels] = useState<ModelInfo[]>([
     {
       id: '1',
-      name: '推荐算法模型',
+      name: '水质预测模型',
       version: 'v1.2.3',
       status: 'production',
       framework: 'TensorFlow',
@@ -41,7 +41,7 @@ const ModelRegistryPage: React.FC = () => {
     },
     {
       id: '2',
-      name: '风控评分模型',
+      name: '用水量预测模型',
       version: 'v2.1.0',
       status: 'staging',
       framework: 'PyTorch',
