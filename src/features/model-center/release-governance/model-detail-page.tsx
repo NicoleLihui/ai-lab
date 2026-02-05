@@ -339,7 +339,7 @@ const ModelDetailPage: React.FC<ModelDetailPageProps> = ({
                     <MdButton
                       variant="ghost"
                       size="sm"
-                      onClick={() => router.push(`/categories/model-center/release-governance/admission-check-detail?id=${model.admissionCheckId}`)}
+                      onClick={() => router.push(`/categories/model-lab/release-governance/admission-check-detail?id=${model.admissionCheckId}`)}
                     >
                       查看详情
                     </MdButton>
@@ -433,7 +433,7 @@ const ModelDetailPage: React.FC<ModelDetailPageProps> = ({
                   <MdButton
                     variant="ghost"
                     size="sm"
-                    onClick={() => router.push(`/categories/model-center/release-governance/admission-check-detail?id=${model.admissionCheckId}`)}
+                    onClick={() => router.push(`/categories/model-lab/release-governance/admission-check-detail?id=${model.admissionCheckId}`)}
                   >
                     查看详情
                   </MdButton>

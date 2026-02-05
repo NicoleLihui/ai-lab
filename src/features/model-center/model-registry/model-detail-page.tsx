@@ -310,7 +310,7 @@ const ModelDetailPage: React.FC = () => {
                 <Edit className="mr-2 h-4 w-4" />
                 编辑
               </MdButton>
-              <MdButton onClick={() => router.push(`/categories/model-center/release-governance/model-release-review?modelId=${model.id}`)}>
+              <MdButton onClick={() => router.push(`/categories/model-lab/release-governance/model-release-review?modelId=${model.id}`)}>
                 发布
               </MdButton>
             </div>
@@ -634,7 +634,7 @@ const ModelDetailPage: React.FC = () => {
                 <h3 className="font-semibold">部署实例</h3>
                 <MdButton 
                   variant="outline"
-                  onClick={() => router.push('/categories/model-center/release-governance/deployment-management')}
+                  onClick={() => router.push('/categories/model-lab/release-governance/deployment-management')}
                 >
                   <Settings className="mr-2 h-4 w-4" />
                   新建部署

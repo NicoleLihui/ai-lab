@@ -273,7 +273,7 @@ const ReviewModelReleasePage: React.FC = () => {
             size="sm"
             onClick={() => {
               // 导航到详情页面
-                            router.push(`/categories/model-center/release-governance/model-detail?id=${item.id}`)
+                            router.push(`/categories/model-lab/release-governance/model-detail?id=${item.id}`)
             }}
           >
             <Eye className="h-4 w-4 mr-1" />
@@ -314,7 +314,7 @@ const ReviewModelReleasePage: React.FC = () => {
             size="sm"
             onClick={() => {
               // 导航到详情页面
-                            router.push(`/categories/model-center/release-governance/model-detail?id=${item.id}`)
+                            router.push(`/categories/model-lab/release-governance/model-detail?id=${item.id}`)
             }}
           >
             <Eye className="h-4 w-4 mr-1" />
@@ -371,7 +371,7 @@ const ReviewModelReleasePage: React.FC = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => {
-                          router.push(`/categories/model-center/release-governance/model-detail?id=${updatedReview.id}`)
+                          router.push(`/categories/model-lab/release-governance/model-detail?id=${updatedReview.id}`)
                         }}
                       >
                         <Eye className="h-4 w-4 mr-1" />
@@ -404,7 +404,7 @@ const ReviewModelReleasePage: React.FC = () => {
               variant="outline" 
               size="sm"
               onClick={() => {
-                router.push(`/categories/model-center/release-governance/model-detail?id=${review.id}`);
+                router.push(`/categories/model-lab/release-governance/model-detail?id=${review.id}`);
               }}
             >
               <Eye className="h-4 w-4 mr-1" />
@@ -625,7 +625,7 @@ const ReviewModelReleasePage: React.FC = () => {
                     <MdButton
                       variant="ghost"
                       size="sm"
-                      onClick={() => router.push(`/categories/model-center/release-governance/admission-check-detail?id=${selectedModel.admissionCheckId}`)}
+                      onClick={() => router.push(`/categories/model-lab/release-governance/admission-check-detail?id=${selectedModel.admissionCheckId}`)}
                     >
                       查看详情
                     </MdButton>

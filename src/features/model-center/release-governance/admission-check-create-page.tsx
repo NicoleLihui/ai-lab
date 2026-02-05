@@ -108,7 +108,7 @@ const AdmissionCheckCreatePage: React.FC = () => {
       
       console.log('创建测试:', formData);
       alert('创建成功');
-      router.push('/categories/model-center/release-governance/admission-check');
+      router.push('/categories/model-lab/release-governance/admission-check');
     } catch (error) {
       console.error('创建失败:', error);
       alert('创建失败，请重试');

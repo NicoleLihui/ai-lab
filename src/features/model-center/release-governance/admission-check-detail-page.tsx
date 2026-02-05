@@ -97,7 +97,7 @@ const AdmissionCheckDetailPage: React.FC = () => {
 
   const handleEdit = () => {
     if (testDetail && testDetail.testStatus === '待执行') {
-      router.push(`/categories/model-center/release-governance/admission-check-edit?id=${testDetail.id}`);
+      router.push(`/categories/model-lab/release-governance/admission-check-edit?id=${testDetail.id}`);
     }
   };
 

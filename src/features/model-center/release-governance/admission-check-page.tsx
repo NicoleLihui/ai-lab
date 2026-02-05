@@ -272,17 +272,17 @@ const AdmissionCheckPage: React.FC = () => {
 
   // 新增测试
   const handleCreate = () => {
-    router.push('/categories/model-center/release-governance/admission-check-create');
+    router.push('/categories/model-lab/release-governance/admission-check-create');
   };
 
   // 查看详情
   const handleViewDetail = (row: AdmissionCheck) => {
-    router.push(`/categories/model-center/release-governance/admission-check-detail?id=${row.id}`);
+    router.push(`/categories/model-lab/release-governance/admission-check-detail?id=${row.id}`);
   };
 
   // 编辑
   const handleEdit = (row: AdmissionCheck) => {
-    router.push(`/categories/model-center/release-governance/admission-check-edit?id=${row.id}`);
+    router.push(`/categories/model-lab/release-governance/admission-check-edit?id=${row.id}`);
   };
 
   // 执行测试

@@ -157,7 +157,7 @@ const AdmissionCheckEditPage: React.FC = () => {
       
       console.log('更新测试:', formData);
       alert('更新成功');
-      router.push('/categories/model-center/release-governance/admission-check');
+      router.push('/categories/model-lab/release-governance/admission-check');
     } catch (error) {
       console.error('更新失败:', error);
       alert('更新失败，请重试');

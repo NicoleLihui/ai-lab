@@ -182,6 +182,13 @@ export const categories: PrimaryCategory[] = [
             description: "预训练模型浏览、模型在线试用、模型详情页",
             status: "已具备",
             existingPath: "model-management/model-plaza/index.vue"
+          },
+          {
+            key: "model-detail",
+            name: "模型详情",
+            description: "查看模型详细信息",
+            status: "已具备",
+            show: false
           }
         ]
       },
