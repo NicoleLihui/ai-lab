@@ -3,10 +3,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
-import { Search, RotateCcw, Plus, Edit, Eye, Send, Rocket, Trash2, Play, MoreVertical } from 'lucide-react';
+import { Search, RotateCcw, Plus, Edit, Eye, Send, Rocket, Trash2, Play, MoreVertical, TestTube, GraduationCap } from 'lucide-react';
 import { MdInput, MdButton, MdTable, MdBadge } from '@/components/enterprise-ui';
 import type { Column } from '@/components/enterprise-ui';
 import { toast } from 'sonner';
+import { TrainingGuideDrawer } from './training-guide-drawer';
+import { ModelTrialDrawer, type ModelTrialInfo } from './model-trial-drawer';
 
 interface MachineLearningModel {
   id: number;
@@ -158,6 +160,10 @@ const MachineLearningModelsPage: React.FC = () => {
     pageSize: 20,
     total: 0,
   });
+  const [trainingDrawerOpen, setTrainingDrawerOpen] = useState(false);
+  const [selectedModelForTraining, setSelectedModelForTraining] = useState<MachineLearningModel | null>(null);
+  const [trialDrawerOpen, setTrialDrawerOpen] = useState(false);
+  const [selectedModelForTrial, setSelectedModelForTrial] = useState<ModelTrialInfo | null>(null);
 
   const { current: currentPage, pageSize } = pagination;
 
@@ -296,6 +302,87 @@ const MachineLearningModelsPage: React.FC = () => {
     );
   };
 
+  // 训练模型（所有模型都可以训练）
+  const handleTraining = (row: MachineLearningModel) => {
+    setSelectedModelForTraining(row);
+    setTrainingDrawerOpen(true);
+  };
+
+  // 获取模型试用信息（Mock数据）
+  const getModelTrialInfo = (model: MachineLearningModel): ModelTrialInfo => {
+    return {
+      id: model.id,
+      name: model.name,
+      type: model.type,
+      owner: '所在组织',
+      language: 'python',
+      useCase: '无特定场景',
+      createTime: model.createdTime,
+      updateTime: model.createdTime,
+      version: model.version,
+      description: `1. 核心目标：应用CNN-LSTM-Attention混合模型，对污水处理厂的多维时序数据进行深度分析，预测出水水质、流量、工艺控制参数等，并挖掘强时序耦合关系。
+
+2. 模型输入参数：关键多维输入包括水质指标（如"进水COD"、"进水TN"、"进水TP"、"进水NH3"等）和工艺参数（如"处理水量"、"MLSS（混合液悬浮固体）"等）。`,
+      params: [
+        {
+          id: '1',
+          chineseName: 'Date',
+          englishName: 'Date',
+          unit: '',
+          selected: false,
+        },
+        {
+          id: '2',
+          chineseName: 'Input-COD',
+          englishName: '进水COD',
+          unit: '',
+          selected: false,
+        },
+        {
+          id: '3',
+          chineseName: 'Input-NH3-N',
+          englishName: '进水NH3',
+          unit: '',
+          selected: false,
+        },
+        {
+          id: '4',
+          chineseName: 'Inlet water flow',
+          englishName: '进水流量',
+          unit: '',
+          selected: false,
+        },
+        {
+          id: '5',
+          chineseName: 'DO',
+          englishName: '进水DO',
+          unit: '',
+          selected: false,
+        },
+        {
+          id: '6',
+          chineseName: 'Airflow',
+          englishName: '曝气风量',
+          unit: '',
+          selected: true,
+          field: 'airflow',
+        },
+      ],
+    };
+  };
+
+  // 试用模型（测试部署已部署时可用）
+  const handleTrial = (row: MachineLearningModel) => {
+    if (row.deployTestStatus !== 1) {
+      toast.warning('模型尚未部署到测试环境，无法试用');
+      return;
+    }
+    // 打开试用弹窗
+    const trialInfo = getModelTrialInfo(row);
+    setSelectedModelForTrial(trialInfo);
+    setTrialDrawerOpen(true);
+  };
+
   // 删除
   const handleDelete = (row: MachineLearningModel) => {
     if (row.status !== '开发中') {
@@ -346,6 +433,12 @@ const MachineLearningModelsPage: React.FC = () => {
         show: true,
       },
       {
+        label: '训练',
+        icon: GraduationCap,
+        onClick: () => handleTraining(row),
+        show: true, // 所有模型都可以训练
+      },
+      {
         label: '编辑',
         icon: Edit,
         onClick: () => handleEdit(row),
@@ -362,6 +455,12 @@ const MachineLearningModelsPage: React.FC = () => {
         icon: Play,
         onClick: () => handleDeployTest(row),
         show: row.status !== '开发中' && row.deployTestStatus !== 1,
+      },
+      {
+        label: '试用',
+        icon: TestTube,
+        onClick: () => handleTrial(row),
+        show: row.deployTestStatus === 1,
       },
       {
         label: '部署生产',
@@ -638,6 +737,31 @@ const MachineLearningModelsPage: React.FC = () => {
           className="h-full"
         />
       </div>
+
+      {/* 训练指南抽屉 */}
+      {selectedModelForTraining && (
+        <TrainingGuideDrawer
+          open={trainingDrawerOpen}
+          onClose={() => {
+            setTrainingDrawerOpen(false);
+            setSelectedModelForTraining(null);
+          }}
+          modelId={selectedModelForTraining.id}
+          modelName={selectedModelForTraining.name}
+          experimentName={selectedModelForTraining.runId ? `MLModel-${selectedModelForTraining.id}_V001` : undefined}
+          username="lihuihui01"
+        />
+      )}
+
+      {/* 模型试用抽屉 */}
+      <ModelTrialDrawer
+        open={trialDrawerOpen}
+        onClose={() => {
+          setTrialDrawerOpen(false);
+          setSelectedModelForTrial(null);
+        }}
+        model={selectedModelForTrial}
+      />
     </div>
   );
 };

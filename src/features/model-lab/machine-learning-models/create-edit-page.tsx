@@ -5,102 +5,338 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MdCard, MdCardContent, MdCardDescription, MdCardHeader, MdCardTitle } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdInput } from '@/components/enterprise-ui/md-input';
-import { MdSelect } from '@/components/enterprise-ui/md-select';
+import { MdSelect, type SelectOption } from '@/components/enterprise-ui/md-select';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
-import { ArrowLeft, Plus, X, Save, Upload, LayoutGrid, List } from 'lucide-react';
-import { VisualParameterEditor, ParameterSchemaConfig } from '@/components/model-parameter-editor/visual-parameter-editor';
+import { ArrowLeft, Save, X, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { createPortal } from 'react-dom';
+import { cn } from '@/lib/utils';
 
-// 参数字段定义接口
-interface ParameterField {
-  name: string;
-  physicalFieldName: string;
-  dataType: string;
-  description: string;
-}
-
-// 评估指标定义接口
-interface EvaluationMetric {
-  metricType: string; // MAE, MSE, R², RMSE, Accuracy, Precision_0, Recall_1
-  value?: number;
-  enabled: boolean;
-}
-
-// 模型基础信息
+// 模型基础信息接口
 interface ModelBasicInfo {
   name: string;
-  type: string;
-  version: string;
-  status: string;
-  description: string;
-  owner: string;
-  applicableScenario: string[];
+  category: string; // 分类：回归、分类、排序、时序序列
+  owner: string; // 模型所有者：个人、所在组织
+  programmingLanguage: string; // 编程语言
+  applicableScenarios: string[]; // 适用场景（多选）
+  description: string; // 模型描述
+  tags: string[]; // 标签（多选）
 }
 
-// 评估指标元数据配置（元数据驱动UI）
-const evaluationMetricsMetadata = [
+// 树形节点接口
+interface TreeNode {
+  value: string;
+  label: string;
+  children?: TreeNode[];
+}
+
+// 标签接口
+interface Tag {
+  id: string;
+  tagCode: string;
+  tagName: string;
+  tagTypeId: string;
+  tagTypeName: string;
+  description: string;
+  status: '启用' | '禁用';
+}
+
+// 污水处理适用场景树形数据
+const applicableScenarioTree: TreeNode[] = [
   {
-    key: 'MAE',
-    label: '平均绝对误差 (MAE)',
-    description: 'Mean Absolute Error',
-    applicableTypes: ['回归模型', '时间序列'],
-    dataType: 'number'
+    value: 'nonSpecific',
+    label: '无特定场景',
   },
   {
-    key: 'MSE',
-    label: '均方误差 (MSE)',
-    description: 'Mean Squared Error',
-    applicableTypes: ['回归模型', '时间序列'],
-    dataType: 'number'
+    value: 'process',
+    label: '污水处理工艺',
+    children: [
+      { value: 'a2o', label: 'A2O工艺' },
+      { value: 'oxidation_ditch', label: '氧化沟工艺' },
+      { value: 'sbr', label: 'SBR工艺' },
+      { value: 'mbr', label: 'MBR膜工艺' }
+    ]
   },
   {
-    key: 'R²',
-    label: '决定系数 (R²)',
-    description: 'Coefficient of Determination',
-    applicableTypes: ['回归模型', '时间序列'],
-    dataType: 'number'
+    value: 'equipment',
+    label: '污水处理设备',
+    children: [
+      { value: 'blower', label: '曝气风机' },
+      { value: 'do_meter', label: 'DO溶解氧仪' },
+      { value: 'sludge_pump', label: '污泥回流泵' },
+      { value: 'scraper', label: '刮泥机' }
+    ]
   },
   {
-    key: 'RMSE',
-    label: '均方根误差 (RMSE)',
-    description: 'Root Mean Squared Error',
-    applicableTypes: ['回归模型', '时间序列'],
-    dataType: 'number'
+    value: 'facility',
+    label: '污水处理设施',
+    children: [
+      { value: 'aeration_tank', label: '曝气池' },
+      { value: 'sedimentation_tank', label: '沉淀池' },
+      { value: 'sludge_thickener', label: '污泥浓缩池' },
+      { value: 'disinfection_pool', label: '消毒池' },
+      { value: '2', label: '粗格栅' },
+      { value: '5', label: '细格栅' },
+      { value: '9', label: '精细格栅' },
+      { value: '15', label: '污泥浓缩池' },
+      { value: '25', label: '生化池' },
+      { value: '28', label: '高级氧化池（芬顿）' },
+      { value: '37', label: '初沉池' },
+      { value: '39', label: '污泥调理池' },
+      { value: '44', label: '高级氧化池（臭氧）' },
+      { value: '49', label: '滤池' },
+      { value: '55', label: '储泥池' },
+      { value: '62', label: '混凝沉淀池' },
+      { value: '68', label: '进水提升泵房' },
+      { value: '77', label: '膜车间' },
+      { value: '84', label: '二次提升泵房' },
+      { value: '93', label: '出水提升泵房' },
+      { value: '104', label: '污泥泵房' },
+    ]
   },
   {
-    key: 'Accuracy',
-    label: '准确率 (Accuracy)',
-    description: 'Classification Accuracy',
-    applicableTypes: ['分类模型', 'CNN模型', 'NLP模型'],
-    dataType: 'number'
+    value: 'monitor',
+    label: '监测仪表',
+    children: [
+      { value: 'ph_meter', label: 'PH计' },
+      { value: 'cod_analyzer', label: 'COD在线分析仪' },
+      { value: 'turbidity_meter', label: '浊度仪' },
+      { value: 'ammonia_meter', label: '氨氮分析仪' }
+    ]
   },
   {
-    key: 'Precision_0',
-    label: '精确率 (Precision_0)',
-    description: 'Precision for Class 0',
-    applicableTypes: ['分类模型', 'CNN模型', 'NLP模型'],
-    dataType: 'number'
+    value: 'other',
+    label: '其他',
   },
-  {
-    key: 'Recall_1',
-    label: '召回率 (Recall_1)',
-    description: 'Recall for Class 1',
-    applicableTypes: ['分类模型', 'CNN模型', 'NLP模型'],
-    dataType: 'number'
-  }
 ];
 
-// 数据类型选项
-const dataTypeOptions = [
-  { value: 'string', label: '字符串 (String)' },
-  { value: 'number', label: '数字 (Number)' },
-  { value: 'integer', label: '整数 (Integer)' },
-  { value: 'float', label: '浮点数 (Float)' },
-  { value: 'boolean', label: '布尔值 (Boolean)' },
-  { value: 'date', label: '日期 (Date)' },
-  { value: 'datetime', label: '日期时间 (DateTime)' },
-  { value: 'array', label: '数组 (Array)' },
-  { value: 'object', label: '对象 (Object)' }
-];
+// 树形多选组件
+interface TreeSelectProps {
+  treeData: TreeNode[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+  className?: string;
+}
+
+const TreeSelect: React.FC<TreeSelectProps> = ({
+  treeData,
+  selectedValues,
+  onChange,
+  placeholder = '请选择',
+  className,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+  const [checkedKeys, setCheckedKeys] = useState<Set<string>>(new Set(selectedValues));
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = React.useState<{ top: number; left: number; minWidth: number } | null>(null);
+
+  // 同步外部传入的选中状态
+  useEffect(() => {
+    setCheckedKeys(new Set(selectedValues));
+  }, [selectedValues]);
+
+  // 计算下拉框位置
+  React.useLayoutEffect(() => {
+    if (isOpen && triggerRef.current && typeof document !== 'undefined') {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        top: rect.bottom + 4,
+        left: rect.left,
+        minWidth: rect.width,
+      });
+    } else {
+      setDropdownStyle(null);
+    }
+  }, [isOpen]);
+
+  // 点击外部关闭
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        triggerRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // 切换节点展开/收起
+  const toggleExpand = (value: string) => {
+    setExpandedKeys(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(value)) {
+        newSet.delete(value);
+      } else {
+        newSet.add(value);
+      }
+      return newSet;
+    });
+  };
+
+  // 切换节点选中状态
+  const toggleCheck = (value: string) => {
+    const newCheckedKeys = new Set(checkedKeys);
+    if (newCheckedKeys.has(value)) {
+      newCheckedKeys.delete(value);
+    } else {
+      newCheckedKeys.add(value);
+    }
+    setCheckedKeys(newCheckedKeys);
+    onChange(Array.from(newCheckedKeys));
+  };
+
+  // 获取节点标签
+  const getNodeLabel = (nodes: TreeNode[], value: string): string => {
+    for (const node of nodes) {
+      if (node.value === value) {
+        return node.label;
+      }
+      if (node.children) {
+        const found = getNodeLabel(node.children, value);
+        if (found) return found;
+      }
+    }
+    return '';
+  };
+
+  // 渲染树节点
+  const renderTreeNode = (node: TreeNode, level: number = 0): React.ReactNode => {
+    const hasChildren = node.children && node.children.length > 0;
+    const isExpanded = expandedKeys.has(node.value);
+    const isChecked = checkedKeys.has(node.value);
+
+    return (
+      <div key={node.value} className="select-none">
+        <div
+          className={cn(
+            'flex items-center py-1.5 px-2 hover:bg-primary-light cursor-pointer',
+            level > 0 && 'pl-6'
+          )}
+          style={{ paddingLeft: `${level * 16 + 8}px` }}
+        >
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand(node.value);
+              }}
+              className="mr-1 p-0.5 hover:bg-primary/20 rounded"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+            </button>
+          ) : (
+            <span className="w-4 mr-1" />
+          )}
+          <button
+            type="button"
+            onClick={() => toggleCheck(node.value)}
+            className="flex items-center flex-1 text-left"
+          >
+            <div className={cn(
+              'w-4 h-4 border rounded mr-2 flex items-center justify-center',
+              isChecked ? 'bg-primary border-primary' : 'border-border'
+            )}>
+              {isChecked && <Check className="h-3 w-3 text-white" />}
+            </div>
+            <span className="text-sm">{node.label}</span>
+          </button>
+        </div>
+        {hasChildren && isExpanded && (
+          <div>
+            {node.children!.map(child => renderTreeNode(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // 获取选中项的显示文本
+  const getDisplayText = () => {
+    if (checkedKeys.size === 0) {
+      return placeholder;
+    }
+    if (checkedKeys.size === 1) {
+      const value = Array.from(checkedKeys)[0];
+      return getNodeLabel(treeData, value);
+    }
+    return `已选择 ${checkedKeys.size} 项`;
+  };
+
+  const dropdownContent =
+    isOpen &&
+    dropdownStyle &&
+    typeof document !== 'undefined' &&
+    createPortal(
+      <div
+        ref={dropdownRef}
+        className="fixed z-9999 rounded-md border border-border bg-popover shadow-lg animate-in fade-in-0 zoom-in-95"
+        style={{
+          top: dropdownStyle.top,
+          left: dropdownStyle.left,
+          minWidth: dropdownStyle.minWidth,
+          maxHeight: 400,
+        }}
+      >
+        <div className="max-h-96 overflow-auto py-2">
+          {treeData.map(node => renderTreeNode(node))}
+        </div>
+      </div>,
+      document.body
+    );
+
+  return (
+    <div className={cn('w-full', className)}>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between h-10 px-4 text-sm border-2 border-input rounded-md hover:border-primary/50 transition-all"
+      >
+        <span className={cn(checkedKeys.size === 0 && 'text-muted-foreground')}>
+          {getDisplayText()}
+        </span>
+        <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
+      </button>
+      {dropdownContent}
+      {checkedKeys.size > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {Array.from(checkedKeys).map(value => (
+            <MdBadge
+              key={value}
+              variant="secondary"
+              className="flex items-center gap-1"
+            >
+              {getNodeLabel(treeData, value)}
+              <button
+                type="button"
+                onClick={() => {
+                  const newValues = Array.from(checkedKeys).filter(v => v !== value);
+                  onChange(newValues);
+                }}
+                className="ml-1 hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </MdBadge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MachineLearningModelCreateEditPage: React.FC = () => {
   const router = useRouter();
@@ -108,236 +344,167 @@ const MachineLearningModelCreateEditPage: React.FC = () => {
   const isEditMode = searchParams.get('id') !== null;
   const modelId = searchParams.get('id');
 
-  const [step, setStep] = useState(1);
-  const [basicInfo, setBasicInfo] = useState<ModelBasicInfo>({
+  const [formData, setFormData] = useState<ModelBasicInfo>({
     name: '',
-    type: '',
-    version: '',
-    status: '开发中',
-    description: '',
+    category: '',
     owner: '',
-    applicableScenario: []
+    programmingLanguage: '',
+    applicableScenarios: [],
+    description: '',
+    tags: [],
   });
 
-  const [inputParameters, setInputParameters] = useState<ParameterField[]>([
-    { name: '', physicalFieldName: '', dataType: 'string', description: '' }
-  ]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [outputParameters, setOutputParameters] = useState<ParameterField[]>([
-    { name: '', physicalFieldName: '', dataType: 'string', description: '' }
-  ]);
-
-  const [evaluationMetrics, setEvaluationMetrics] = useState<EvaluationMetric[]>([]);
-
-  const [newInputParam, setNewInputParam] = useState<ParameterField>({
-    name: '',
-    physicalFieldName: '',
-    dataType: 'string',
-    description: ''
-  });
-
-  const [newOutputParam, setNewOutputParam] = useState<ParameterField>({
-    name: '',
-    physicalFieldName: '',
-    dataType: 'string',
-    description: ''
-  });
-
-  // 可视化编辑模式状态
-  const [useVisualEditor, setUseVisualEditor] = useState(false);
-  const [inputParamSchema, setInputParamSchema] = useState<ParameterSchemaConfig>({
-    title: '输入参数',
-    parameters: []
-  });
-  const [outputParamSchema, setOutputParamSchema] = useState<ParameterSchemaConfig>({
-    title: '输出参数',
-    parameters: []
-  });
-
-  // 模型类型选项
-  const modelTypeOptions = [
-    { value: '分类模型', label: '分类模型' },
-    { value: '回归模型', label: '回归模型' },
-    { value: '聚类模型', label: '聚类模型' },
-    { value: '时间序列', label: '时间序列' },
-    { value: 'NLP模型', label: 'NLP模型' },
-    { value: 'CNN模型', label: 'CNN模型' },
-    { value: '协同过滤', label: '协同过滤' }
+  // 分类选项
+  const categoryOptions: SelectOption[] = [
+    { value: '回归', label: '回归' },
+    { value: '分类', label: '分类' },
+    { value: '排序', label: '排序' },
+    { value: '时序序列', label: '时序序列' },
   ];
 
-  // 适用场景选项
-  const scenarioOptions = [
-    { value: '水质分析', label: '水质分析' },
-    { value: '水量分析', label: '水量分析' },
-    { value: '设备预测', label: '设备预测' },
-    { value: '能耗优化', label: '能耗优化' },
-    { value: '故障诊断', label: '故障诊断' }
+  // 模型所有者选项
+  const ownerOptions: SelectOption[] = [
+    { value: '个人', label: '个人' },
+    { value: '所在组织', label: '所在组织' },
   ];
 
-  // 当模型类型改变时，更新可用的评估指标
-  useEffect(() => {
-    if (basicInfo.type) {
-      const applicableMetrics = evaluationMetricsMetadata
-        .filter(meta => meta.applicableTypes.includes(basicInfo.type))
-        .map(meta => ({
-          metricType: meta.key,
-          value: undefined,
-          enabled: false
-        }));
-      
-      // 保留已启用的指标
-      const existingEnabled = evaluationMetrics.filter(m => m.enabled);
-      const newMetrics = applicableMetrics.map(newMetric => {
-        const existing = existingEnabled.find(e => e.metricType === newMetric.metricType);
-        return existing || newMetric;
-      });
-      
-      setEvaluationMetrics(newMetrics);
+  // 编程语言选项
+  const programmingLanguageOptions: SelectOption[] = [
+    { value: 'Python', label: 'Python' },
+    { value: 'R', label: 'R' },
+    { value: 'Java', label: 'Java' },
+    { value: 'Scala', label: 'Scala' },
+    { value: 'C++', label: 'C++' },
+    { value: 'JavaScript', label: 'JavaScript' },
+    { value: '其他', label: '其他' },
+  ];
+
+  // 加载标签列表
+  const loadTags = useCallback(async () => {
+    try {
+      setLoading(true);
+      // TODO: 调用API获取标签列表
+      // 模拟数据
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const mockTags: Tag[] = [
+        {
+          id: '1',
+          tagCode: 'dq_high',
+          tagName: '高质量',
+          tagTypeId: '1',
+          tagTypeName: '数据质量',
+          description: '数据质量高的标签',
+          status: '启用',
+        },
+        {
+          id: '2',
+          tagCode: 'dq_medium',
+          tagName: '中等质量',
+          tagTypeId: '1',
+          tagTypeName: '数据质量',
+          description: '数据质量中等的标签',
+          status: '启用',
+        },
+        {
+          id: '3',
+          tagCode: 'bd_finance',
+          tagName: '金融业务',
+          tagTypeId: '2',
+          tagTypeName: '业务域',
+          description: '金融业务相关的标签',
+          status: '启用',
+        },
+        {
+          id: '4',
+          tagCode: 'bd_retail',
+          tagName: '零售业务',
+          tagTypeId: '2',
+          tagTypeName: '业务域',
+          description: '零售业务相关的标签',
+          status: '启用',
+        },
+        {
+          id: '5',
+          tagCode: 'ds_database',
+          tagName: '数据库',
+          tagTypeId: '3',
+          tagTypeName: '数据源',
+          description: '来自数据库的数据源',
+          status: '启用',
+        },
+        {
+          id: '6',
+          tagCode: 'sl_confidential',
+          tagName: '机密',
+          tagTypeId: '4',
+          tagTypeName: '安全等级',
+          description: '机密级别的数据',
+          status: '启用',
+        },
+      ];
+      setTags(mockTags.filter(tag => tag.status === '启用'));
+    } catch (error) {
+      console.error('加载标签失败:', error);
+      toast.error('加载标签失败');
+    } finally {
+      setLoading(false);
     }
-  }, [basicInfo.type]);
-
-  // 将 ParameterField 转换为 ParameterSchema
-  const convertToSchema = useCallback((params: ParameterField[]): ParameterSchemaConfig['parameters'] => {
-    return params.map(param => ({
-      name: param.name || `param_${Date.now()}`,
-      label: param.name || '未命名参数',
-      type: param.dataType === 'integer' ? 'integer' : 
-            param.dataType === 'float' ? 'float' :
-            param.dataType === 'number' ? 'number' :
-            param.dataType === 'boolean' ? 'boolean' : 'string',
-      widget: param.dataType === 'boolean' ? 'switch' : 'text',
-      default: param.dataType === 'number' || param.dataType === 'integer' || param.dataType === 'float' ? 0 : '',
-      description: param.description || '',
-      required: true
-    }));
   }, []);
-
-  // 将 ParameterSchema 转换为 ParameterField
-  const convertFromSchema = useCallback((schemas: ParameterSchemaConfig['parameters']): ParameterField[] => {
-    return schemas.map(schema => ({
-      name: schema.name,
-      physicalFieldName: schema.name,
-      dataType: schema.type === 'integer' ? 'integer' :
-                schema.type === 'float' ? 'float' :
-                schema.type === 'number' ? 'number' :
-                schema.type === 'boolean' ? 'boolean' : 'string',
-      description: schema.description || ''
-    }));
-  }, []);
-
-  // 同步传统表单数据到可视化编辑器
-  useEffect(() => {
-    if (useVisualEditor) {
-      setInputParamSchema({
-        title: '输入参数',
-        parameters: convertToSchema(inputParameters)
-      });
-      setOutputParamSchema({
-        title: '输出参数',
-        parameters: convertToSchema(outputParameters)
-      });
-    }
-  }, [useVisualEditor, inputParameters, outputParameters, convertToSchema]);
 
   // 加载编辑数据
   useEffect(() => {
     if (isEditMode && modelId) {
       // TODO: 从API加载模型数据
       // 这里使用模拟数据
-      setBasicInfo({
+      setFormData({
         name: '示例模型',
-        type: '分类模型',
-        version: 'v1.0.0',
-        status: '开发中',
+        category: '分类',
+        owner: '个人',
+        programmingLanguage: 'Python',
+        applicableScenarios: ['a2o', 'aeration_tank'],
         description: '这是一个示例模型',
-        owner: '张三',
-        applicableScenario: ['水质分析']
+        tags: ['1', '3'],
       });
     }
   }, [isEditMode, modelId]);
 
-  // 添加输入参数
-  const addInputParameter = () => {
-    if (newInputParam.name && newInputParam.physicalFieldName) {
-      setInputParameters([...inputParameters, { ...newInputParam }]);
-      setNewInputParam({ name: '', physicalFieldName: '', dataType: 'string', description: '' });
-    }
-  };
-
-  // 删除输入参数
-  const removeInputParameter = (index: number) => {
-    setInputParameters(inputParameters.filter((_, i) => i !== index));
-  };
-
-  // 添加输出参数
-  const addOutputParameter = () => {
-    if (newOutputParam.name && newOutputParam.physicalFieldName) {
-      setOutputParameters([...outputParameters, { ...newOutputParam }]);
-      setNewOutputParam({ name: '', physicalFieldName: '', dataType: 'string', description: '' });
-    }
-  };
-
-  // 删除输出参数
-  const removeOutputParameter = (index: number) => {
-    setOutputParameters(outputParameters.filter((_, i) => i !== index));
-  };
-
-  // 切换评估指标启用状态
-  const toggleEvaluationMetric = (metricType: string) => {
-    setEvaluationMetrics(metrics =>
-      metrics.map(m =>
-        m.metricType === metricType ? { ...m, enabled: !m.enabled } : m
-      )
-    );
-  };
-
-  // 更新评估指标值
-  const updateEvaluationMetricValue = (metricType: string, value: number | undefined) => {
-    setEvaluationMetrics(metrics =>
-      metrics.map(m =>
-        m.metricType === metricType ? { ...m, value } : m
-      )
-    );
-  };
-
-  // 获取当前模型类型适用的评估指标元数据
-  const getApplicableMetricsMetadata = () => {
-    if (!basicInfo.type) return [];
-    return evaluationMetricsMetadata.filter(meta =>
-      meta.applicableTypes.includes(basicInfo.type)
-    );
-  };
+  // 加载标签
+  useEffect(() => {
+    loadTags();
+  }, [loadTags]);
 
   // 提交表单
   const handleSubmit = () => {
     // 验证必填字段
-    if (!basicInfo.name || !basicInfo.type || !basicInfo.version) {
-      alert('请填写必填字段');
+    if (!formData.name) {
+      toast.error('请输入模型名称');
       return;
     }
-
-    if (inputParameters.length === 0) {
-      alert('请至少添加一个输入参数');
+    if (!formData.category) {
+      toast.error('请选择分类');
       return;
     }
-
-    if (outputParameters.length === 0) {
-      alert('请至少添加一个输出参数');
+    if (!formData.owner) {
+      toast.error('请选择模型所有者');
+      return;
+    }
+    if (!formData.programmingLanguage) {
+      toast.error('请选择编程语言');
       return;
     }
 
     // 准备提交数据
     const submitData = {
-      basicInfo,
-      inputParameters,
-      outputParameters,
-      evaluationMetrics: evaluationMetrics.filter(m => m.enabled)
+      ...formData,
     };
 
     console.log('提交模型数据:', submitData);
     
     // TODO: 调用API保存数据
-    alert(isEditMode ? '模型更新成功！' : '模型创建成功！');
+    toast.success(isEditMode ? '模型更新成功！' : '模型创建成功！');
     router.push('/categories/model-lab/model-development/machine-learning-models');
   };
 
@@ -358,400 +525,169 @@ const MachineLearningModelCreateEditPage: React.FC = () => {
         </MdButton>
       </div>
 
-      {/* 步骤指示器 */}
       <MdCard>
-        <MdCardContent className="pt-6">
-          <div className="flex items-center justify-center space-x-4">
-            {[1, 2].map((s) => (
-              <React.Fragment key={s}>
-                <div className={`flex items-center ${step >= s ? 'text-primary' : 'text-muted-foreground'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                    step >= s ? 'border-primary bg-primary text-white' : 'border-muted-foreground'
-                  }`}>
-                    {s}
-                  </div>
-                  <span className="ml-2 text-sm font-medium">
-                    {s === 1 && '模型基础信息'}
-                    {s === 2 && '模型参数定义'}
-                  </span>
-                </div>
-                {s < 2 && <div className={`w-16 h-0.5 ${step > s ? 'bg-primary' : 'bg-muted-foreground'}`} />}
-              </React.Fragment>
-            ))}
+        <MdCardHeader>
+          <MdCardTitle>模型基本信息</MdCardTitle>
+          <MdCardDescription>填写模型的基本信息</MdCardDescription>
+        </MdCardHeader>
+        <MdCardContent className="space-y-6">
+          {/* 模型名称 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              模型名称 <span className="text-red-500">*</span>
+            </label>
+            <MdInput
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="请输入模型名称"
+            />
           </div>
-        </MdCardContent>
-      </MdCard>
 
-      {/* 步骤1: 模型基础信息 */}
-      {step === 1 && (
-        <MdCard>
-          <MdCardHeader>
-            <MdCardTitle>模型基础信息</MdCardTitle>
-            <MdCardDescription>填写模型的基本信息和版本信息</MdCardDescription>
-          </MdCardHeader>
-          <MdCardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  模型名称 <span className="text-red-500">*</span>
-                </label>
-                <MdInput
-                  value={basicInfo.name}
-                  onChange={(e) => setBasicInfo({ ...basicInfo, name: e.target.value })}
-                  placeholder="请输入模型名称"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  模型类型 <span className="text-red-500">*</span>
-                </label>
-                <MdSelect
-                  options={modelTypeOptions}
-                  value={basicInfo.type}
-                  onChange={(value) => setBasicInfo({ ...basicInfo, type: value })}
-                />
-              </div>
-            </div>
+          {/* 分类 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              分类 <span className="text-red-500">*</span>
+            </label>
+            <MdSelect
+              options={categoryOptions}
+              value={formData.category}
+              onChange={(value) => setFormData({ ...formData, category: value })}
+              placeholder="请选择分类"
+            />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  模型版本 <span className="text-red-500">*</span>
-                </label>
-                <MdInput
-                  value={basicInfo.version}
-                  onChange={(e) => setBasicInfo({ ...basicInfo, version: e.target.value })}
-                  placeholder="例如: v1.0.0"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  模型状态
-                </label>
-                <MdSelect
-                  options={[
-                    { value: '开发中', label: '开发中' },
-                    { value: '测试中', label: '测试中' },
-                    { value: '已发布', label: '已发布' }
-                  ]}
-                  value={basicInfo.status}
-                  onChange={(value) => setBasicInfo({ ...basicInfo, status: value })}
-                />
-              </div>
-            </div>
+          {/* 模型所有者 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              模型所有者 <span className="text-red-500">*</span>
+            </label>
+            <MdSelect
+              options={ownerOptions}
+              value={formData.owner}
+              onChange={(value) => setFormData({ ...formData, owner: value })}
+              placeholder="请选择模型所有者"
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                模型功能描述
-              </label>
-              <textarea
-                value={basicInfo.description}
-                onChange={(e) => setBasicInfo({ ...basicInfo, description: e.target.value })}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                rows={3}
-                placeholder="请输入模型功能描述"
-              />
-            </div>
+          {/* 编程语言 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              编程语言 <span className="text-red-500">*</span>
+            </label>
+            <MdSelect
+              options={programmingLanguageOptions}
+              value={formData.programmingLanguage}
+              onChange={(value) => setFormData({ ...formData, programmingLanguage: value })}
+              placeholder="请选择编程语言"
+            />
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  负责人 <span className="text-red-500">*</span>
-                </label>
-                <MdInput
-                  value={basicInfo.owner}
-                  onChange={(e) => setBasicInfo({ ...basicInfo, owner: e.target.value })}
-                  placeholder="请输入负责人姓名"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  模型适用场景
-                </label>
-                <MdSelect
-                  options={scenarioOptions}
-                  value={basicInfo.applicableScenario[0] || ''}
-                  onChange={(value) => {
-                    const scenarios = value ? [value] : [];
-                    setBasicInfo({ ...basicInfo, applicableScenario: scenarios });
-                  }}
-                  placeholder="请选择适用场景"
-                />
-              </div>
-            </div>
+          {/* 模型适用场景 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              模型适用场景
+            </label>
+            <TreeSelect
+              treeData={applicableScenarioTree}
+              selectedValues={formData.applicableScenarios}
+              onChange={(values) => setFormData({ ...formData, applicableScenarios: values })}
+              placeholder="请选择适用场景（可多选）"
+            />
+          </div>
 
-            <div className="flex justify-end">
-              <MdButton onClick={() => setStep(2)}>
-                下一步
-              </MdButton>
-            </div>
-          </MdCardContent>
-        </MdCard>
-      )}
+          {/* 模型描述 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              模型描述
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full rounded-md border-2 border-input bg-background px-3 py-2 text-sm min-h-[100px] resize-y focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="请输入模型描述"
+              rows={4}
+            />
+          </div>
 
-      {/* 步骤2: 模型参数定义 */}
-      {step === 2 && (
-        <MdCard>
-          <MdCardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <MdCardTitle>模型参数定义</MdCardTitle>
-                <MdCardDescription>定义模型的输入参数、输出参数和评估指标</MdCardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <MdButton
-                  variant={!useVisualEditor ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => setUseVisualEditor(false)}
-                >
-                  <List className="mr-2 h-4 w-4" />
-                  传统表单
-                </MdButton>
-                <MdButton
-                  variant={useVisualEditor ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => setUseVisualEditor(true)}
-                >
-                  <LayoutGrid className="mr-2 h-4 w-4" />
-                  可视化编辑
-                </MdButton>
-              </div>
-            </div>
-          </MdCardHeader>
-          <MdCardContent className="space-y-6">
-            {useVisualEditor ? (
-              <>
-                {/* 可视化输入参数编辑 */}
-                <VisualParameterEditor
-                  initialSchema={inputParamSchema}
-                  onSchemaChange={(schema) => {
-                    setInputParamSchema(schema);
-                    setInputParameters(convertFromSchema(schema.parameters));
-                  }}
-                  title="输入参数"
-                  description="可视化编辑模型的输入参数"
-                  showSchemaEditor={true}
-                  showPreview={true}
-                />
-
-                {/* 可视化输出参数编辑 */}
-                <VisualParameterEditor
-                  initialSchema={outputParamSchema}
-                  onSchemaChange={(schema) => {
-                    setOutputParamSchema(schema);
-                    setOutputParameters(convertFromSchema(schema.parameters));
-                  }}
-                  title="输出参数"
-                  description="可视化编辑模型的输出参数"
-                  showSchemaEditor={true}
-                  showPreview={true}
-                />
-              </>
+          {/* 标签 */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              标签
+            </label>
+            {loading ? (
+              <div className="text-sm text-muted-foreground">加载标签中...</div>
             ) : (
-              <>
-                    {/* 输入参数 */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">输入参数</h3>
-                    <MdButton variant="outline" size="sm" onClick={addInputParameter}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      添加参数
-                    </MdButton>
-                  </div>
-                  <div className="space-y-2">
-                    {inputParameters.map((param, index) => (
-                      <div key={index} className="border rounded-lg p-4 flex items-center justify-between">
-                        <div className="flex-1 grid grid-cols-4 gap-4">
-                          <div>
-                            <div className="text-xs text-muted-foreground">参数名称</div>
-                            <div className="font-medium">{param.name || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">物理字段名</div>
-                            <div className="font-medium">{param.physicalFieldName || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">数据类型</div>
-                            <MdBadge variant="outline">{param.dataType || '-'}</MdBadge>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">描述</div>
-                            <div className="text-sm">{param.description || '-'}</div>
-                          </div>
-                        </div>
-                        <MdButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeInputParameter(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </MdButton>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border rounded-lg p-4 mt-4 space-y-2">
-                    <div className="grid grid-cols-4 gap-2">
-                      <MdInput
-                        placeholder="参数名称"
-                        value={newInputParam.name}
-                        onChange={(e) => setNewInputParam({ ...newInputParam, name: e.target.value })}
-                      />
-                      <MdInput
-                        placeholder="物理字段名"
-                        value={newInputParam.physicalFieldName}
-                        onChange={(e) => setNewInputParam({ ...newInputParam, physicalFieldName: e.target.value })}
-                      />
-                      <MdSelect
-                        options={dataTypeOptions}
-                        value={newInputParam.dataType}
-                        onChange={(value) => setNewInputParam({ ...newInputParam, dataType: value })}
-                      />
-                      <MdInput
-                        placeholder="描述"
-                        value={newInputParam.description}
-                        onChange={(e) => setNewInputParam({ ...newInputParam, description: e.target.value })}
-                      />
-                    </div>
-                    <MdButton variant="outline" size="sm" onClick={addInputParameter}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      添加
-                    </MdButton>
-                  </div>
-                </div>
-
-                {/* 输出参数 */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">输出参数</h3>
-                    <MdButton variant="outline" size="sm" onClick={addOutputParameter}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      添加参数
-                    </MdButton>
-                  </div>
-                  <div className="space-y-2">
-                    {outputParameters.map((param, index) => (
-                      <div key={index} className="border rounded-lg p-4 flex items-center justify-between">
-                        <div className="flex-1 grid grid-cols-4 gap-4">
-                          <div>
-                            <div className="text-xs text-muted-foreground">参数名称</div>
-                            <div className="font-medium">{param.name || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">物理字段名</div>
-                            <div className="font-medium">{param.physicalFieldName || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">数据类型</div>
-                            <MdBadge variant="outline">{param.dataType || '-'}</MdBadge>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">描述</div>
-                            <div className="text-sm">{param.description || '-'}</div>
-                          </div>
-                        </div>
-                        <MdButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeOutputParameter(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </MdButton>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border rounded-lg p-4 mt-4 space-y-2">
-                    <div className="grid grid-cols-4 gap-2">
-                      <MdInput
-                        placeholder="参数名称"
-                        value={newOutputParam.name}
-                        onChange={(e) => setNewOutputParam({ ...newOutputParam, name: e.target.value })}
-                      />
-                      <MdInput
-                        placeholder="物理字段名"
-                        value={newOutputParam.physicalFieldName}
-                        onChange={(e) => setNewOutputParam({ ...newOutputParam, physicalFieldName: e.target.value })}
-                      />
-                      <MdSelect
-                        options={dataTypeOptions}
-                        value={newOutputParam.dataType}
-                        onChange={(value) => setNewOutputParam({ ...newOutputParam, dataType: value })}
-                      />
-                      <MdInput
-                        placeholder="描述"
-                        value={newOutputParam.description}
-                        onChange={(e) => setNewOutputParam({ ...newOutputParam, description: e.target.value })}
-                      />
-                    </div>
-                    <MdButton variant="outline" size="sm" onClick={addOutputParameter}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      添加
-                    </MdButton>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* 评估指标 */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">评估指标</h3>
-                {!basicInfo.type && (
-                  <span className="text-sm text-muted-foreground">请先选择模型类型</span>
-                )}
-              </div>
-              {basicInfo.type && (
-                <div className="space-y-3">
-                  {getApplicableMetricsMetadata().map((meta) => {
-                    const metric = evaluationMetrics.find(m => m.metricType === meta.key);
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2 p-3 border-2 border-input rounded-md min-h-[60px]">
+                  {tags.map(tag => {
+                    const isSelected = formData.tags.includes(tag.id);
                     return (
-                      <div key={meta.key} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={metric?.enabled || false}
-                                onChange={() => toggleEvaluationMetric(meta.key)}
-                                className="w-4 h-4"
-                              />
-                              <span className="font-medium">{meta.label}</span>
-                              <span className="text-xs text-muted-foreground">({meta.description})</span>
-                            </div>
-                            {metric?.enabled && (
-                              <div className="mt-2">
-                                <MdInput
-                                  type="number"
-                                  placeholder="请输入指标值"
-                                  value={metric.value?.toString() || ''}
-                                  onChange={(e) => {
-                                    const value = e.target.value ? parseFloat(e.target.value) : undefined;
-                                    updateEvaluationMetricValue(meta.key, value);
-                                  }}
-                                  className="w-48"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => {
+                          const newTags = isSelected
+                            ? formData.tags.filter(t => t !== tag.id)
+                            : [...formData.tags, tag.id];
+                          setFormData({ ...formData, tags: newTags });
+                        }}
+                        className={cn(
+                          'px-3 py-1.5 rounded-md text-sm transition-colors',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-foreground hover:bg-muted/80'
+                        )}
+                      >
+                        {tag.tagName}
+                      </button>
                     );
                   })}
                 </div>
-              )}
-            </div>
+                {formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-muted-foreground">已选择：</span>
+                    {formData.tags.map(tagId => {
+                      const tag = tags.find(t => t.id === tagId);
+                      return tag ? (
+                        <MdBadge
+                          key={tagId}
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
+                          {tag.tagName}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                tags: formData.tags.filter(t => t !== tagId),
+                              });
+                            }}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </MdBadge>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-            <div className="flex justify-between">
-              <MdButton variant="outline" onClick={() => setStep(1)}>
-                上一步
-              </MdButton>
-              <MdButton onClick={handleSubmit}>
-                <Save className="mr-2 h-4 w-4" />
-                {isEditMode ? '保存修改' : '创建模型'}
-              </MdButton>
-            </div>
-          </MdCardContent>
-        </MdCard>
-      )}
+          {/* 提交按钮 */}
+          <div className="flex justify-end gap-3 pt-4">
+            <MdButton variant="outline" onClick={() => router.back()}>
+              取消
+            </MdButton>
+            <MdButton onClick={handleSubmit}>
+              <Save className="mr-2 h-4 w-4" />
+              {isEditMode ? '保存修改' : '创建模型'}
+            </MdButton>
+          </div>
+        </MdCardContent>
+      </MdCard>
     </div>
   );
 };

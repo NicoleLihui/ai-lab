@@ -390,6 +390,41 @@ const mockTrainingResults: Record<string, TrainingResult> = {
       ],
     },
   },
+  run_009: {
+    runId: "run_009",
+    inputJson: JSON.stringify(
+      {
+        windowSize: 24,
+        learningRate: 0.001,
+        batchSize: 32,
+        epochs: 100,
+        optimizer: "Adam",
+      },
+      null,
+      2,
+    ),
+    runDataVO: {
+      picList: [createPlaceholderImage("管网压力预测结果图")],
+      csvReturnVO: {
+        titleMap: {
+          column1: "时间点",
+          column2: "预测压力",
+          column3: "实际压力",
+          column4: "误差",
+        },
+        dataList: [
+          { column1: "2026-02-05 10:00", column2: 0.45, column3: 0.43, column4: 0.02 },
+          { column1: "2026-02-05 11:00", column2: 0.48, column3: 0.47, column4: 0.01 },
+          { column1: "2026-02-05 12:00", column2: 0.46, column3: 0.45, column4: 0.01 },
+        ],
+      },
+      evaIndexList: [
+        { name: "RMSE", desc: "均方根误差", value: "0.12" },
+        { name: "MAE", desc: "平均绝对误差", value: "0.06" },
+        { name: "R²", desc: "拟合优度", value: "0.89" },
+      ],
+    },
+  },
 };
 
 // 污水处理行业相关的模型任务数据
@@ -557,6 +592,31 @@ export const mockTrainingTasks: TrainingTask[] = [
     modelId: "model_008",
     runId: "run_008",
     modelKey: "svi_predictor"
+  },
+  {
+    id: "9",
+    taskName: "管网压力预测模型训练",
+    modelName: "PipelinePressurePredictor",
+    version: "1.0.0",
+    modelType: "回归模型",
+    developLanguage: "Python",
+    statusName: "训练完成",
+    trainTime: 1890,
+    deployTestStatus: 0, // 未部署测试，可以点击
+    evaluateIndex: JSON.stringify([
+      { name: "RMSE", value: "0.12" },
+      { name: "MAE", value: "0.06" },
+      { name: "R²", value: "0.89" }
+    ]),
+    evaluateIndexData: {
+      "RMSE": "0.12",
+      "MAE": "0.06",
+      "R²": "0.89"
+    },
+    createTime: "2026-02-05 10:30:00",
+    modelId: "model_009",
+    runId: "run_009",
+    modelKey: "pipeline_pressure_predictor"
   }
 ];
 

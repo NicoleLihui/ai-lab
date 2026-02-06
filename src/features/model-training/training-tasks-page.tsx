@@ -2,11 +2,37 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
-import { Search, RotateCcw, BarChart2, X } from "lucide-react"
+import { Search, RotateCcw, BarChart2, X, Play } from "lucide-react"
 import { MdInput, MdButton, MdTable, MdBadge } from "@/components/enterprise-ui"
 import type { Column } from "@/components/enterprise-ui"
-import { getMockTrainingPage, getMockTrainingResult, TrainingResult, TrainingTask } from "./mock-data"
+import { getMockTrainingPage, getMockTrainingResult, mockDeployTest, TrainingResult, TrainingTask } from "./mock-data"
 import { toast } from "sonner"
+
+// 检查训练任务是否有训练结果
+const hasTrainingResult = (task: TrainingTask): boolean => {
+  // 优先检查是否有评估指标数据（最快的方式）
+  if (task.evaluateIndexData && Object.keys(task.evaluateIndexData).length > 0) {
+    return true
+  }
+  // 检查是否有评估指标字符串
+  if (task.evaluateIndex) {
+    try {
+      const indices = JSON.parse(task.evaluateIndex)
+      if (Array.isArray(indices) && indices.length > 0) {
+        return true
+      }
+    } catch {
+      // 解析失败，继续检查
+    }
+  }
+  // 最后尝试通过runId获取训练结果数据（最可靠的方式）
+  try {
+    const result = getMockTrainingResult({ runId: task.runId })
+    return result.success && !!result.data
+  } catch {
+    return false
+  }
+}
 
 export function TrainingTasksPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -65,6 +91,54 @@ export function TrainingTasksPage() {
   const handleReset = () => {
     setSearchQuery("")
     loadData(1, pagination.pageSize, "")
+  }
+
+  // 部署测试
+  const handleDeployTest = async (task: TrainingTask) => {
+    if (task.deployTestStatus === 1) {
+      toast.warning("该训练任务已部署测试")
+      return
+    }
+    if (task.statusName !== "训练完成") {
+      toast.warning("只有训练完成的任务才能部署测试")
+      return
+    }
+    
+    if (confirm(`确定要部署测试训练任务"${task.taskName}"吗？\n\n部署测试后，该模型将可以在机器学习模型列表中进行试用。`)) {
+      try {
+        setLoading(true)
+        // 模拟API调用
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const res = mockDeployTest({
+          modelId: task.modelId,
+          runId: task.runId,
+          modelKey: task.modelKey,
+          modelName: task.modelName,
+          version: task.version,
+        })
+        
+        if (res.success) {
+          toast.success("部署测试成功！现在可以在机器学习模型列表中试用该模型了。")
+          // 更新本地数据状态
+          setTableData(prevData => 
+            prevData.map(item => 
+              item.id === task.id 
+                ? { ...item, deployTestStatus: 1 } 
+                : item
+            )
+          )
+          // 刷新数据（确保与后端同步）
+          loadData()
+        } else {
+          toast.error("部署测试失败")
+        }
+      } catch (error) {
+        console.error("部署测试失败:", error)
+        toast.error("部署测试失败")
+      } finally {
+        setLoading(false)
+      }
+    }
   }
 
 
@@ -241,7 +315,7 @@ export function TrainingTasksPage() {
     {
       key: "actions",
       title: "操作",
-      width: 200,
+      width: 280,
       align: "center" as const,
       render: (_: unknown, row: Record<string, unknown>) => {
         const task = row as TrainingTask
@@ -254,6 +328,28 @@ export function TrainingTasksPage() {
               leftIcon={<BarChart2 className="h-3 w-3" />}
             >
               训练结果
+            </MdButton>
+            <MdButton
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDeployTest(task)}
+              leftIcon={<Play className="h-3 w-3" />}
+              disabled={
+                task.deployTestStatus === 1 ||
+                task.statusName !== "训练完成" ||
+                !hasTrainingResult(task)
+              }
+              title={
+                task.deployTestStatus === 1
+                  ? "该任务已部署测试"
+                  : task.statusName !== "训练完成"
+                  ? `只有训练完成的任务才能部署测试，当前状态：${task.statusName}`
+                  : !hasTrainingResult(task)
+                  ? "该任务没有训练结果，无法部署测试"
+                  : "点击部署测试"
+              }
+            >
+              部署测试
             </MdButton>
           </div>
         )
