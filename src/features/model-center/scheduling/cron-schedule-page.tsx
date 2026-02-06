@@ -28,6 +28,14 @@ interface ScheduleTask {
   triggerCount?: number;
   successCount?: number;
   failureCount?: number;
+  // 近七天统计数据
+  triggerCount7Days?: number;
+  successCount7Days?: number;
+  failureCount7Days?: number;
+  // 近30天统计数据
+  triggerCount30Days?: number;
+  successCount30Days?: number;
+  failureCount30Days?: number;
   actions?: React.ReactNode;
 }
 
@@ -39,6 +47,7 @@ const CronSchedulePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [taskTypeFilter, setTaskTypeFilter] = useState('all');
+  const [timeRange, setTimeRange] = useState<'all' | '7days' | '30days'>('7days'); // 时间维度选择
 
   // 操作菜单组件
   const ActionMenu: React.FC<{ row: ScheduleTask }> = ({ row }) => {
@@ -184,7 +193,13 @@ const CronSchedulePage: React.FC = () => {
         description: '每天上午9点执行污水处理效果预测任务',
         triggerCount: 20,
         successCount: 18,
-        failureCount: 2
+        failureCount: 2,
+        triggerCount7Days: 7,
+        successCount7Days: 6,
+        failureCount7Days: 1,
+        triggerCount30Days: 20,
+        successCount30Days: 18,
+        failureCount30Days: 2
       },
       {
         id: '2',
@@ -198,7 +213,13 @@ const CronSchedulePage: React.FC = () => {
         description: '接收API请求触发水质监测模型执行',
         triggerCount: 156,
         successCount: 154,
-        failureCount: 2
+        failureCount: 2,
+        triggerCount7Days: 48,
+        successCount7Days: 47,
+        failureCount7Days: 1,
+        triggerCount30Days: 156,
+        successCount30Days: 154,
+        failureCount30Days: 2
       },
       {
         id: '3',
@@ -215,7 +236,13 @@ const CronSchedulePage: React.FC = () => {
         description: '每天凌晨2点执行污水流量预测任务',
         triggerCount: 15,
         successCount: 15,
-        failureCount: 0
+        failureCount: 0,
+        triggerCount7Days: 5,
+        successCount7Days: 5,
+        failureCount7Days: 0,
+        triggerCount30Days: 15,
+        successCount30Days: 15,
+        failureCount30Days: 0
       },
       {
         id: '4',
@@ -231,7 +258,13 @@ const CronSchedulePage: React.FC = () => {
         description: '每两天下午4点半执行污染物浓度预测任务',
         triggerCount: 8,
         successCount: 6,
-        failureCount: 2
+        failureCount: 2,
+        triggerCount7Days: 3,
+        successCount7Days: 2,
+        failureCount7Days: 1,
+        triggerCount30Days: 8,
+        successCount30Days: 6,
+        failureCount30Days: 2
       },
       {
         id: '5',
@@ -248,7 +281,13 @@ const CronSchedulePage: React.FC = () => {
         description: '每周日凌晨执行曝气系统优化任务',
         triggerCount: 3,
         successCount: 3,
-        failureCount: 0
+        failureCount: 0,
+        triggerCount7Days: 1,
+        successCount7Days: 1,
+        failureCount7Days: 0,
+        triggerCount30Days: 3,
+        successCount30Days: 3,
+        failureCount30Days: 0
       }
     ];
     
@@ -395,12 +434,52 @@ const CronSchedulePage: React.FC = () => {
     }
   ];
 
-  // 计算统计数据
+  // 根据时间维度计算统计数据
+  // 触发次数始终使用全部时间，成功次数和成功率根据时间维度选择
+  const getStatsByTimeRange = () => {
+    // 触发次数始终使用全部时间
+    const totalTriggers = schedules.reduce((sum, s) => sum + (s.triggerCount || 0), 0);
+    
+    if (timeRange === 'all') {
+      return {
+        totalTriggers,
+        totalSuccess: schedules.reduce((sum, s) => sum + (s.successCount || 0), 0),
+        totalFailure: schedules.reduce((sum, s) => sum + (s.failureCount || 0), 0),
+        label: ''
+      };
+    } else if (timeRange === '7days') {
+      const totalSuccess = schedules.reduce((sum, s) => sum + (s.successCount7Days || 0), 0);
+      const totalTriggers7Days = schedules.reduce((sum, s) => sum + (s.triggerCount7Days || 0), 0);
+      return {
+        totalTriggers,
+        totalSuccess,
+        totalFailure: schedules.reduce((sum, s) => sum + (s.failureCount7Days || 0), 0),
+        label: '（近七天）',
+        // 成功率基于近七天的触发次数计算
+        successRateTriggers: totalTriggers7Days
+      };
+    } else {
+      const totalSuccess = schedules.reduce((sum, s) => sum + (s.successCount30Days || 0), 0);
+      const totalTriggers30Days = schedules.reduce((sum, s) => sum + (s.triggerCount30Days || 0), 0);
+      return {
+        totalTriggers,
+        totalSuccess,
+        totalFailure: schedules.reduce((sum, s) => sum + (s.failureCount30Days || 0), 0),
+        label: '（近30天）',
+        // 成功率基于近30天的触发次数计算
+        successRateTriggers: totalTriggers30Days
+      };
+    }
+  };
+
+  const stats = getStatsByTimeRange();
   const totalTasks = schedules.length;
   const runningTasks = schedules.filter(s => s.status === '运行中').length;
-  const totalTriggers = schedules.reduce((sum, s) => sum + (s.triggerCount || 0), 0);
-  const totalSuccess = schedules.reduce((sum, s) => sum + (s.successCount || 0), 0);
-  const successRate = totalTriggers > 0 ? ((totalSuccess / totalTriggers) * 100).toFixed(1) : '0';
+  const totalTriggers = stats.totalTriggers;
+  const totalSuccess = stats.totalSuccess;
+  // 成功率计算：如果选择了时间维度，使用对应时间维度的触发次数；否则使用全部时间的触发次数
+  const successRateTriggers = stats.successRateTriggers !== undefined ? stats.successRateTriggers : totalTriggers;
+  const successRate = successRateTriggers > 0 ? ((totalSuccess / successRateTriggers) * 100).toFixed(1) : '0';
 
   // 获取执行历史数据（用于图表）
   const getExecutionHistory = () => {
@@ -419,7 +498,22 @@ const CronSchedulePage: React.FC = () => {
       {/* 统计概览 */}
       <MdCard>
         <MdCardHeader>
-          <MdCardTitle>调度统计</MdCardTitle>
+          <div className="flex items-center justify-between">
+            <MdCardTitle>调度统计</MdCardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">时间维度：</span>
+              <MdSelect 
+                options={[
+                  { value: 'all', label: '全部时间' }, 
+                  { value: '7days', label: '近七天' }, 
+                  { value: '30days', label: '近30天' }
+                ]}
+                value={timeRange}
+                onChange={(value) => setTimeRange(value as 'all' | '7days' | '30days')}
+                className="w-[120px]"
+              />
+            </div>
+          </div>
         </MdCardHeader>
         <MdCardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -437,11 +531,11 @@ const CronSchedulePage: React.FC = () => {
             </div>
             <div className="rounded-lg border bg-card p-4">
               <div className="text-2xl font-bold text-green-600">{totalSuccess}</div>
-              <div className="text-xs text-muted-foreground">成功次数</div>
+              <div className="text-xs text-muted-foreground">成功次数{stats.label}</div>
             </div>
             <div className="rounded-lg border bg-card p-4">
               <div className="text-2xl font-bold">{successRate}%</div>
-              <div className="text-xs text-muted-foreground">成功率</div>
+              <div className="text-xs text-muted-foreground">成功率{stats.label}</div>
             </div>
           </div>
         </MdCardContent>

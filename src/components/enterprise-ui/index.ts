@@ -33,3 +33,6 @@ export { MdDrawer } from "./md-drawer"
 export type { MdDrawerProps } from "./md-drawer"
 
 export { TreeView, TreeNode, type TreeViewProps, type TreeNodeProps } from "./tree-view"
+
+export { MdTooltip } from "./md-tooltip"
+export type { MdTooltipProps } from "./md-tooltip"

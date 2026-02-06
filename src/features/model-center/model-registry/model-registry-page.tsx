@@ -65,12 +65,15 @@ interface ModelInfo {
   environment: 'staging' | 'production';
   framework: string;
   signature: string;
+  modelCode?: string; // 模型编码
   dependencies: string[];
   createdTime: string;
   updatedTime: string;
   creator: string;
   status: 'draft' | 'registered' | 'archived';
   published?: boolean; // 是否已发布到模型广场
+  modelType?: '机器学习' | '数据规则' | '智能体'; // 模型类型
+  successRate30Days?: number; // 近30天平均成功率（0-100）
   // 新增部署相关字段
   deployments?: DeploymentSummary[];
   deploymentCount?: number;
@@ -89,12 +92,15 @@ const ModelRegistryPage: React.FC = () => {
       environment: 'production',
       framework: 'TensorFlow',
       signature: 'input: tensor[batch, 15], output: tensor[batch, 1]',
+      modelCode: 'MODEL-WW-001',
       dependencies: ['tensorflow==2.8.0', 'numpy>=1.19.0', 'pandas>=1.3.0'],
       createdTime: '2024-01-15 10:30:00',
       updatedTime: '2024-01-20 14:22:15',
       creator: '张三',
       status: 'registered',
       published: true,
+      modelType: '机器学习',
+      successRate30Days: 95.8,
       deployments: [
         {
           id: 'deploy-1',
@@ -116,12 +122,15 @@ const ModelRegistryPage: React.FC = () => {
       environment: 'staging',
       framework: 'PyTorch',
       signature: 'input: features[12], output: probability[1]',
+      modelCode: 'MODEL-WQ-002',
       dependencies: ['torch==1.12.0', 'scikit-learn>=1.0.0', 'scipy>=1.7.0'],
       createdTime: '2024-01-18 09:15:00',
       updatedTime: '2024-01-19 16:45:22',
       creator: '李四',
       status: 'registered',
       published: false,
+      modelType: '机器学习',
+      successRate30Days: 92.3,
       deployments: [],
       deploymentCount: 0,
       runningDeploymentCount: 0,
@@ -134,12 +143,15 @@ const ModelRegistryPage: React.FC = () => {
       environment: 'staging',
       framework: 'Transformers',
       signature: 'input: time_series[sequence], output: flow_rate[float]',
+      modelCode: 'MODEL-FLOW-003',
       dependencies: ['transformers==4.21.0', 'tokenizers>=0.12.0', 'statsmodels>=0.13.0'],
       createdTime: '2024-01-20 11:20:00',
       updatedTime: '2024-01-21 10:10:05',
       creator: '王五',
       status: 'registered',
       published: false,
+      modelType: '机器学习',
+      successRate30Days: 88.5,
       deployments: [],
       deploymentCount: 0,
       runningDeploymentCount: 0,
@@ -152,11 +164,14 @@ const ModelRegistryPage: React.FC = () => {
       environment: 'production',
       framework: 'OpenCV',
       signature: 'input: sludge_params[dict], output: optimal_config[dict]',
+      modelCode: 'MODEL-SLUDGE-004',
       dependencies: ['opencv-python==4.8.0', 'pillow>=9.0.0', 'scikit-optimize>=0.9.0'],
       createdTime: '2024-01-10 08:00:00',
       updatedTime: '2024-01-22 15:30:00',
       creator: '赵六',
       status: 'archived',
+      modelType: '数据规则',
+      successRate30Days: 97.2,
       deployments: [
         {
           id: 'deploy-4-1',
@@ -544,25 +559,30 @@ const ModelRegistryPage: React.FC = () => {
               <div className="text-2xl font-bold">
                 {models.filter(m => m.environment === 'production').length}
               </div>
-              <div className="text-xs text-muted-foreground">已部署模型总数</div>
+              <div className="text-xs text-muted-foreground">模型总数</div>
             </div>
             <div className="rounded-lg border bg-card p-4">
               <div className="text-2xl font-bold">
-                {models.filter(m => m.environment === 'production' && m.status === 'registered').length}
+                {models.filter(m => m.environment === 'production' && m.modelType === '机器学习').length}
               </div>
-              <div className="text-xs text-muted-foreground">运行中</div>
+              <div className="text-xs text-muted-foreground">机器学习类个数</div>
             </div>
             <div className="rounded-lg border bg-card p-4">
               <div className="text-2xl font-bold">
-                {models.filter(m => m.environment === 'production' && m.status === 'archived').length}
+                {models.filter(m => m.environment === 'production' && m.modelType === '数据规则').length}
               </div>
-              <div className="text-xs text-muted-foreground">已归档</div>
+              <div className="text-xs text-muted-foreground">数据规则类个数</div>
             </div>
             <div className="rounded-lg border bg-card p-4">
               <div className="text-2xl font-bold">
-                {models.filter(m => m.environment === 'production').reduce((acc, model) => acc + model.dependencies.length, 0)}
+                {(() => {
+                  const productionModels = models.filter(m => m.environment === 'production' && m.successRate30Days !== undefined);
+                  if (productionModels.length === 0) return '0';
+                  const avgRate = productionModels.reduce((sum, m) => sum + (m.successRate30Days || 0), 0) / productionModels.length;
+                  return avgRate.toFixed(1);
+                })()}%
               </div>
-              <div className="text-xs text-muted-foreground">依赖包总数</div>
+              <div className="text-xs text-muted-foreground">近30天平均成功率</div>
             </div>
           </div>
         </MdCardContent>
@@ -652,7 +672,7 @@ const ModelRegistryPage: React.FC = () => {
                 render: (value, row) => (
                   <div>
                     <div className="font-medium">{row.name}</div>
-                    <div className="text-xs text-muted-foreground">{row.signature}</div>
+                    <div className="text-xs text-muted-foreground">{row.modelCode || '-'}</div>
                   </div>
                 )
               },
@@ -664,15 +684,10 @@ const ModelRegistryPage: React.FC = () => {
                 )
               },
               {
-                key: 'framework',
-                title: '框架',
-                render: (value, row) => row.framework
-              },
-              {
-                key: 'dependencies',
-                title: '依赖数量',
+                key: 'modelType',
+                title: '模型类型',
                 render: (value, row) => (
-                  <span className="text-sm">{row.dependencies.length} 个</span>
+                  <span className="text-sm">{row.modelType || '-'}</span>
                 )
               },
               {
@@ -680,79 +695,17 @@ const ModelRegistryPage: React.FC = () => {
                 title: '部署状态',
                 render: (value, row) => {
                   const deploymentCount = row.deploymentCount || 0;
-                  const runningCount = row.runningDeploymentCount || 0;
-                  const healthStatus = row.healthStatus || 'unknown';
                   
                   if (deploymentCount === 0) {
-                    return <span className="text-sm text-muted-foreground">未部署</span>;
+                    return <MdBadge variant="secondary">未部署</MdBadge>;
                   }
-
-                  const isExpanded = expandedModelIds.has(row.id);
-                  const deployments = row.deployments || [];
-
-                  return (
-                    <div className="space-y-2">
-                      <div 
-                        className="flex items-center gap-2 cursor-pointer hover:text-primary"
-                        onClick={() => toggleExpandModel(row.id)}
-                      >
-                        <div className="flex items-center gap-1">
-                          {healthStatus === 'healthy' ? (
-                            <span className="text-green-600">🟢</span>
-                          ) : healthStatus === 'unhealthy' ? (
-                            <span className="text-red-600">🔴</span>
-                          ) : (
-                            <span className="text-gray-400">⚪</span>
-                          )}
-                          <span className="text-sm">
-                            {runningCount}个运行中 / {deploymentCount}个部署
-                          </span>
-                        </div>
-                        {deployments.length > 0 && (
-                          isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )
-                        )}
-                      </div>
-                      {isExpanded && deployments.length > 0 && (
-                        <div className="ml-4 space-y-1 border-l-2 pl-2">
-                          {deployments.map((dep) => (
-                            <div key={dep.id} className="text-xs flex items-center gap-2">
-                              <MdBadge 
-                                variant={dep.environment === 'production' ? 'primary' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {dep.environment === 'production' ? '生产' : '预发布'}
-                              </MdBadge>
-                              <span className="font-mono">{dep.version}</span>
-                              <MdBadge 
-                                variant={
-                                  dep.status === 'running' ? 'success' :
-                                  dep.status === 'updating' || dep.status === 'rolling_back' ? 'warning' :
-                                  'danger'
-                                }
-                                className="text-xs"
-                              >
-                                {dep.status === 'running' ? '运行中' :
-                                 dep.status === 'stopped' ? '已停止' :
-                                 dep.status === 'updating' ? '更新中' : '回滚中'}
-                              </MdBadge>
-                              {dep.healthStatus === 'unhealthy' && (
-                                <span className="text-red-600">⚠️</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
+                  
+                  return <MdBadge variant="success">已部署</MdBadge>;
                 }
               },
               {
                 key: 'creator',
-                title: '创建者',
+                title: '负责人',
                 render: (value, row) => row.creator
               },
               {

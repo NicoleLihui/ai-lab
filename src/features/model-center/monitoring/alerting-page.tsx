@@ -15,7 +15,7 @@ import { Search, Plus, Edit, Trash2, Mail, MessageSquare, Bell, CheckCircle, XCi
 interface AlertRule {
   id: string;
   ruleName: string;
-  alertType: '性能告警' | '数据漂移告警' | '错误率告警' | '延迟告警';
+  alertType: '性能告警' | '数据漂移告警' | '失败率告警' | '延迟告警';
   condition: string;
   threshold: string;
   notificationChannels: ('邮件' | '即时通讯')[];
@@ -95,8 +95,8 @@ export const AlertingPage: React.FC = () => {
       },
       {
         id: '3',
-        ruleName: '错误率告警',
-        alertType: '错误率告警',
+        ruleName: '失败率告警',
+        alertType: '失败率告警',
         condition: 'Error Rate > 2%',
         threshold: '2%',
         notificationChannels: ['邮件', '即时通讯'],
@@ -120,7 +120,7 @@ export const AlertingPage: React.FC = () => {
       {
         id: '5',
         ruleName: '模型异常告警',
-        alertType: '错误率告警',
+        alertType: '失败率告警',
         condition: 'Error Rate > 5%',
         threshold: '5%',
         notificationChannels: ['邮件'],
@@ -139,11 +139,11 @@ export const AlertingPage: React.FC = () => {
     const mockRecords: AlertRecord[] = [
       {
         id: '1',
-        ruleName: '错误率告警',
-        alertType: '错误率告警',
+        ruleName: '失败率告警',
+        alertType: '失败率告警',
         modelName: '污染物浓度预测模型',
         severity: '高',
-        message: '错误率超过阈值 2%，当前值: 3.2%',
+        message: '失败率超过阈值 2%，当前值: 3.2%',
         status: '已触发',
         triggerTime: '2024-01-20 14:28:30'
       },
@@ -183,11 +183,11 @@ export const AlertingPage: React.FC = () => {
       },
       {
         id: '5',
-        ruleName: '错误率告警',
-        alertType: '错误率告警',
+        ruleName: '失败率告警',
+        alertType: '失败率告警',
         modelName: '曝气系统控制模型',
         severity: '中',
-        message: '错误率超过阈值 2%，当前值: 2.5%',
+        message: '失败率超过阈值 2%，当前值: 2.5%',
         status: '已忽略',
         triggerTime: '2024-01-20 10:15:30'
       }
@@ -904,7 +904,7 @@ export const AlertingPage: React.FC = () => {
               options={[
                 { value: '性能告警', label: '性能告警' },
                 { value: '数据漂移告警', label: '数据漂移告警' },
-                { value: '错误率告警', label: '错误率告警' },
+                { value: '失败率告警', label: '失败率告警' },
                 { value: '延迟告警', label: '延迟告警' }
               ]}
               value={editingRule?.alertType || '性能告警'}

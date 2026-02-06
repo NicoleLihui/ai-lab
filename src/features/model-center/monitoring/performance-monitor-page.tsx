@@ -10,6 +10,7 @@ import { MdSelect } from '@/components/enterprise-ui/md-select';
 import { MdDrawer } from '@/components/enterprise-ui/md-drawer';
 import { Search, Eye, TrendingUp, AlertTriangle, Activity, BarChart3, RefreshCw, GitCompare, Clock, FileText } from 'lucide-react';
 import { MdCheckbox } from '@/components/enterprise-ui/md-checkbox';
+import { MdTooltip } from '@/components/enterprise-ui/md-tooltip';
 
 // 定义监控数据接口
 interface PerformanceMonitor {
@@ -19,11 +20,95 @@ interface PerformanceMonitor {
   modelVersion: string;
   qps: number; // 每秒查询数
   latency: number; // 延迟（毫秒）
-  errorRate: number; // 错误率（百分比）
+  errorRate: number; // 失败率（百分比）
   psi: number; // 数据漂移 PSI 值
   status: '正常' | '警告' | '异常';
+  statusReasons?: string[]; // 状态原因列表
   lastUpdateTime: string;
   actions?: React.ReactNode;
+}
+
+// 状态判断规则配置
+interface StatusRule {
+  // 失败率阈值（百分比）
+  errorRate: {
+    warning: number; // 警告阈值
+    error: number; // 异常阈值
+  };
+  // 延迟阈值（毫秒）
+  latency: {
+    warning: number;
+    error: number;
+  };
+  // PSI阈值
+  psi: {
+    warning: number;
+    error: number;
+  };
+}
+
+// 默认规则配置（参考市面上常见的模型监控规则）
+const DEFAULT_STATUS_RULES: StatusRule = {
+  errorRate: {
+    warning: 1.0, // 失败率 >= 1% 警告
+    error: 3.0,   // 失败率 >= 3% 异常
+  },
+  latency: {
+    warning: 100, // 延迟 >= 100ms 警告
+    error: 200,   // 延迟 >= 200ms 异常
+  },
+  psi: {
+    warning: 0.25, // PSI >= 0.25 警告
+    error: 0.5,    // PSI >= 0.5 异常
+  },
+};
+
+// 状态判断函数
+function calculateStatus(
+  errorRate: number,
+  latency: number,
+  psi: number,
+  rules: StatusRule = DEFAULT_STATUS_RULES
+): { status: '正常' | '警告' | '异常'; reasons: string[] } {
+  const reasons: string[] = [];
+  let hasError = false;
+  let hasWarning = false;
+
+  // 检查失败率
+  if (errorRate >= rules.errorRate.error) {
+    reasons.push(`失败率过高: ${errorRate.toFixed(2)}% (阈值: ${rules.errorRate.error}%)`);
+    hasError = true;
+  } else if (errorRate >= rules.errorRate.warning) {
+    reasons.push(`失败率偏高: ${errorRate.toFixed(2)}% (阈值: ${rules.errorRate.warning}%)`);
+    hasWarning = true;
+  }
+
+  // 检查延迟
+  if (latency >= rules.latency.error) {
+    reasons.push(`响应延迟过高: ${latency}ms (阈值: ${rules.latency.error}ms)`);
+    hasError = true;
+  } else if (latency >= rules.latency.warning) {
+    reasons.push(`响应延迟偏高: ${latency}ms (阈值: ${rules.latency.warning}ms)`);
+    hasWarning = true;
+  }
+
+  // 检查PSI
+  if (psi >= rules.psi.error) {
+    reasons.push(`数据漂移严重: PSI=${psi.toFixed(2)} (阈值: ${rules.psi.error})`);
+    hasError = true;
+  } else if (psi >= rules.psi.warning) {
+    reasons.push(`数据漂移警告: PSI=${psi.toFixed(2)} (阈值: ${rules.psi.warning})`);
+    hasWarning = true;
+  }
+
+  // 确定最终状态
+  if (hasError) {
+    return { status: '异常', reasons };
+  } else if (hasWarning) {
+    return { status: '警告', reasons };
+  } else {
+    return { status: '正常', reasons: [] };
+  }
 }
 
 // 定义运行日志接口
@@ -45,8 +130,6 @@ export const PerformanceMonitorPage: React.FC = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set());
   const [compareDrawerOpen, setCompareDrawerOpen] = useState(false);
-  const [timeRange, setTimeRange] = useState('24h');
-  const [showCharts, setShowCharts] = useState(true);
   const [modelLogs, setModelLogs] = useState<ModelLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<ModelLog[]>([]);
   const [logLevelFilter, setLogLevelFilter] = useState<string>('all');
@@ -56,17 +139,16 @@ export const PerformanceMonitorPage: React.FC = () => {
 
   // 模拟数据
   useEffect(() => {
-    const mockData: PerformanceMonitor[] = [
+    const rawData = [
       {
         id: '1',
         modelId: 'model-001',
         modelName: '污水处理效果预测模型',
         modelVersion: 'v1.2.3',
-        qps: 1250,
+        qps: 250,
         latency: 45,
         errorRate: 0.2,
         psi: 0.15,
-        status: '正常',
         lastUpdateTime: '2024-01-20 14:30:00'
       },
       {
@@ -74,11 +156,10 @@ export const PerformanceMonitorPage: React.FC = () => {
         modelId: 'model-002',
         modelName: '水质监测预警模型',
         modelVersion: 'v2.0.1',
-        qps: 890,
+        qps: 180,
         latency: 120,
         errorRate: 1.5,
         psi: 0.35,
-        status: '警告',
         lastUpdateTime: '2024-01-20 14:29:45'
       },
       {
@@ -86,11 +167,10 @@ export const PerformanceMonitorPage: React.FC = () => {
         modelId: 'model-003',
         modelName: '污水流量预测模型',
         modelVersion: 'v1.0.5',
-        qps: 320,
+        qps: 65,
         latency: 85,
         errorRate: 0.1,
         psi: 0.08,
-        status: '正常',
         lastUpdateTime: '2024-01-20 14:30:15'
       },
       {
@@ -98,11 +178,10 @@ export const PerformanceMonitorPage: React.FC = () => {
         modelId: 'model-004',
         modelName: '污染物浓度预测模型',
         modelVersion: 'v1.5.0',
-        qps: 560,
+        qps: 110,
         latency: 200,
         errorRate: 3.2,
         psi: 0.65,
-        status: '异常',
         lastUpdateTime: '2024-01-20 14:28:30'
       },
       {
@@ -110,37 +189,26 @@ export const PerformanceMonitorPage: React.FC = () => {
         modelId: 'model-005',
         modelName: '曝气系统控制模型',
         modelVersion: 'v1.1.2',
-        qps: 2100,
+        qps: 420,
         latency: 35,
         errorRate: 0.05,
         psi: 0.12,
-        status: '正常',
         lastUpdateTime: '2024-01-20 14:30:30'
       }
     ];
     
+    // 使用规则自动计算状态和原因
+    const mockData: PerformanceMonitor[] = rawData.map(item => {
+      const { status, reasons } = calculateStatus(item.errorRate, item.latency, item.psi);
+      return {
+        ...item,
+        status,
+        statusReasons: reasons.length > 0 ? reasons : undefined,
+      };
+    });
+    
     setMonitors(mockData);
   }, []);
-
-  // 获取性能趋势数据（模拟）
-  const getPerformanceTrend = (modelId: string) => {
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-    return {
-      qps: hours.map(h => Math.floor(Math.random() * 500) + 1000),
-      latency: hours.map(h => Math.floor(Math.random() * 50) + 40),
-      errorRate: hours.map(h => Math.random() * 2),
-      timestamps: hours.map(h => `${h}:00`)
-    };
-  };
-
-  // 获取PSI趋势数据
-  const getPSITrend = (modelId: string) => {
-    const days = Array.from({ length: 7 }, (_, i) => i);
-    return days.map(d => ({
-      date: `01-${14 + d}`,
-      psi: Math.random() * 0.5
-    }));
-  };
 
   // 生成模拟运行日志
   const generateMockLogs = (modelId: string): ModelLog[] => {
@@ -435,7 +503,7 @@ export const PerformanceMonitorPage: React.FC = () => {
     },
     {
       prop: 'errorRate',
-      label: '错误率 (%)',
+      label: '失败率 (%)',
       width: 120,
       align: 'center' as const,
       render: (row: PerformanceMonitor) => {
@@ -469,11 +537,38 @@ export const PerformanceMonitorPage: React.FC = () => {
       label: '状态',
       width: 100,
       align: 'center' as const,
-      render: (row: PerformanceMonitor) => (
-        <MdBadge variant={getStatusVariant(row.status)}>
-          {row.status}
-        </MdBadge>
-      )
+      render: (row: PerformanceMonitor) => {
+        const badge = (
+          <MdBadge variant={getStatusVariant(row.status)}>
+            {row.status}
+          </MdBadge>
+        );
+
+        // 如果是警告或异常状态，且有原因，则显示Tooltip
+        if ((row.status === '警告' || row.status === '异常') && row.statusReasons && row.statusReasons.length > 0) {
+          return (
+            <MdTooltip
+              content={
+                <div className="space-y-1">
+                  <div className="font-semibold mb-1">
+                    {row.status === '警告' ? '⚠️ 警告原因：' : '❌ 异常原因：'}
+                  </div>
+                  {row.statusReasons.map((reason, index) => (
+                    <div key={index} className="text-xs">
+                      • {reason}
+                    </div>
+                  ))}
+                </div>
+              }
+              placement="top"
+            >
+              {badge}
+            </MdTooltip>
+          );
+        }
+
+        return badge;
+      }
     },
     {
       prop: 'lastUpdateTime',
@@ -548,89 +643,6 @@ export const PerformanceMonitorPage: React.FC = () => {
         </MdCard>
       </div>
 
-      {/* 性能趋势图表 */}
-      {showCharts && selectedMonitor && (
-        <MdCard>
-          <MdCardHeader>
-            <div className="flex items-center justify-between">
-              <MdCardTitle>性能趋势 - {selectedMonitor.modelName}</MdCardTitle>
-              <div className="flex gap-2">
-                <MdSelect
-                  options={[
-                    { value: '1h', label: '1小时' },
-                    { value: '24h', label: '24小时' },
-                    { value: '7d', label: '7天' },
-                    { value: '30d', label: '30天' }
-                  ]}
-                  value={timeRange}
-                  onChange={setTimeRange}
-                  className="w-[120px]"
-                />
-              </div>
-            </div>
-          </MdCardHeader>
-          <MdCardContent>
-            <div className="space-y-6">
-              {/* QPS趋势 */}
-              <div>
-                <h4 className="font-semibold mb-3">QPS趋势</h4>
-                <div className="h-48 border rounded-lg bg-muted/50 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-2" />
-                    <div className="text-sm">QPS趋势图（模拟数据）</div>
-                    <div className="text-xs mt-2">
-                      {getPerformanceTrend(selectedMonitor.modelId).qps.slice(-5).join(', ')} ...
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Latency趋势 */}
-              <div>
-                <h4 className="font-semibold mb-3">延迟趋势</h4>
-                <div className="h-48 border rounded-lg bg-muted/50 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <TrendingUp className="h-12 w-12 mx-auto mb-2" />
-                    <div className="text-sm">延迟趋势图（模拟数据）</div>
-                    <div className="text-xs mt-2">
-                      {getPerformanceTrend(selectedMonitor.modelId).latency.slice(-5).join(', ')} ms ...
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* PSI趋势 */}
-              <div>
-                <h4 className="font-semibold mb-3">PSI数据漂移趋势</h4>
-                <div className="h-48 border rounded-lg bg-muted/50 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground w-full p-4">
-                    <Activity className="h-12 w-12 mx-auto mb-2" />
-                    <div className="text-sm mb-4">PSI趋势图（模拟数据）</div>
-                    <div className="text-xs space-y-1">
-                      {getPSITrend(selectedMonitor.modelId).map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between gap-4">
-                          <span>{item.date}</span>
-                          <div className="flex items-center gap-2">
-                            <div className="w-32 bg-muted rounded-full h-2">
-                              <div 
-                                className={`h-2 rounded-full ${
-                                  item.psi < 0.1 ? 'bg-green-600' :
-                                  item.psi < 0.25 ? 'bg-yellow-600' : 'bg-red-600'
-                                }`}
-                                style={{ width: `${(item.psi / 1) * 100}%` }}
-                              />
-                            </div>
-                            <span className="text-xs w-12 text-right">{item.psi.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </MdCardContent>
-        </MdCard>
-      )}
-
       {/* 监控列表 */}
       <MdCard>
         <MdCardHeader className="border-b">
@@ -664,10 +676,6 @@ export const PerformanceMonitorPage: React.FC = () => {
                 onChange={setStatusFilter}
                 className="w-[150px]"
               />
-              <MdButton variant="outline" onClick={() => setShowCharts(!showCharts)}>
-                <BarChart3 className="h-4 w-4 mr-2" />
-                {showCharts ? '隐藏图表' : '显示图表'}
-              </MdButton>
               <MdButton 
                 variant="outline" 
                 onClick={() => {
@@ -716,9 +724,33 @@ export const PerformanceMonitorPage: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground">状态</p>
               {selectedMonitor && (
-                <MdBadge variant={getStatusVariant(selectedMonitor.status)}>
-                  {selectedMonitor.status}
-                </MdBadge>
+                (selectedMonitor.status === '警告' || selectedMonitor.status === '异常') &&
+                selectedMonitor.statusReasons &&
+                selectedMonitor.statusReasons.length > 0 ? (
+                  <MdTooltip
+                    content={
+                      <div className="space-y-1">
+                        <div className="font-semibold mb-1">
+                          {selectedMonitor.status === '警告' ? '⚠️ 警告原因：' : '❌ 异常原因：'}
+                        </div>
+                        {selectedMonitor.statusReasons.map((reason, index) => (
+                          <div key={index} className="text-xs">
+                            • {reason}
+                          </div>
+                        ))}
+                      </div>
+                    }
+                    placement="top"
+                  >
+                    <MdBadge variant={getStatusVariant(selectedMonitor.status)}>
+                      {selectedMonitor.status}
+                    </MdBadge>
+                  </MdTooltip>
+                ) : (
+                  <MdBadge variant={getStatusVariant(selectedMonitor.status)}>
+                    {selectedMonitor.status}
+                  </MdBadge>
+                )
               )}
             </div>
             <div>
@@ -742,7 +774,7 @@ export const PerformanceMonitorPage: React.FC = () => {
                 <p className="text-xs text-muted-foreground mt-1">平均响应时间</p>
               </div>
               <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">错误率</p>
+                <p className="text-sm text-muted-foreground mb-1">失败率</p>
                 <p className="text-2xl font-bold">{selectedMonitor?.errorRate}%</p>
                 <p className="text-xs text-muted-foreground mt-1">请求失败率</p>
               </div>
@@ -781,7 +813,7 @@ export const PerformanceMonitorPage: React.FC = () => {
               </h4>
               <div className="flex items-center gap-2">
                 <MdButton
-                  variant={logAutoRefresh ? 'default' : 'outline'}
+                  variant={logAutoRefresh ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => setLogAutoRefresh(!logAutoRefresh)}
                 >
@@ -882,9 +914,33 @@ export const PerformanceMonitorPage: React.FC = () => {
                     <h3 className="font-semibold">{model.modelName}</h3>
                     <div className="text-sm text-muted-foreground">{model.modelVersion}</div>
                   </div>
-                  <MdBadge variant={getStatusVariant(model.status)}>
-                    {model.status}
-                  </MdBadge>
+                  {(model.status === '警告' || model.status === '异常') &&
+                  model.statusReasons &&
+                  model.statusReasons.length > 0 ? (
+                    <MdTooltip
+                      content={
+                        <div className="space-y-1">
+                          <div className="font-semibold mb-1">
+                            {model.status === '警告' ? '⚠️ 警告原因：' : '❌ 异常原因：'}
+                          </div>
+                          {model.statusReasons.map((reason, index) => (
+                            <div key={index} className="text-xs">
+                              • {reason}
+                            </div>
+                          ))}
+                        </div>
+                      }
+                      placement="top"
+                    >
+                      <MdBadge variant={getStatusVariant(model.status)}>
+                        {model.status}
+                      </MdBadge>
+                    </MdTooltip>
+                  ) : (
+                    <MdBadge variant={getStatusVariant(model.status)}>
+                      {model.status}
+                    </MdBadge>
+                  )}
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   <div>
@@ -896,7 +952,7 @@ export const PerformanceMonitorPage: React.FC = () => {
                     <div className="text-lg font-bold">{model.latency} ms</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">错误率</div>
+                    <div className="text-xs text-muted-foreground">失败率</div>
                     <div className="text-lg font-bold">{model.errorRate.toFixed(2)}%</div>
                   </div>
                   <div>

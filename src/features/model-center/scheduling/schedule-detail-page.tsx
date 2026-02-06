@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { MdCard, MdCardHeader, MdCardTitle, MdCardContent, MdCardDescription } from '@/components/enterprise-ui/md-card';
 import { MdButton } from '@/components/enterprise-ui/md-button';
 import { MdBadge } from '@/components/enterprise-ui/md-badge';
-import { OrganizationTree, OrgTreeNode } from '@/components/enterprise-ui/organization-tree';
+import { OrgTreeNode } from '@/components/enterprise-ui/organization-tree';
 import { Check, X, Eye, User, Calendar, Clock, Settings, Play, Pause, RefreshCw, AlertTriangle, Activity } from 'lucide-react';
 
 // 调度配置接口
@@ -42,6 +42,10 @@ interface ScheduleTask {
   triggerCount?: number;
   successCount?: number;
   failureCount?: number;
+  // 近七天统计数据
+  triggerCount7Days?: number;
+  successCount7Days?: number;
+  failureCount7Days?: number;
   scheduleConfig?: ScheduleConfig; // 调度配置
   parameters?: Record<string, any>;
   logs?: Array<{
@@ -161,6 +165,9 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
           triggerCount: 20,
           successCount: 18,
           failureCount: 2,
+          triggerCount7Days: 7,
+          successCount7Days: 6,
+          failureCount7Days: 1,
           scheduleConfig: {
             applicationScope: ['taiyuan-beijiao', 'yuhang', 'guangzhou-tianhe'],
             taskType: '按时间',
@@ -233,6 +240,45 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
     alert(`正在立即执行任务: ${schedule.taskName}`);
   };
 
+  // 获取组织节点的完整路径
+  const getOrgPath = (nodeId: string, nodes: OrgTreeNode[], path: string[] = []): string[] | null => {
+    for (const node of nodes) {
+      const currentPath = [...path, node.name];
+      if (node.id === nodeId) {
+        return currentPath;
+      }
+      if (node.children) {
+        const result = getOrgPath(nodeId, node.children, currentPath);
+        if (result) return result;
+      }
+    }
+    return null;
+  };
+
+  // 获取所有选中组织的完整路径
+  const getSelectedOrgPaths = (): Array<{ id: string; path: string[]; name: string }> => {
+    if (!schedule?.scheduleConfig?.applicationScope) return [];
+    
+    return schedule.scheduleConfig.applicationScope
+      .map(id => {
+        const path = getOrgPath(id, orgTreeData);
+        // 从组织树中找到节点名称
+        const findNodeName = (nodes: OrgTreeNode[], targetId: string): string | null => {
+          for (const node of nodes) {
+            if (node.id === targetId) return node.name;
+            if (node.children) {
+              const result = findNodeName(node.children, targetId);
+              if (result) return result;
+            }
+          }
+          return null;
+        };
+        const name = findNodeName(orgTreeData, id) || id;
+        return path ? { id, path, name } : null;
+      })
+      .filter((item): item is { id: string; path: string[]; name: string } => item !== null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -244,13 +290,6 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
             </p>
           </div>
           <div className="flex space-x-2">
-            <MdButton 
-              variant="outline"
-              onClick={handleRunNow}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              立即执行
-            </MdButton>
             <MdButton 
               variant={schedule.status === '运行中' ? 'warning' : 'success'}
               onClick={handleToggleStatus}
@@ -311,35 +350,54 @@ const ScheduleDetailPage: React.FC<ScheduleDetailPageProps> = ({
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-green-600">
-                      {schedule.successCount || 0}
+                      {schedule.successCount7Days || 0}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">成功次数</div>
+                    <div className="text-xs text-muted-foreground mt-1">成功次数（近七天）</div>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-red-600">
-                      {schedule.failureCount || 0}
+                      {schedule.failureCount7Days || 0}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">失败次数</div>
+                    <div className="text-xs text-muted-foreground mt-1">失败次数（近七天）</div>
                   </div>
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">
-                      {schedule.triggerCount ? Math.round(((schedule.successCount || 0) / schedule.triggerCount) * 100) : 0}%
+                      {schedule.triggerCount7Days ? Math.round(((schedule.successCount7Days || 0) / schedule.triggerCount7Days) * 100) : 0}%
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">成功率</div>
+                    <div className="text-xs text-muted-foreground mt-1">成功率（近七天）</div>
                   </div>
                 </div>
                 
                 {/* 应用范围 */}
                 {schedule.scheduleConfig && schedule.scheduleConfig.applicationScope && schedule.scheduleConfig.applicationScope.length > 0 && (
                   <div>
-                    <div className="text-sm font-medium mb-3">应用范围</div>
-                    <div className="border rounded-lg p-4 max-h-64 overflow-y-auto bg-muted/30">
-                      <OrganizationTree
-                        data={orgTreeData}
-                        selectedIds={schedule.scheduleConfig.applicationScope || []}
-                        defaultExpanded={true}
-                        readonly={true}
-                      />
+                    <div className="text-sm font-medium mb-3">
+                      应用范围
+                      <span className="text-xs text-muted-foreground ml-2 font-normal">
+                        （共 {schedule.scheduleConfig.applicationScope.length} 个组织）
+                      </span>
+                    </div>
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <div className="flex flex-wrap gap-2">
+                        {getSelectedOrgPaths().map((org) => {
+                          const parentPath = org.path.length > 1 ? org.path.slice(0, -1).join(' > ') : null;
+                          return (
+                            <div
+                              key={org.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-background border rounded-md hover:bg-muted transition-colors"
+                              title={org.path.join(' > ')}
+                            >
+                              <span className="text-sm font-medium text-foreground">{org.name}</span>
+                              {parentPath && (
+                                <span className="text-xs text-muted-foreground">
+                                  <span className="mx-1">·</span>
+                                  {parentPath}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}
