@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
-import { Search, RotateCcw, Plus, Edit, Eye, Send, Rocket, Trash2, Play, MoreVertical, TestTube, GraduationCap } from 'lucide-react';
+import { Search, RotateCcw, Plus, Edit, Send, Rocket, Trash2, Play, MoreVertical, TestTube, GraduationCap } from 'lucide-react';
 import { MdInput, MdButton, MdTable, MdBadge } from '@/components/enterprise-ui';
 import type { Column } from '@/components/enterprise-ui';
 import { toast } from 'sonner';
@@ -231,10 +231,6 @@ const MachineLearningModelsPage: React.FC = () => {
     router.push(`/categories/model-lab/model-development/machine-learning-models-create?id=${row.id}`);
   };
 
-  // 查看
-  const handleView = (row: MachineLearningModel) => {
-    router.push(`/categories/model-lab/model-development/machine-learning-models-detail?id=${row.id}`);
-  };
 
   // 发布
   const handlePublish = (row: MachineLearningModel) => {
@@ -290,6 +286,10 @@ const MachineLearningModelsPage: React.FC = () => {
     }
     if (row.status === '开发中') {
       toast.warning('开发中的模型不能部署');
+      return;
+    }
+    if (row.deployTestStatus !== 1) {
+      toast.warning('模型尚未部署到测试环境，无法部署生产。请先在训练任务管理中完成部署测试。');
       return;
     }
     if (!row.runId || !row.modelId) {
@@ -396,9 +396,9 @@ const MachineLearningModelsPage: React.FC = () => {
     }
   };
 
-  // 点击模型名称跳转详情
+  // 点击模型名称跳转编辑
   const handleModelNameClick = (row: MachineLearningModel) => {
-    handleView(row);
+    handleEdit(row);
   };
 
   // 操作菜单组件
@@ -427,12 +427,6 @@ const MachineLearningModelsPage: React.FC = () => {
 
     const menuItems = [
       {
-        label: '查看',
-        icon: Eye,
-        onClick: () => handleView(row),
-        show: true,
-      },
-      {
         label: '训练',
         icon: GraduationCap,
         onClick: () => handleTraining(row),
@@ -451,12 +445,6 @@ const MachineLearningModelsPage: React.FC = () => {
         show: !row.published && row.status !== '开发中',
       },
       {
-        label: '部署测试',
-        icon: Play,
-        onClick: () => handleDeployTest(row),
-        show: row.status !== '开发中' && row.deployTestStatus !== 1,
-      },
-      {
         label: '试用',
         icon: TestTube,
         onClick: () => handleTrial(row),
@@ -466,7 +454,7 @@ const MachineLearningModelsPage: React.FC = () => {
         label: '部署生产',
         icon: Rocket,
         onClick: () => handleDeployProduction(row),
-        show: row.status !== '开发中' && row.deployProdStatus !== 1 && row.deployProdStatus !== 2,
+        show: row.status !== '开发中' && row.deployTestStatus === 1 && row.deployProdStatus !== 1 && row.deployProdStatus !== 2,
       },
       {
         label: '删除',
