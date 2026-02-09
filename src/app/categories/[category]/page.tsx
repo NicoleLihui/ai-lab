@@ -5,9 +5,9 @@ import { MdCard } from "@/components/enterprise-ui";
 import { ArrowRight } from "lucide-react";
 
 type CategoryPageProps = {
-  params: {
+  params: Promise<{
     category: string;
-  };
+  }>;
 };
 
 export async function generateStaticParams() {
@@ -16,8 +16,8 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function CategoryPage(props: CategoryPageProps) {
-  const { category: categoryKey } = props.params;
+export default async function CategoryPage(props: CategoryPageProps) {
+  const { category: categoryKey } = await props.params;
   const categoryData = findCategory(categoryKey);
 
   if (!categoryData) {

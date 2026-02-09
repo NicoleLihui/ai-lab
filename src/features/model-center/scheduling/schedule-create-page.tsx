@@ -26,7 +26,6 @@ interface ScheduleConfig {
   retryCount?: number;
   retryInterval?: number; // 重试间隔（分钟）
   // 高级选项
-  waitDataReady: boolean; // 等待数据源就绪
   timeoutAlert: boolean; // 执行超时告警
   timeoutMinutes?: number; // 超时时间（分钟）
 }
@@ -49,7 +48,6 @@ const ScheduleCreatePage: React.FC<ScheduleCreatePageProps> = ({ onSave }) => {
     taskType: '按时间',
     scheduleType: 'periodic',
     retryEnabled: false,
-    waitDataReady: false,
     timeoutAlert: false,
     timeoutMinutes: 30
   });
@@ -508,13 +506,6 @@ const ScheduleCreatePage: React.FC<ScheduleCreatePageProps> = ({ onSave }) => {
 
             {/* 高级选项 */}
             <div className="space-y-2">
-              <div className="flex items-center">
-                <MdCheckbox
-                  checked={scheduleConfig.waitDataReady}
-                  onChange={(checked) => setScheduleConfig({ ...scheduleConfig, waitDataReady: checked })}
-                />
-                <span className="ml-2">任务调度上游依赖检查（是否等待数据源（DW_PUMP_SENSOR）就绪后再执行）</span>
-              </div>
               <div className="flex items-center">
                 <MdCheckbox
                   checked={scheduleConfig.timeoutAlert}

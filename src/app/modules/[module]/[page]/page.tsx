@@ -7,10 +7,10 @@ import { MdBadge } from "@/components/enterprise-ui";
 import { cn } from "@/lib/utils";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     module: string;
     page: string;
-  };
+  }>;
 };
 
 const statusClassMap: Record<string, string> = {
@@ -28,8 +28,8 @@ export async function generateStaticParams() {
   );
 }
 
-export default function ModulePage(props: PageProps) {
-  const { module: moduleKey, page: pageKey } = props.params;
+export default async function ModulePage(props: PageProps) {
+  const { module: moduleKey, page: pageKey } = await props.params;
   const moduleData = modules.find(m => m.key === moduleKey);
   const page = moduleData?.pages.find(p => p.key === pageKey);
   const pageKeyWithModule = `${moduleKey}:${pageKey}`;

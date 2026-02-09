@@ -36,6 +36,7 @@ const HomePage = () => {
         { name: '模型库', path: '/categories/model-center/model-registry/model-registry', desc: '已部署到生产环境的模型库' },
         { name: '模型调度', path: '/categories/model-center/scheduling/cron-schedule', desc: '定时 / 触发 / API 调度' },
         { name: '模型监控', path: '/categories/model-center/monitoring/performance-monitor', desc: '性能、漂移、用量与告警' },
+        { name: '模型部署上线流程', path: '/categories/model-center/deployment-workflow/deployment-workflow', desc: '模型从开发到生产的完整部署流程管理' },
       ]
     },
     {

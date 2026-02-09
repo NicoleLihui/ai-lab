@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Search, RotateCcw, Edit, RefreshCw, FileText, User, X } from "lucide-react";
-import { MdInput, MdButton, MdCard, MdBadge, MdSelect, AdvancedSearch, FormItem, type SelectOption } from "@/components/enterprise-ui";
+import React, { useState, useEffect, useCallback } from "react";
+import { Eye, X, Plus, RotateCcw, Search } from "lucide-react";
+import { MdButton, MdCard, MdBadge, type SelectOption } from "@/components/enterprise-ui";
+import { MdInput } from "@/components/enterprise-ui/md-input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -14,137 +15,254 @@ interface IndicatorData {
   rate: string; // 变化率
 }
 
-// 定义项目数据类型
-interface ProjectData {
+// 定义模型数据类型
+interface ModelData {
   id: string;
-  name: string; // 项目名称
-  tag: string; // 项目标签
-  region: string; // 所属大区
-  beforeStart: string; // 应用前开始时间
-  beforeEnd: string; // 应用前结束时间
-  afterStart: string; // 应用期开始时间
-  afterEnd: string; // 应用期结束时间
-  summaryData: IndicatorData[]; // 指标数据列表
+  modelName: string; // 模型名称
+  modelType: string; // 模型类型
+  version: string; // 版本号
+  lastEvaluationTime: string; // 最后一次评估时间
+  evaluationCount: number; // 评估次数
+  summaryData: IndicatorData[]; // 核心评估指标列表
 }
 
-// 扁平化后的表格行数据
-interface FlattenedRow extends ProjectData, IndicatorData {
-  rowKey: string; // 唯一标识
+// 定义评估任务数据类型
+interface EvaluationTask {
+  id: string;
+  taskId: string; // 任务ID
+  modelId: string; // 关联的模型ID
+  dataset: string; // 使用的数据集（单个）
+  evaluationTime: string; // 评估时间
+  status: "completed" | "running" | "failed"; // 任务状态
+  metrics: IndicatorData[]; // 评估指标结果
+  duration: string; // 评估耗时
 }
+
+// Mock评估任务数据
+const mockEvaluationTasks: EvaluationTask[] = [
+  {
+    id: "task-1",
+    taskId: "TASK-20241215001",
+    modelId: "model-1",
+    dataset: "2024年Q1生产数据集",
+    evaluationTime: "2024-12-15 14:30:00",
+    status: "completed",
+    duration: "2分35秒",
+    metrics: [
+      { metricStr: "R² Score (拟合度)", base: 0.7523, applied: 0.8916, rate: "+18.5%" },
+      { metricStr: "MAE (平均绝对误差)", base: 12.56, applied: 8.34, rate: "-33.6%" },
+      { metricStr: "RMAE (相对误差率)", base: 0.1523, applied: 0.0987, rate: "-35.2%" }
+    ]
+  },
+  {
+    id: "task-2",
+    taskId: "TASK-20241210001",
+    modelId: "model-1",
+    dataset: "2024年Q2生产数据集",
+    evaluationTime: "2024-12-10 09:20:00",
+    status: "completed",
+    duration: "1分48秒",
+    metrics: [
+      { metricStr: "R² Score (拟合度)", base: 0.7434, applied: 0.8845, rate: "+19.0%" },
+      { metricStr: "MAE (平均绝对误差)", base: 13.12, applied: 8.76, rate: "-33.2%" },
+      { metricStr: "RMSE (均方根误差)", base: 16.78, applied: 11.23, rate: "-33.1%" }
+    ]
+  },
+  {
+    id: "task-3",
+    taskId: "TASK-20241208001",
+    modelId: "model-1",
+    dataset: "2024年Q3生产数据集",
+    evaluationTime: "2024-12-08 16:45:00",
+    status: "completed",
+    duration: "3分12秒",
+    metrics: [
+      { metricStr: "R² Score (拟合度)", base: 0.7612, applied: 0.9034, rate: "+18.7%" },
+      { metricStr: "MAE (平均绝对误差)", base: 11.89, applied: 7.92, rate: "-33.4%" },
+      { metricStr: "RMAE (相对误差率)", base: 0.1489, applied: 0.0956, rate: "-35.8%" }
+    ]
+  },
+  {
+    id: "task-4",
+    taskId: "TASK-20241205001",
+    modelId: "model-1",
+    dataset: "历史验证数据集_v1",
+    evaluationTime: "2024-12-05 11:20:00",
+    status: "failed",
+    duration: "0分45秒",
+    metrics: []
+  },
+  {
+    id: "task-5",
+    taskId: "TASK-20241212001",
+    modelId: "model-2",
+    dataset: "2024年Q2生产数据集",
+    evaluationTime: "2024-12-12 15:30:00",
+    status: "completed",
+    duration: "2分18秒",
+    metrics: [
+      { metricStr: "R² Score (拟合度)", base: 0.8134, applied: 0.9245, rate: "+13.7%" },
+      { metricStr: "MAE (平均绝对误差)", base: 15.23, applied: 9.87, rate: "-35.2%" },
+      { metricStr: "RMSE (均方根误差)", base: 18.45, applied: 12.36, rate: "-33.0%" }
+    ]
+  },
+  {
+    id: "task-6",
+    taskId: "TASK-20241214001",
+    modelId: "model-3",
+    dataset: "2024年Q1生产数据集",
+    evaluationTime: "2024-12-14 10:15:00",
+    status: "running",
+    duration: "进行中",
+    metrics: []
+  }
+];
 
 // Mock数据
-const mockProjectData: ProjectData[] = [
+const mockModelData: ModelData[] = [
   {
-    id: "proj-1",
-    name: "智能调度优化项目",
-    tag: "生产优化",
-    region: "华东大区",
-    beforeStart: "2024-01-01",
-    beforeEnd: "2024-06-30",
-    afterStart: "2024-07-01",
-    afterEnd: "2024-12-31",
+    id: "model-1",
+    modelName: "智能调度优化模型",
+    modelType: "机器学习",
+    version: "v2.1.0",
+    lastEvaluationTime: "2024-12-15 14:30:00",
+    evaluationCount: 12,
     summaryData: [
       {
-        metricStr: "能耗降低率",
-        base: 100.5,
-        applied: 85.2,
-        rate: "-15.2%"
+        metricStr: "R² Score (拟合度)",
+        base: 0.7523,
+        applied: 0.8916,
+        rate: "+18.5%"
       },
       {
-        metricStr: "生产效率",
-        base: 78.3,
-        applied: 92.1,
-        rate: "+17.6%"
+        metricStr: "MAE (平均绝对误差)",
+        base: 12.56,
+        applied: 8.34,
+        rate: "-33.6%"
       },
       {
-        metricStr: "故障率",
-        base: 5.2,
-        applied: 3.1,
-        rate: "-40.4%"
+        metricStr: "RMAE (相对误差率)",
+        base: 0.1523,
+        applied: 0.0987,
+        rate: "-35.2%"
       }
     ]
   },
   {
-    id: "proj-2",
-    name: "水质预测模型项目",
-    tag: "质量监控",
-    region: "华南大区",
-    beforeStart: "2024-02-01",
-    beforeEnd: "2024-07-31",
-    afterStart: "2024-08-01",
-    afterEnd: "2024-12-31",
+    id: "model-2",
+    modelName: "水质预测深度学习模型",
+    modelType: "深度学习",
+    version: "v1.8.5",
+    lastEvaluationTime: "2024-12-10 09:20:00",
+    evaluationCount: 8,
     summaryData: [
       {
-        metricStr: "预测准确率",
-        base: 82.5,
-        applied: 91.3,
-        rate: "+10.7%"
+        metricStr: "R² Score (拟合度)",
+        base: 0.8134,
+        applied: 0.9245,
+        rate: "+13.7%"
       },
       {
-        metricStr: "异常检出率",
-        base: 65.8,
-        applied: 78.4,
-        rate: "+19.1%"
+        metricStr: "MAE (平均绝对误差)",
+        base: 15.23,
+        applied: 9.87,
+        rate: "-35.2%"
+      },
+      {
+        metricStr: "RMSE (均方根误差)",
+        base: 18.45,
+        applied: 12.36,
+        rate: "-33.0%"
       }
     ]
   },
   {
-    id: "proj-3",
-    name: "设备维护优化项目",
-    tag: "设备管理",
-    region: "华北大区",
-    beforeStart: "2024-03-01",
-    beforeEnd: "2024-08-31",
-    afterStart: "2024-09-01",
-    afterEnd: "2024-12-31",
+    id: "model-3",
+    modelName: "设备故障预测模型",
+    modelType: "机器学习",
+    version: "v3.0.2",
+    lastEvaluationTime: "2024-12-08 16:45:00",
+    evaluationCount: 15,
     summaryData: [
       {
-        metricStr: "维护成本",
-        base: 125.6,
-        applied: 98.3,
-        rate: "-21.7%"
+        metricStr: "R² Score (拟合度)",
+        base: 0.6987,
+        applied: 0.8256,
+        rate: "+18.2%"
       },
       {
-        metricStr: "设备可用率",
-        base: 88.2,
-        applied: 94.5,
-        rate: "+7.1%"
+        metricStr: "MAE (平均绝对误差)",
+        base: 22.15,
+        applied: 14.23,
+        rate: "-35.8%"
       },
       {
-        metricStr: "维护响应时间",
-        base: 45.3,
-        applied: 32.1,
-        rate: "-29.1%"
-      },
-      {
-        metricStr: "预防性维护覆盖率",
-        base: 72.4,
-        applied: 89.6,
-        rate: "+23.8%"
+        metricStr: "RMAE (相对误差率)",
+        base: 0.2156,
+        applied: 0.1345,
+        rate: "-37.6%"
       }
     ]
   },
   {
-    id: "proj-4",
-    name: "智能加药系统项目",
-    tag: "工艺优化",
-    region: "华东大区",
-    beforeStart: "2024-04-01",
-    beforeEnd: "2024-09-30",
-    afterStart: "2024-10-01",
-    afterEnd: "2024-12-31",
+    id: "model-4",
+    modelName: "智能加药优化模型",
+    modelType: "机器学习",
+    version: "v1.5.3",
+    lastEvaluationTime: "2024-12-05 11:20:00",
+    evaluationCount: 6,
     summaryData: [
       {
-        metricStr: "药剂使用量",
-        base: 150.8,
-        applied: 128.5,
-        rate: "-14.8%"
+        metricStr: "R² Score (拟合度)",
+        base: 0.8156,
+        applied: 0.9023,
+        rate: "+10.6%"
       },
       {
-        metricStr: "水质达标率",
-        base: 95.2,
-        applied: 98.7,
-        rate: "+3.7%"
+        metricStr: "MAE (平均绝对误差)",
+        base: 9.87,
+        applied: 6.54,
+        rate: "-33.7%"
+      },
+      {
+        metricStr: "RMAE (相对误差率)",
+        base: 0.1123,
+        applied: 0.0745,
+        rate: "-33.7%"
+      }
+    ]
+  },
+  {
+    id: "model-5",
+    modelName: "污泥处理预测模型",
+    modelType: "深度学习",
+    version: "v2.3.1",
+    lastEvaluationTime: "2024-11-28 10:15:00",
+    evaluationCount: 10,
+    summaryData: [
+      {
+        metricStr: "R² Score (拟合度)",
+        base: 0.7234,
+        applied: 0.8845,
+        rate: "+22.3%"
+      },
+      {
+        metricStr: "MAE (平均绝对误差)",
+        base: 18.92,
+        applied: 11.45,
+        rate: "-39.5%"
+      },
+      {
+        metricStr: "RMSE (均方根误差)",
+        base: 23.56,
+        applied: 14.23,
+        rate: "-39.6%"
+      },
+      {
+        metricStr: "RMAE (相对误差率)",
+        base: 0.1876,
+        applied: 0.1134,
+        rate: "-39.6%"
       }
     ]
   }
@@ -152,87 +270,88 @@ const mockProjectData: ProjectData[] = [
 
 export function BenefitEvaluationPage() {
   const [loading, setLoading] = useState(false);
-  const [tableData, setTableData] = useState<ProjectData[]>([]);
+  const [tableData, setTableData] = useState<ModelData[]>([]);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 10,
     total: 0,
   });
 
   // 搜索表单数据
   const [formData, setFormData] = useState({
-    name: "",
-    tag: "",
-    region: "",
+    modelName: "",
+    modelType: "",
   });
 
-  // 项目名称下拉选项
-  const [projectOptions, setProjectOptions] = useState<SelectOption[]>([]);
-
-  // 选中的行（用于批量授权）
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  // 模型类型下拉选项
+  const [modelTypeOptions] = useState<SelectOption[]>([
+    { value: "机器学习", label: "机器学习" },
+    { value: "深度学习", label: "深度学习" },
+  ]);
 
   // 弹窗状态
   const [isShowDetail, setIsShowDetail] = useState(false);
-  const [currentRow, setCurrentRow] = useState<FlattenedRow | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [currentModel, setCurrentModel] = useState<ModelData | null>(null);
+  const [isShowCreateDrawer, setIsShowCreateDrawer] = useState(false);
 
-  // 扁平化数据
-  const flattenedTableData = useMemo<FlattenedRow[]>(() => {
-    const result: FlattenedRow[] = [];
-    tableData.forEach((project) => {
-      project.summaryData.forEach((indicator, index) => {
-        result.push({
-          ...project,
-          ...indicator,
-          rowKey: `${project.id}-${index}`,
-        });
-      });
-    });
-    return result;
-  }, [tableData]);
+  // 评估任务列表状态
+  const [evaluationTasks, setEvaluationTasks] = useState<EvaluationTask[]>([]);
+  const [taskPagination, setTaskPagination] = useState({
+    current: 1,
+    pageSize: 5,
+    total: 0,
+  });
 
-  // 计算行合并信息
-  const spanArr = useMemo(() => {
-    const spans: number[] = [];
-    if (flattenedTableData.length === 0) return spans;
+  // 新建评估任务表单状态
+  const [selectedModel, setSelectedModel] = useState("");
+  const [datasetTab, setDatasetTab] = useState<"existing" | "new">("existing");
+  const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
+  const [customMetrics, setCustomMetrics] = useState<string[]>([]);
+  const [customMetricInput, setCustomMetricInput] = useState("");
 
-    let pos = 0;
-    let currentName = flattenedTableData[0].name;
-    spans.push(1);
+  // 评估模型选项
+  const [modelOptions] = useState<SelectOption[]>([
+    { value: "model-1", label: "智能调度优化模型 v2.1.0" },
+    { value: "model-2", label: "水质预测深度学习模型 v1.8.5" },
+    { value: "model-3", label: "设备故障预测模型 v3.0.2" },
+    { value: "model-4", label: "智能加药优化模型 v1.5.3" },
+    { value: "model-5", label: "污泥处理预测模型 v2.3.1" },
+  ]);
 
-    for (let i = 1; i < flattenedTableData.length; i++) {
-      if (flattenedTableData[i].name === currentName) {
-        spans[pos] += 1;
-        spans.push(0);
-      } else {
-        spans.push(1);
-        pos = i;
-        currentName = flattenedTableData[i].name;
-      }
+  // 数据集选项
+  const [datasetOptions] = useState<SelectOption[]>([
+    { value: "dataset-1", label: "2024年Q1生产数据集" },
+    { value: "dataset-2", label: "2024年Q2生产数据集" },
+    { value: "dataset-3", label: "2024年Q3生产数据集" },
+    { value: "dataset-4", label: "历史验证数据集_v1" },
+  ]);
+
+  // 默认评估指标
+  const defaultMetrics = ["R² Score (拟合度)", "MAE (平均绝对误差)", "RMAE (相对误差率)"];
+
+  // 添加自定义指标
+  const handleAddMetric = () => {
+    if (customMetricInput.trim() && !customMetrics.includes(customMetricInput.trim())) {
+      setCustomMetrics([...customMetrics, customMetricInput.trim()]);
+      setCustomMetricInput("");
     }
-    return spans;
-  }, [flattenedTableData]);
+  };
 
-  // 获取行合并信息
-  const getSpanInfo = (rowIndex: number, columnIndex: number) => {
-    // 项目信息列(0)、对比周期列(1)、操作列(7)需要合并
-    if (columnIndex === 0 || columnIndex === 1 || columnIndex === 7) {
-      const rowspan = spanArr[rowIndex];
-      return {
-        rowSpan: rowspan > 0 ? rowspan : 0,
-        colSpan: rowspan > 0 ? 1 : 0,
-      };
-    }
-    return { rowSpan: 1, colSpan: 1 };
+  // 删除自定义指标
+  const handleRemoveMetric = (metric: string) => {
+    setCustomMetrics(customMetrics.filter((m) => m !== metric));
+  };
+
+  // 重置为默认指标
+  const handleResetMetrics = () => {
+    setCustomMetrics([]);
   };
 
   // 加载数据（带过滤条件）
   const loadDataWithFilters = useCallback(async (
     page: number,
     size: number,
-    filters: { name: string; tag: string; region: string }
+    filters: { modelName: string; modelType: string }
   ) => {
     setLoading(true);
     try {
@@ -240,10 +359,9 @@ export function BenefitEvaluationPage() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // 模拟数据过滤
-      let filteredData = mockProjectData.filter((item) => {
-        if (filters.name && item.id !== filters.name) return false;
-        if (filters.tag && !item.tag.includes(filters.tag)) return false;
-        if (filters.region && !item.region.includes(filters.region)) return false;
+      let filteredData = mockModelData.filter((item) => {
+        if (filters.modelName && !item.modelName.includes(filters.modelName)) return false;
+        if (filters.modelType && item.modelType !== filters.modelType) return false;
         return true;
       });
 
@@ -272,17 +390,7 @@ export function BenefitEvaluationPage() {
     await loadDataWithFilters(page, size, formData);
   }, [formData, loadDataWithFilters]);
 
-  // 加载项目名称选项
-  const loadProjectOptions = useCallback(() => {
-    const options: SelectOption[] = mockProjectData.map((item) => ({
-      value: item.id,
-      label: item.name,
-    }));
-    setProjectOptions(options);
-  }, []);
-
   useEffect(() => {
-    loadProjectOptions();
     loadDataWithFilters(1, pagination.pageSize, formData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -290,34 +398,23 @@ export function BenefitEvaluationPage() {
   // 搜索
   const handleSearch = (data: Record<string, any>) => {
     const newFormData = {
-      name: data.name || "",
-      tag: data.tag || "",
-      region: data.region || "",
+      modelName: data.modelName || "",
+      modelType: data.modelType || "",
     };
     setFormData(newFormData);
     setPagination((prev) => ({ ...prev, current: 1 }));
-    // 使用新的 formData 进行搜索
     loadDataWithFilters(1, pagination.pageSize, newFormData);
   };
 
   // 重置
   const handleReset = () => {
     const newFormData = {
-      name: "",
-      tag: "",
-      region: "",
+      modelName: "",
+      modelType: "",
     };
     setFormData(newFormData);
     setPagination((prev) => ({ ...prev, current: 1 }));
     loadDataWithFilters(1, pagination.pageSize, newFormData);
-  };
-
-  // 清空某个搜索项
-  const handleClear = (primaryKey: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [primaryKey]: "",
-    }));
   };
 
   // 分页变化
@@ -325,97 +422,91 @@ export function BenefitEvaluationPage() {
     loadData(page, size);
   };
 
-  // 行选择变化
-  const handleSelectionChange = (rowKey: string, checked: boolean) => {
-    if (checked) {
-      setSelectedRows((prev) => [...prev, rowKey]);
-    } else {
-      setSelectedRows((prev) => prev.filter((key) => key !== rowKey));
-    }
-  };
-
-  // 全选/取消全选
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedRows(flattenedTableData.map((row) => row.rowKey));
-    } else {
-      setSelectedRows([]);
-    }
-  };
-
-  // 授权
-  const handleAuthorization = (row: FlattenedRow) => {
-    toast.info("授权功能待实现");
-  };
-
-  // 批量授权
-  const handleBatchAuthorization = () => {
-    if (selectedRows.length === 0) {
-      toast.warning("请选择授权项目!");
-      return;
-    }
-    toast.info("批量授权功能待实现");
-  };
-
-  // 编辑
-  const handleEdit = (row: FlattenedRow) => {
-    toast.info("编辑功能待实现");
-  };
-
-  // 更新
-  const handleUpdate = async (row: FlattenedRow) => {
-    setUpdatingId(row.id);
-    setIsUpdating(true);
-    try {
-      // 模拟更新请求
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success("更新成功");
-      loadData();
-    } catch (error) {
-      toast.error("更新失败");
-    } finally {
-      setIsUpdating(false);
-      setUpdatingId(null);
-    }
-  };
-
-  // 明细
-  const handleDetail = (row: FlattenedRow) => {
-    setCurrentRow(row);
+  // 详情
+  const handleDetail = (model: ModelData) => {
+    setCurrentModel(model);
+    // 加载该模型的评估任务
+    const modelTasks = mockEvaluationTasks.filter(task => task.modelId === model.id);
+    setEvaluationTasks(modelTasks);
+    setTaskPagination({
+      current: 1,
+      pageSize: 5,
+      total: modelTasks.length,
+    });
     setIsShowDetail(true);
   };
 
-  // 关闭明细弹窗
+  // 关闭详情弹窗
   const handleCloseDetail = () => {
     setIsShowDetail(false);
-    setCurrentRow(null);
+    setCurrentModel(null);
+    setEvaluationTasks([]);
   };
 
-  // 搜索表单配置
-  const formItemList: FormItem[] = [
-    {
-      type: "select",
-      label: "项目名称",
-      paramKey: "name",
-      placeholder: "请选择",
-      modelValue: formData.name,
-      selectOptions: projectOptions,
-    },
-    {
-      type: "input",
-      label: "项目标签",
-      paramKey: "tag",
-      placeholder: "请输入",
-      modelValue: formData.tag,
-    },
-    {
-      type: "input",
-      label: "所属大区",
-      paramKey: "region",
-      placeholder: "请输入",
-      modelValue: formData.region,
-    },
-  ];
+  // 打开新建抽屉
+  const handleOpenCreateDrawer = () => {
+    setIsShowCreateDrawer(true);
+  };
+
+  // 关闭新建抽屉
+  const handleCloseCreateDrawer = () => {
+    setIsShowCreateDrawer(false);
+    // 重置表单状态
+    setSelectedModel("");
+    setDatasetTab("existing");
+    setSelectedDatasets([]);
+    setCustomMetrics([]);
+    setCustomMetricInput("");
+  };
+
+  // 处理数据集多选
+  const handleDatasetToggle = (datasetValue: string) => {
+    setSelectedDatasets((prev) =>
+      prev.includes(datasetValue)
+        ? prev.filter((v) => v !== datasetValue)
+        : [...prev, datasetValue]
+    );
+  };
+
+  // 全选/取消全选数据集
+  const handleToggleAllDatasets = () => {
+    if (selectedDatasets.length === datasetOptions.length) {
+      setSelectedDatasets([]);
+    } else {
+      setSelectedDatasets(datasetOptions.map((opt) => opt.value));
+    }
+  };
+
+  // 提交新建评估任务（批量创建）
+  const handleSubmitCreateTask = () => {
+    // 验证表单
+    if (!selectedModel) {
+      toast.error("请选择评估模型");
+      return;
+    }
+    if (selectedDatasets.length === 0 && datasetTab === "existing") {
+      toast.error("请至少选择一个数据集");
+      return;
+    }
+
+    // 模拟批量创建任务
+    const allMetrics = [...defaultMetrics, ...customMetrics];
+    const taskCount = selectedDatasets.length;
+    const datasetNames = selectedDatasets.map(value =>
+      datasetOptions.find(opt => opt.value === value)?.label
+    ).join("、");
+
+    toast.success(
+      `✓ 成功批量创建 ${taskCount} 个评估任务` +
+      `\n数据集：${datasetNames}` +
+      `\n每个任务包含 ${allMetrics.length} 个评估指标`,
+      { duration: 5000 }
+    );
+
+    handleCloseCreateDrawer();
+    // 重新加载数据
+    loadData();
+  };
 
   // 判断变化率颜色
   const getRateColor = (rate: string) => {
@@ -427,222 +518,175 @@ export function BenefitEvaluationPage() {
     return "text-gray-600 bg-gray-50";
   };
 
+  // 获取任务状态的颜色和文本
+  const getTaskStatusInfo = (status: EvaluationTask["status"]) => {
+    switch (status) {
+      case "completed":
+        return { text: "已完成", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+      case "running":
+        return { text: "运行中", color: "bg-blue-50 text-blue-700 border-blue-200" };
+      case "failed":
+        return { text: "失败", color: "bg-red-50 text-red-700 border-red-200" };
+      default:
+        return { text: "未知", color: "bg-gray-50 text-gray-700 border-gray-200" };
+    }
+  };
+
   return (
     <div className="flex flex-col h-full border-0 outline-0 shadow-none m-0 p-0 gap-3">
-      {/* 搜索区域 */}
-      <div className="bg-white rounded-xl border border-border shadow-sm">
-        <AdvancedSearch
-          formItemList={formItemList}
-          onSearch={handleSearch}
-          onReset={handleReset}
-          onClear={handleClear}
-        />
-        
+      {/* 搜索和操作区域 */}
+      <div className="flex items-center justify-between gap-3 bg-white p-4 rounded-xl border border-border shadow-sm">
+        {/* 左侧：新建评估任务按钮 */}
+        <MdButton onClick={handleOpenCreateDrawer} leftIcon={<Plus className="h-4 w-4" />} className="h-9 px-3">
+          新建评估任务
+        </MdButton>
+
+        {/* 右侧：搜索表单 */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 w-80">
+            <MdInput
+              placeholder="搜索模型名称或描述"
+              value={formData.modelName || ""}
+              onChange={(e) => handleSearch({ ...formData, modelName: e.target.value })}
+              className="h-9"
+            />
+          </div>
+          <MdButton onClick={handleSearch} leftIcon={<Search className="h-4 w-4" />} className="h-9 px-3">
+            查询
+          </MdButton>
+          <MdButton variant="outline" onClick={handleReset} leftIcon={<RotateCcw className="h-4 w-4" />} className="h-9 px-3">
+            重置
+          </MdButton>
+        </div>
       </div>
 
       {/* 表格区域 */}
-      <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-4 flex items-center justify-start">
-          <MdButton onClick={handleBatchAuthorization} leftIcon={<User className="h-3 w-3" />}>
-            批量授权
-          </MdButton>
-        </div>
-        
-        <div className="overflow-auto h-full">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-muted/50 border-b border-border">
-                <th className="border-r border-border p-3 text-left text-sm font-semibold">
-                  <input
-                    type="checkbox"
-                    checked={selectedRows.length === flattenedTableData.length && flattenedTableData.length > 0}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="cursor-pointer"
-                  />
-                </th>
-                <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[200px]">
-                  项目信息
-                </th>
-                <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[120px]">
-                  对比周期
-                </th>
-                <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[150px]">
-                  指标名称
-                </th>
-                <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[120px]">
-                  应用前均值
-                </th>
-                <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[120px]">
-                  应用期均值
-                </th>
-                <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[120px]">
-                  变化率
-                </th>
-                <th className="p-3 text-center text-sm font-semibold min-w-[100px]">操作</th>
+      <div className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-auto flex flex-col">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-muted/50 border-b border-border">
+              <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[60px]">
+                序号
+              </th>
+              <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[180px]">
+                模型名称
+              </th>
+              <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[100px]">
+                模型类型
+              </th>
+              <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[100px]">
+                版本号
+              </th>
+              <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[160px]">
+                最后一次评估时间
+              </th>
+              <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[80px]">
+                评估次数
+              </th>
+              <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[200px]">
+                核心评估指标
+              </th>
+              <th className="p-3 text-center text-sm font-semibold min-w-[80px]">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <span className="text-muted-foreground">加载中...</span>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      <span className="text-muted-foreground">加载中...</span>
-                    </div>
+            ) : tableData.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="p-12 text-center text-muted-foreground">
+                  暂无数据
+                </td>
+              </tr>
+            ) : (
+              tableData.map((model, index) => (
+                <tr
+                  key={model.id}
+                  className={cn(
+                    "border-b border-border hover:bg-muted/30 transition-colors",
+                    index % 2 === 1 && "bg-muted/10"
+                  )}
+                >
+                  {/* 序号 */}
+                  <td className="border-r border-border p-3 text-center">
+                    {(pagination.current - 1) * pagination.pageSize + index + 1}
                   </td>
-                </tr>
-              ) : flattenedTableData.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="p-12 text-center text-muted-foreground">
-                    暂无数据
+
+                  {/* 模型名称 */}
+                  <td className="border-r border-border p-3 font-semibold text-foreground">
+                    {model.modelName}
                   </td>
-                </tr>
-              ) : (
-                flattenedTableData.map((row, rowIndex) => {
-                  const spanInfo = getSpanInfo(rowIndex, 0);
-                  return (
-                    <tr
-                      key={row.rowKey}
-                      className={cn(
-                        "border-b border-border hover:bg-muted/30 transition-colors",
-                        rowIndex % 2 === 1 && "bg-muted/10"
-                      )}
-                    >
-                      {/* 选择框 */}
-                      <td className="border-r border-border p-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedRows.includes(row.rowKey)}
-                          onChange={(e) => handleSelectionChange(row.rowKey, e.target.checked)}
-                          className="cursor-pointer"
-                        />
-                      </td>
 
-                      {/* 项目信息 */}
-                      <td
-                        className="border-r border-border p-3"
-                        rowSpan={spanInfo.rowSpan}
-                        style={{ display: spanInfo.rowSpan === 0 ? "none" : "table-cell" }}
-                      >
-                        <div className="space-y-1">
-                          <div className="font-semibold text-base">{row.name}</div>
-                          <div className="text-primary text-sm">{row.region}</div>
-                          <MdBadge variant="secondary" className="text-xs">
-                            {row.tag}
-                          </MdBadge>
-                        </div>
-                      </td>
+                  {/* 模型类型 */}
+                  <td className="border-r border-border p-3 text-sm">
+                    {model.modelType}
+                  </td>
 
-                      {/* 对比周期 */}
-                      {(() => {
-                        const spanInfo = getSpanInfo(rowIndex, 1);
-                        return (
-                          <td
-                            className="border-r border-border p-3"
-                            rowSpan={spanInfo.rowSpan}
-                            style={{ display: spanInfo.rowSpan === 0 ? "none" : "table-cell" }}
-                          >
-                            <div className="space-y-1 text-sm">
-                              <div>{row.beforeStart} ~ {row.beforeEnd}</div>
-                              <div className="text-muted-foreground">vs</div>
-                              <div>{row.afterStart} ~ {row.afterEnd}</div>
-                            </div>
-                          </td>
-                        );
-                      })()}
+                  {/* 版本号 */}
+                  <td className="border-r border-border p-3 text-sm font-mono text-muted-foreground">
+                    {model.version}
+                  </td>
 
-                      {/* 指标名称 */}
-                      <td className="border-r border-border p-3">
-                        <div className="font-semibold">{row.metricStr}</div>
-                      </td>
+                  {/* 最后一次评估时间 */}
+                  <td className="border-r border-border p-3 text-sm text-muted-foreground">
+                    {model.lastEvaluationTime}
+                  </td>
 
-                      {/* 应用前均值 */}
-                      <td className="border-r border-border p-3 text-center">
-                        {row.base.toFixed(2)}
-                      </td>
+                  {/* 评估次数 */}
+                  <td className="border-r border-border p-3 text-center">
+                    <MdBadge variant="secondary" className="text-xs">
+                      {model.evaluationCount}
+                    </MdBadge>
+                  </td>
 
-                      {/* 应用期均值 */}
-                      <td className="border-r border-border p-3 text-center">
-                        {row.applied.toFixed(2)}
-                      </td>
-
-                      {/* 变化率 */}
-                      <td className="border-r border-border p-3 text-center">
+                  {/* 核心评估指标 */}
+                  <td className="border-r border-border p-3 space-y-1.5">
+                    {model.summaryData.map((metric, idx) => (
+                      <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                        <span className="text-muted-foreground">{metric.metricStr}:</span>
                         <span
                           className={cn(
-                            "inline-block px-3 py-1 rounded-full font-bold text-sm font-mono",
-                            getRateColor(row.rate)
+                            "px-2 py-0.5 rounded-full font-bold text-xs font-mono",
+                            getRateColor(metric.rate)
                           )}
                         >
-                          {row.rate}
+                          {metric.rate}
                         </span>
-                      </td>
+                      </div>
+                    ))}
+                  </td>
 
-                      {/* 操作 */}
-                      {(() => {
-                        const spanInfo = getSpanInfo(rowIndex, 7);
-                        return (
-                          <td
-                            className="p-3 text-center"
-                            rowSpan={spanInfo.rowSpan}
-                            style={{ display: spanInfo.rowSpan === 0 ? "none" : "table-cell" }}
-                          >
-                            <div className="flex flex-col gap-1 items-center">
-                              <MdButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleAuthorization(row)}
-                                leftIcon={<User className="h-3 w-3" />}
-                                className="w-full"
-                              >
-                                授权
-                              </MdButton>
-                              <MdButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(row)}
-                                leftIcon={<Edit className="h-3 w-3" />}
-                                className="w-full"
-                              >
-                                编辑
-                              </MdButton>
-                              <MdButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleUpdate(row)}
-                                disabled={isUpdating && updatingId === row.id}
-                                leftIcon={<RefreshCw className={cn("h-3 w-3", isUpdating && updatingId === row.id && "animate-spin")} />}
-                                className="w-full"
-                              >
-                                {isUpdating && updatingId === row.id ? "更新中..." : "更新"}
-                              </MdButton>
-                              <MdButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDetail(row)}
-                                leftIcon={<FileText className="h-3 w-3" />}
-                                className="w-full"
-                              >
-                                明细
-                              </MdButton>
-                            </div>
-                          </td>
-                        );
-                      })()}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                  {/* 操作 */}
+                  <td className="p-3 text-center">
+                    <MdButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDetail(model)}
+                      leftIcon={<Eye className="h-3 w-3" />}
+                      className="w-full"
+                    >
+                      详情
+                    </MdButton>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
 
         {/* 分页 */}
-        {!loading && flattenedTableData.length > 0 && (
+        {!loading && tableData.length > 0 && (
           <div className="flex items-center justify-between p-4 border-t border-border">
-            <div className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               共 {pagination.total} 条数据
-            </div>
+            </span>
             <div className="flex items-center gap-2">
               <MdButton
                 variant="outline"
@@ -668,75 +712,369 @@ export function BenefitEvaluationPage() {
         )}
       </div>
 
-      {/* 明细弹窗 */}
-      {isShowDetail && currentRow && (
+      {/* 详情弹窗 - 评估任务列表 */}
+      {isShowDetail && currentModel && (
         <div className="fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/30" onClick={handleCloseDetail} />
-          <div className="relative ml-auto h-full w-[600px] bg-card border-l border-border shadow-xl flex flex-col">
+          <div className="relative ml-auto h-full w-[900px] bg-card border-l border-border shadow-xl flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <div className="text-lg font-semibold text-foreground">项目明细</div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">{currentModel.modelName} - 评估任务</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {currentModel.modelType} · {currentModel.version} · 共 {evaluationTasks.length} 个评估任务
+                </p>
+              </div>
               <MdButton variant="text" size="sm" onClick={handleCloseDetail}>
                 <X className="h-4 w-4" />
               </MdButton>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-4">
-                <MdCard className="p-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">项目名称</h4>
-                      <p>{currentRow.name}</p>
+
+            <div className="flex-1 overflow-auto">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 bg-background">
+                  <tr className="bg-muted/50 border-b border-border">
+                    <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[60px]">
+                      序号
+                    </th>
+                    <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[140px]">
+                      任务ID
+                    </th>
+                    <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[140px]">
+                      数据集
+                    </th>
+                    <th className="border-r border-border p-3 text-left text-sm font-semibold min-w-[140px]">
+                      评估时间
+                    </th>
+                    <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[80px]">
+                      状态
+                    </th>
+                    <th className="border-r border-border p-3 text-center text-sm font-semibold min-w-[80px]">
+                      耗时
+                    </th>
+                    <th className="p-3 text-left text-sm font-semibold min-w-[180px]">
+                      评估指标
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {evaluationTasks.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-12 text-center text-muted-foreground">
+                        暂无评估任务
+                      </td>
+                    </tr>
+                  ) : (
+                    evaluationTasks.map((task, index) => {
+                      const statusInfo = getTaskStatusInfo(task.status);
+                      return (
+                        <tr
+                          key={task.id}
+                          className="border-b border-border hover:bg-muted/30 transition-colors"
+                        >
+                          {/* 序号 */}
+                          <td className="border-r border-border p-3 text-center">
+                            {index + 1}
+                          </td>
+
+                          {/* 任务ID */}
+                          <td className="border-r border-border p-3">
+                            <span className="font-mono text-sm">{task.taskId}</span>
+                          </td>
+
+                          {/* 数据集 */}
+                          <td className="border-r border-border p-3 text-sm text-foreground">
+                            {task.dataset}
+                          </td>
+
+                          {/* 评估时间 */}
+                          <td className="border-r border-border p-3 text-sm text-muted-foreground">
+                            {task.evaluationTime}
+                          </td>
+
+                          {/* 状态 */}
+                          <td className="border-r border-border p-3 text-center">
+                            <span className={cn(
+                              "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border",
+                              statusInfo.color
+                            )}>
+                              {statusInfo.text}
+                            </span>
+                          </td>
+
+                          {/* 耗时 */}
+                          <td className="border-r border-border p-3 text-center text-sm text-muted-foreground">
+                            {task.duration}
+                          </td>
+
+                          {/* 评估指标 */}
+                          <td className="p-3">
+                            {task.status === "completed" && task.metrics.length > 0 ? (
+                              <div className="space-y-1.5">
+                                {task.metrics.map((metric, idx) => (
+                                  <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                                    <span className="text-muted-foreground">{metric.metricStr}:</span>
+                                    <span
+                                      className={cn(
+                                        "px-2 py-0.5 rounded-full font-bold text-xs font-mono",
+                                        getRateColor(metric.rate)
+                                      )}
+                                    >
+                                      {metric.rate}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : task.status === "running" ? (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                <span>评估中...</span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-red-500">评估失败</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="border-t border-border px-6 py-4 flex justify-end">
+              <MdButton variant="outline" onClick={handleCloseDetail}>关闭</MdButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 新建评估任务抽屉 */}
+      {isShowCreateDrawer && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/30" onClick={handleCloseCreateDrawer} />
+          <div className="relative ml-auto h-full w-[600px] bg-card border-l border-border shadow-xl flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">新建评估任务</h2>
+              <MdButton variant="text" size="sm" onClick={handleCloseCreateDrawer}>
+                <X className="h-4 w-4" />
+              </MdButton>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* 步骤1：选择评估模型 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                    1
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">选择评估模型</h3>
+                </div>
+                <div className="pl-8 space-y-2">
+                  <p className="text-xs text-muted-foreground">请选择需要进行效益评估的模型版本</p>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    aria-label="选择评估模型"
+                    title="选择评估模型"
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">请选择模型</option>
+                    {modelOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 步骤2：选择数据集 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                    2
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">选择数据集</h3>
+                </div>
+                <div className="pl-8 space-y-3">
+                  {/* Tab切换 */}
+                  <div className="flex items-center gap-1 p-1 bg-muted rounded-lg w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setDatasetTab("existing")}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                        datasetTab === "existing"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      现有数据集
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDatasetTab("new")}
+                      className={cn(
+                        "px-3 py-1.5 text-sm font-medium rounded-md transition-all",
+                        datasetTab === "new"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      新建/上传
+                    </button>
+                  </div>
+
+                  {datasetTab === "existing" ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">从现有数据集中选择用于评估的数据集（可多选，将为每个数据集创建独立的评估任务）</p>
+                        <button
+                          type="button"
+                          onClick={handleToggleAllDatasets}
+                          className="text-xs text-primary hover:text-primary/80 transition-colors"
+                        >
+                          {selectedDatasets.length === datasetOptions.length ? "取消全选" : "全选"}
+                        </button>
+                      </div>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {datasetOptions.map((option) => (
+                          <label
+                            key={option.value}
+                            className={cn(
+                              "flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all",
+                              selectedDatasets.includes(option.value)
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedDatasets.includes(option.value)}
+                              onChange={() => handleDatasetToggle(option.value)}
+                              className="w-4 h-4 rounded border-border text-primary focus:ring-primary focus:ring-2"
+                            />
+                            <span className="text-sm flex-1">{option.label}</span>
+                            {selectedDatasets.includes(option.value) && (
+                              <span className="text-primary">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </span>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                      {selectedDatasets.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          已选择 <span className="font-semibold text-foreground">{selectedDatasets.length}</span> 个数据集，
+                          将创建 <span className="font-semibold text-foreground">{selectedDatasets.length}</span> 个评估任务
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">项目标签</h4>
-                      <p>{currentRow.tag}</p>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground">上传新的数据集用于模型评估</p>
+                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                        <div className="text-muted-foreground text-sm">
+                          <p className="font-medium mb-1">点击上传或拖拽文件到此处</p>
+                          <p className="text-xs">支持 CSV、Excel、JSON 格式</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">所属大区</h4>
-                      <p>{currentRow.region}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 步骤3：评估指标 */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
+                      3
                     </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">指标名称</h4>
-                      <p>{currentRow.metricStr}</p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">应用前开始时间</h4>
-                      <p>{currentRow.beforeStart}</p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">应用前结束时间</h4>
-                      <p>{currentRow.beforeEnd}</p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">应用期开始时间</h4>
-                      <p>{currentRow.afterStart}</p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">应用期结束时间</h4>
-                      <p>{currentRow.afterEnd}</p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">应用前均值</h4>
-                      <p>{currentRow.base.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">应用期均值</h4>
-                      <p>{currentRow.applied.toFixed(2)}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-1">变化率</h4>
-                      <p>
-                        <span className={cn("inline-block px-3 py-1 rounded-full font-bold text-sm font-mono", getRateColor(currentRow.rate))}>
-                          {currentRow.rate}
+                    <h3 className="text-base font-semibold text-foreground">评估指标</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResetMetrics}
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    重置默认
+                  </button>
+                </div>
+                <div className="pl-8 space-y-3">
+                  {/* 默认指标 */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">默认评估指标：</p>
+                    <div className="flex flex-wrap gap-2">
+                      {defaultMetrics.map((metric) => (
+                        <span
+                          key={metric}
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                        >
+                          {metric}
                         </span>
-                      </p>
+                      ))}
                     </div>
                   </div>
-                </MdCard>
+
+                  {/* 自定义指标 */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">自定义指标：</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={customMetricInput}
+                        onChange={(e) => setCustomMetricInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleAddMetric();
+                          }
+                        }}
+                        placeholder="输入自定义指标名称"
+                        className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                      <MdButton
+                        size="sm"
+                        onClick={handleAddMetric}
+                        disabled={!customMetricInput.trim()}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        添加
+                      </MdButton>
+                    </div>
+                    {customMetrics.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {customMetrics.map((metric) => (
+                          <span
+                            key={metric}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-600"
+                          >
+                            {metric}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMetric(metric)}
+                              aria-label={`删除指标 ${metric}`}
+                              className="hover:text-blue-800 transition-colors"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="border-t border-border px-6 py-4 flex justify-end gap-2">
-              <MdButton variant="outline" onClick={handleCloseDetail}>关闭</MdButton>
+              <MdButton variant="outline" onClick={handleCloseCreateDrawer}>取消</MdButton>
+              <MdButton onClick={handleSubmitCreateTask}>确定</MdButton>
             </div>
           </div>
         </div>

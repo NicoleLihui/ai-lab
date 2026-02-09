@@ -7,14 +7,14 @@ import { MdBadge } from "@/components/enterprise-ui";
 import { cn } from "@/lib/utils";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     category: string;
     module: string;
     page: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     [key: string]: string | string[] | undefined;
-  };
+  }>;
 };
 
 // 从 URLSearchParams 转换为简单对象
@@ -49,9 +49,9 @@ export async function generateStaticParams() {
   );
 }
 
-export default function CategoryModulePage(props: PageProps) {
-  const { category: categoryKey, module: moduleKey, page: pageKey } = props.params;
-  const { searchParams } = props;
+export default async function CategoryModulePage(props: PageProps) {
+  const { category: categoryKey, module: moduleKey, page: pageKey } = await props.params;
+  const searchParams = await props.searchParams;
 
   const categoryData = findCategory(categoryKey);
   const moduleData = findModule(categoryKey, moduleKey);

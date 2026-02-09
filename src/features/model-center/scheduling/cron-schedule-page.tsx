@@ -179,7 +179,7 @@ const CronSchedulePage: React.FC = () => {
   useEffect(() => {
     const mockData: ScheduleTask[] = [
       {
-        id: '1',
+        id: 'task-model-001-1',
         taskName: '每日水质预测调度',
         taskType: '定时调度',
         cronExpression: '0 9 * * *',
@@ -202,7 +202,7 @@ const CronSchedulePage: React.FC = () => {
         failureCount30Days: 2
       },
       {
-        id: '2',
+        id: 'task-model-002-1',
         taskName: '实时水质监测调度',
         taskType: 'API调用',
         status: '运行中',
@@ -222,7 +222,7 @@ const CronSchedulePage: React.FC = () => {
         failureCount30Days: 2
       },
       {
-        id: '3',
+        id: 'task-model-003-1',
         taskName: '数据预处理调度',
         taskType: '定时调度',
         cronExpression: '0 2 * * *',
@@ -245,7 +245,7 @@ const CronSchedulePage: React.FC = () => {
         failureCount30Days: 0
       },
       {
-        id: '4',
+        id: 'task-model-004-1',
         taskName: '污染物浓度预测调度',
         taskType: '任务触发',
         lastRunTime: '2024-01-19 16:30:00',
@@ -267,7 +267,7 @@ const CronSchedulePage: React.FC = () => {
         failureCount30Days: 2
       },
       {
-        id: '5',
+        id: 'task-model-005-1',
         taskName: '曝气系统优化调度',
         taskType: '定时调度',
         cronExpression: '0 0 * * 0',
@@ -328,6 +328,15 @@ const CronSchedulePage: React.FC = () => {
 
   // 表格列定义
   const columns = [
+    {
+      prop: 'id',
+      label: '任务ID',
+      width: 100,
+      align: 'center',
+      render: (row: ScheduleTask) => (
+        <span className="text-sm font-mono text-muted-foreground">{row.id}</span>
+      )
+    },
     {
       prop: 'taskName',
       label: '任务名称',

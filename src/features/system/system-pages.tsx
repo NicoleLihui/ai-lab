@@ -31,6 +31,7 @@ import { ModelDetailPageWrapper as ReleaseModelDetailPageWrapper } from "../mode
 import { PerformanceMonitorPage } from "../model-center/monitoring/performance-monitor-page";
 import { AlertingPage } from "../model-center/monitoring/alerting-page";
 import { CronSchedulePage, ScheduleDetailPage, ScheduleCreatePage, ScheduleEditPage } from "../model-center/scheduling";
+import { DeploymentWorkflowPage } from "../model-center/deployment-workflow/deployment-workflow-page";
 import { ReviewModelReleasePage } from "../model-center/release-governance/review-model-release-page";
 import { ReviewModelDeployPage } from "../model-center/release-governance/review-model-deploy-page";
 import { DeployReviewDetailPageWrapper } from "../model-center/release-governance/deploy-review-detail-page";
@@ -437,6 +438,8 @@ export const systemPageComponentMap: Record<string, React.ComponentType> = {
   // 模型监控
   "model-center-monitoring:performance-monitor": PerformanceMonitorPage,
   "model-center-monitoring:alerting": AlertingPage,
+  // 模型部署上线流程
+  "model-center-deployment-workflow:deployment-workflow": DeploymentWorkflowPage,
   // 数据平台 - 元数据管理
   "data-platform-metadata:metadata-management": MetadataManagementPage,
   "data-platform-metadata:metadata-list": MetadataListPage,

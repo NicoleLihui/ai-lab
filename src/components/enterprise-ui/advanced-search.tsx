@@ -73,7 +73,7 @@ export function AdvancedSearch({
   };
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 bg-background border rounded-lg", className)}>
+    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4 bg-background rounded-lg", className)}>
       {formItemList.map((item, index) => (
         <div key={index} className="flex flex-col space-y-1">
           <label className="text-sm font-medium text-foreground">{item.label}</label>

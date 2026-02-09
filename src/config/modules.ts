@@ -361,6 +361,19 @@ export const categories: PrimaryCategory[] = [
             status: "已具备"
           }
         ]
+      },
+      {
+        key: "deployment-workflow",
+        name: "模型部署上线流程",
+        description: "模型从开发到生产的完整部署流程管理",
+        pages: [
+          {
+            key: "deployment-workflow",
+            name: "模型部署上线流程",
+            description: "模型部署上线流程管理，包含流程配置、审批、执行和监控",
+            status: "已具备"
+          }
+        ]
       }
     ]
   },

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { MdButton } from './md-button';
 import { cn } from '@/lib/utils';
